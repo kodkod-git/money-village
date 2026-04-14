@@ -3,6 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>머니빌리지 통합 관리 시스템</title>
+    <script>
+        (function() {
+            const PASSWORD = 'moneyvillage2026!';
+            const SESSION_KEY = 'mv_auth';
+            if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+                const input = prompt('비밀번호를 입력하세요');
+                if (input !== PASSWORD) {
+                    document.documentElement.innerHTML = '';
+                    alert('비밀번호가 올바르지 않습니다.');
+                    location.replace('about:blank');
+                    throw new Error('unauthorized');
+                }
+                sessionStorage.setItem(SESSION_KEY, '1');
+            }
+        })();
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">    
     <link rel="stylesheet" href="style.css">
