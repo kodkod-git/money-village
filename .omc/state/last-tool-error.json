@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"c:/Users/USER/OneDrive/Desktop/Project/money-village\\\" && git init && git add . && git commit -m \\\"initial commit\\\" && git branch -M main && git remote add origin https://github.com/k...",
+  "error": "Exit code 128\nInitialized empty Git repository in C:/Users/USER/OneDrive/Desktop/Project/money-village/.git/\nwarning: in the working copy of '.claude/settings.local.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of '.omc/sessions/3b1fb89a-c873-4e24-952e-eb9e536d2f9b.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the work...",
+  "timestamp": "2026-04-14T13:21:55.298Z",
+  "retry_count": 1
+}

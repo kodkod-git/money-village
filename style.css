@@ -1,0 +1,606 @@
+        /* [1] 공통 스타일 */
+        :root {
+            --mv-blue-deep: #00498c;
+            --mv-blue-light: #0072ce;
+            --mv-yellow: #ffc600;
+            --mv-orange: #ff9e1b;
+            --bg-color: #f4f7fa;
+        }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* 버튼 */
+        .btn { border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; line-height: 1.2; justify-content: center; cursor: pointer; color: white; font-size: 14px; margin-right: 2px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary { background: var(--mv-blue-light); }
+        .btn-success { background: var(--mv-orange); } 
+        .btn-dark { background: #455a64; }
+        .btn-danger { background: #e74c3c; }
+        .btn-drive { background: #00897b; } 
+        .btn-fame { background: #ffd700; color: #333; } 
+        .btn-purple { background: #7e57c2; }
+        .btn-setup-big { width: 48%; padding: 12px; margin-top: 10px; }
+
+        /* 화면 전환 */
+        .screen { display: none; }
+        .active-screen { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* [화면 1] 설정 */
+        .setup-card { background: white; padding: 40px; border-radius: 20px; max-width: 600px; margin: 30px auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .logo-uploader { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 1px dashed #ccc; }
+        .stock-config-area { margin-bottom: 20px; padding: 15px; background: #eef6ff; border-radius: 10px; border: 1px solid #dbeafe; }
+        .stock-config-title { font-weight: bold; color: var(--mv-blue-deep); margin-bottom: 10px; text-align: center; font-size: 15px; }
+        .stock-inputs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stock-input-item { display: flex; flex-direction: column; align-items: center; }
+        .stock-input-item label { font-size: 12px; color: #555; margin-bottom: 3px; font-weight: bold; }
+        .stock-input-item input { width: 80%; padding: 5px; border: 1px solid #ccc; border-radius: 5px; text-align: center; font-size: 14px; }
+        .stock-input-item input[type="number"]::-webkit-inner-spin-button,
+        .stock-input-item input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+        .stock-input-item input[type="number"] {
+        -moz-appearance: textfield; /* Firefox */
+        appearance: textfield;
+        }
+        .mode-select { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .mode-btn { width: 120px; padding: 15px; display:flex; align-items:center; justify-content:center; line-height: 1; gap: 8px; border: 2px solid #ddd; line-height: 1; border-radius: 12px; cursor: pointer; background: #fff; font-weight: bold; color: #888; font-size: 16px; }
+        .mode-btn.selected { border-color: var(--mv-blue-deep); background: #eef6ff; color: var(--mv-blue-deep); }
+        .input-row { margin: 20px 0; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; }
+        .input-num { width: 80px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 5px; font-size: 18px; }
+        .player-list-input { text-align: center; max-height: 250px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .p-input-group { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+        .p-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+        .team-header { font-weight: bold; color: var(--mv-blue-deep); margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+
+        /* [화면 2] 계수 */
+        .dashboard-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
+        .sidebar { background: white; padding: 20px; border-radius: 15px; height: fit-content; }
+        .player-list-item { padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; background: #f9f9f9; display: flex; justify-content: space-between; }
+        .player-list-item.active { background: #eef6ff; color: var(--mv-blue-deep); font-weight: bold; border-left: 4px solid var(--mv-blue-deep); }
+        .player-list-item.done span { background: var(--mv-yellow); color: #333; font-weight: bold; }
+        .count-card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .portfolio-grid-sm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .stock-item-sm { border: 1px solid #eee; border-radius: 8px; padding: 8px; text-align: center; font-size: 13px; }
+
+        /* [화면 3] 성적표 & [화면 4] 명예의 전당 공통 Paper */
+        .report-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            background: #333;
+            padding: 15px 18px;
+            border-radius: 10px;
+            color: white;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        .report-controls .controls-title {
+            flex: 0 0 auto;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .report-controls .controls-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+        .report-paper {
+            background: white; width: 210mm; 
+            min-height: 296mm; 
+            margin: 0 auto; padding: 4mm 4mm; 
+            box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            border-top: 8px solid var(--mv-blue-deep);
+            display: flex; flex-direction: column; position: relative;
+            font-size: 18px;
+            line-height: 1.25; 
+        }
+
+        .editable-input { border: none; border-bottom: 1px dashed #ccc; font-weight: bold; color: inherit; font-size: inherit; text-align: right; width: 80px; background: transparent; padding: 0 2px; }
+        .editable-input:focus { outline: none; border-bottom: 2px solid var(--mv-orange); background: #fffbe6; }
+        .editable-date { border: none; font-size: 16px; font-weight: bold; color: #333; font-family: inherit; text-align: left; width: 120px; background: transparent; border-bottom: 1px dashed #ccc; margin-left: 0; }
+        .editable-text { border: none; font-size: 18px; font-weight: bold; color: #333; font-family: inherit; text-align: left; width: 120px; background: transparent; border-bottom: 1px dashed #ccc; margin-left: 0; }
+
+        .report-header { display: flex; justify-content: center; flex-direction: column; align-items: center; text-align: center; margin-bottom: 4px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        .header-title h1 { margin: 0; font-size: 32px; color: var(--mv-blue-deep); font-weight: 900; line-height: 1.05; letter-spacing: -0.6px; white-space: nowrap; word-break: keep-all}
+        .header-title p { margin: 4px 0 0; color: #666; font-weight: bold; font-size: 14px; white-space: nowrap; }
+        .header-right { text-align: center; }
+        .logo-img { height:55px; margin-bottom:5px; object-fit:contain; display:block; }
+        #pdfAreaReport .logo-img { margin-left:0; height:68px; }
+        .header-info { font-size: 16px; color: #555; margin-top: 10px; margin-top: 5px;} 
+        .info-row { margin-bottom: 6px; display: flex; justify-content: flex-end; align-items: center; } 
+        .info-label { font-weight: bold; margin-right: 8px; width: 45px; text-align: right; display: inline-block; }
+        #pdfAreaReport .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;border-bottom:2px solid #eee;column-gap:16px;}
+        #pdfAreaReport .header-right{justify-self:end;text-align:right;display:grid;justify-items:end;align-self:start;margin-top:30px;position:relative;max-width:none;}
+        #pdfAreaFame .last-update{position:absolute;top:0;right:0;font-size:12px;color:#888;font-weight:700;line-height:1;white-space:nowrap;}
+        #pdfAreaReport .header-left{text-align:left;justify-self:start;min-width:0;}
+        #pdfAreaReport .header-info{font-size:16px;color:#555;margin-top:6px;}
+        #pdfAreaReport .info-row{display:flex;justify-content:flex-end;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:8px;}
+        #pdfAreaReport .info-label { width:auto; margin-right:0; }
+        .pdf-input{ display:inline-block; line-height:1; vertical-align:middle; }
+
+        .ranking-section { display: flex; gap: 15px; margin-bottom: 15px; height: 215px; }
+        .my-rank-card { flex: 0.8; background: #f9f9f9; border-radius: 12px; padding: 15px 15px; text-align: center; border: 1px solid #eee; display: flex; flex-direction: column; justify-content: center; }
+        .my-rank-title { font-size: 17px; color: #666; font-weight: bold; margin-bottom: 5px; }
+        .my-rank-num { font-size: 44px; font-weight: 900; color: var(--mv-blue-deep); line-height: 1; margin-bottom: 5px; }
+        .my-rank-suffix { font-size: 20px; color: #555; font-weight: bold; }
+        .my-team-rank-box { margin-top: 10px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #eee; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .team-detail-line { display: flex; justify-content: space-between; align-items: center; font-size: 17px; margin-bottom: 4px; }
+        .team-detail-line:last-child { margin-bottom: 0; padding-top: 4px; border-top: 1px dashed #eee; }
+        .team-hl { color: var(--mv-orange); font-weight: bold; font-size: 17px; }
+
+        .fame-card { flex: 1.4; background: #fff; border: 2px solid var(--mv-yellow); border-radius: 12px; padding: 15px; padding-bottom: 10px; display: flex; flex-direction: column; overflow: hidden; }
+        .fame-title { font-size: 16px; background: var(--mv-yellow); color: #333; padding: 4px 10px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 15px; align-self: flex-start; }
+        .fame-split-container { display: flex; gap: 15px; height: 100%; width: 100%; }
+        .fame-col { flex: 1; }
+        .fame-col.separator { border-right: 1px dashed #ddd; padding-right: 15px; }
+        .fame-col-title { font-size: 16px; font-weight: 800; color: #666; border-bottom: 2px solid #eee; margin-bottom: 10px; padding-bottom: 2px; }
+        .top3-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; align-items: center;}
+        .rank-1st { color: #d4a000; font-weight:bold; } 
+        .rank-name { font-size: 16px; font-weight: 800; color: #333; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 85px; }
+
+        .asset-box {padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to right, #fcfcfc, #f4f8ff); border-radius: 12px; padding: 10px 25px; margin-bottom: 15px; border: 1px solid #eee; height: 95px; }
+        .asset-text .money { font-size: 44px; font-weight: 900; color: #333; letter-spacing: -1px; margin-bottom: 10px; }
+        .asset-detail { margin-top: 3px; font-size: 16px; font-weight: 700; display: flex; align-items: center; }
+        .chart-container { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+        .chart-center { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; pointer-events: none; }
+        .chart-center div:first-child { font-size: 14px; font-weight: bold; color: #666; line-height: 1.2; margin-bottom: 0px; }
+        .chart-center div:last-child { font-size: 18px; font-weight: 900; color: var(--mv-blue-deep); line-height: 1.2; }
+
+        .section-header { font-size: 18px; font-weight: 800; color: var(--mv-blue-deep); border-left: 6px solid var(--mv-yellow); padding-left: 10px; margin: 15px 0 8px 0; }
+        .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .stock-card { border: 1px solid #ddd; border-radius: 10px; padding: 8px; text-align: center; background: #fff; }
+        .stock-logo { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 4px; color: white !important; display: grid; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .stock-val { font-size: 16px; font-weight: 800; color: var(--mv-blue-deep); }
+        .stock-cnt { font-size: 13px; color: #888; }
+        .booth-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-grow: 1;}
+        .booth-item { border: 1px solid #eee; border-radius: 8px; padding: 5px 8px; display: flex; align-items: center; gap: 10px; background: #fbfbfb; }
+        .booth-icon { font-size: 40px; min-width: 44px; text-align: center; } 
+        .booth-text h4 { margin: 0; font-size: 20px; color: var(--mv-blue-deep); font-weight: 900; }
+        .booth-text p { margin: 2px 0 5px; font-size: 14px; color: #555; line-height: 1.1; } 
+
+        /* [팀전 동적 추가 UI] */
+        .team-section { border-top: 1px solid #eee; padding-top: 12px; margin-top: 12px; }
+        .team-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+        .team-name-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .team-name-wrap span { font-weight: 900; color: var(--mv-blue-deep); white-space: nowrap; }
+        .team-name-input { width: 120px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 8px; font-weight: 800; }
+        .team-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn-mini { padding: 7px 10px !important; font-size: 15px !important; border-radius: 10px !important; margin-right: 0 !important; }
+
+        /* [부스별 특성 취득] */
+        .trait-grid-sm{
+            display:grid;
+            grid-template-columns:repeat(3, 1fr);
+            gap:8px;
+        }
+        .trait-btn{
+            width:100%;
+            border:1px solid #eee;
+            border-radius:10px;
+            background:#fff;
+            padding:10px 8px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:6px;
+            font-weight:900;
+            color:#555;
+            font-size:14px;
+            transition:transform .08s, box-shadow .12s, border-color .12s, background .12s;
+        }
+        .trait-btn:hover{ transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.06); }
+        .trait-btn.on{
+            border:2px solid var(--mv-yellow);
+            background:#fffbe6;
+            color:#333;
+        }
+        .trait-btn .emo{ font-size:18px; line-height:1; }
+
+        .rpt-trait-badges{
+            display:flex;
+            flex-wrap:wrap;
+            gap:6px;
+            margin-top:8px;
+        }
+        .rpt-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:6px 10px;
+            border-radius:999px;
+            border:1px solid #eee;
+            background:#fafafa;
+            font-weight:900;
+            color:#444;
+            font-size:13px;
+        }
+        .rpt-badge.on{
+            border:2px solid var(--mv-yellow);
+            background:#fffbe6;
+        }
+        /* Report: 선택된 항목 골드테두리 + 우측 월계수(이모지) */
+        .booth-item.selected{
+            border:2px solid var(--mv-yellow) !important;
+            background:#fffbe6 !important;
+            position:relative;
+        }
+        .booth-item.selected::after{
+            content:"🏆";
+            position:absolute;
+            right:10px;
+            top:50%;
+            transform:translateY(-60%); /* -50% -> -55% (약간 위로) */
+            font-size:20px;
+            line-height:1;
+        }
+
+        /* [명예의 전당 레이아웃] - 수정됨 */
+        .fame-only .section-title { 
+            font-size: 20px; font-weight: 800; color: var(--mv-blue-deep); 
+            border-left: 7px solid var(--mv-yellow); padding-left: 9px; 
+            margin: 8px 0 5px 0; 
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ranking-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; table-layout: fixed; }
+        
+        /* 1. 스키마(헤더) 폰트 크기 수정 */
+        .ranking-table th { 
+            background: #f4f8ff; color: var(--mv-blue-deep); font-weight: 700; 
+            padding: 12px 6px; /* 여백을 조금 늘림 */
+            text-align: center; border-bottom: 2px solid #dbeafe; 
+            font-size: 14px !important; /* ★ 16px -> 19px로 확대 & 강제 적용 */
+        }
+        
+        .ranking-table td { 
+            padding: 10px 6px; 
+            border-bottom: 1px solid #eee; 
+            vertical-align: middle;
+            text-align: center;
+            font-size: 18px; /* 기본 셀 폰트 키움 */
+        }
+
+        .ranking-table td.name-col{
+            font-size: 20px !important;     
+            font-weight: 800;               
+            line-height: 1.2;
+            white-space: nowrap;            
+            overflow: hidden;               
+            text-overflow: ellipsis;        
+        }
+        
+        .rank-col { text-align: center; font-weight: 900; font-size: 20px; }
+        .rank-1 { color: #d4a000; font-size: 24px; } 
+        .rank-2 { color: #a6a6a6; font-size: 22px; } 
+        .rank-3 { color: #a05a2c; font-size: 20px; } 
+        .rank-other { color: #888; font-size: 16px; }
+        .rank-icon{ display: inline-flex; align-items: center; justify-content: center; line-height: 1; position: relative; top: -1px; }
+
+        .name-col { font-weight: 800; color: #333; font-size: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; }
+        .asset-col { text-align: right; font-weight: 900; color: var(--mv-blue-deep); font-size: 20px; padding-right: 10px !important; }
+        .asset-col.top { color: #d4a000; font-size: 24px; } 
+        
+        /* 2. 현금/주식 폰트 크기 수정 */
+        .sub-asset-col { 
+            text-align: right; color: #555; 
+            font-size: 20px !important; /* ★ 18px -> 20px로 확대 */
+            font-weight: 800; /* ★ 굵기 추가 */
+            padding-right: 8px !important; 
+        }
+        .sub-asset-col.stock { color: #d32f2f; font-weight: 800; }
+        
+        /* 3. 날짜 폰트 크기 수정 */
+        .date-col { 
+            text-align: center; color: #777; 
+            font-size: 15px !important;  /* ★ 15px -> 17px로 확대 */
+            font-weight: bold; /* ★ 잘 보이게 굵기 추가 */
+        }
+        .member-col { font-size: 16px; color:#555; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-weight: bold; }
+        
+        /* 어워드 카드 */
+        .special-awards-container {
+            display: flex; gap: 10px; margin: 6px 0;
+            background: #f9f9f9; border: 1px dashed #ddd;
+            border-radius: 12px; padding: 8px;
+        }
+        .award-card {
+            flex: 1; background: white; border: 1px solid #eee; border-radius: 10px;
+            padding: 10px 12px; display: flex; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .award-icon { font-size: 32px; margin-right: 15px; }
+        .award-info { flex: 1; position: relative; top: -1.5px; }
+        .award-title { font-size: 13px; color: #666; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .award-name { font-size: 18px; font-weight: 900; color: #333; margin-bottom: 2px; }
+        .award-value { font-size: 14px; color: var(--mv-blue-deep); font-weight: 800; }
+        .hl-cash { color: #00897b; }
+        .hl-stock { color: #d32f2f; }
+        
+        /* 푸터 */
+        .fame-footer {
+            margin-top: auto; 
+            padding-top: 15px; border-top: 2px dashed #eee;
+            text-align: center; color: #666; font-size: 13px; font-weight: bold;
+        }
+        .fame-footer div:first-child { 
+            font-size: 18px; color: var(--mv-blue-deep); font-weight: 900; margin-bottom: 5px; 
+        }
+        
+        #loadingOverlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:none; justify-content:center; align-items:center; z-index:99; flex-direction:column; }
+
+        /* [수정] 인쇄 시 백지 오류 해결 (높이 및 오버플로우 강제 설정) */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 210mm;
+                height: 297mm; /* A4 정사이즈 강제 */
+                overflow: hidden !important; /* 넘치는 내용 잘라냄 (백지 방지) */
+                -webkit-print-color-adjust: exact;
+            }
+            .container {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            
+            /* 모든 불필요 요소 숨김 */
+            .setup-card, .dashboard-layout, .report-controls, .screen { display: none !important; }
+            
+            /* 활성화된 화면만 표시 */
+            .screen.active-screen {
+                display: block !important;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+            }
+            
+            /* 내부 용지 스타일 */
+            .report-paper {
+                box-shadow: none; border: none;
+                padding: 3mm 3mm;
+                width: 210mm;
+                height: 297mm !important; /* A4 높이 강제 */
+                margin: 0 !important;
+                transform: none;
+                page-break-inside: avoid;
+                page-break-after: avoid; /* 페이지 나눔 방지 */
+                overflow: hidden;
+                
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+            
+            #pdfAreaFame {
+                display: flex;
+                flex-direction: column;
+                height: 297mm;
+            }
+            
+            .fame-footer {
+                margin-top: auto;
+                padding-bottom: 5mm;
+            }
+
+            .stock-card, .booth-item, .ranking-section { break-inside: avoid; }
+            .editable-input, .editable-date, .editable-text { border-bottom: none !important; background: transparent !important; -webkit-appearance: none; appearance: none; padding: 0; margin: 0; }
+            .editable-input { width: auto; min-width: 10px; text-align: right; } 
+            .editable-date, .editable-text { text-align: left; }
+            .ranking-table th { background: #f4f8ff !important; -webkit-print-color-adjust: exact; }
+            .award-card { background: #fff !important; -webkit-print-color-adjust: exact; }
+            .special-awards-container { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
+        }
+        /* =========================
+        [PDF 캡처 전용 보정]
+        - html2canvas 전용 (onclone에서 .pdf-export 붙일 것)
+        ========================= */
+        .pdf-export, .pdf-export *{
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+        }
+
+        /* 1) 폼/대체 span 정렬 안정화 */
+        .pdf-export .pdf-input{
+        display:inline-block !important;
+        vertical-align:baseline !important;
+        line-height:1 !important;
+        padding:0 !important;
+        margin:0 !important;
+        white-space:nowrap !important;
+        }
+
+        /* editable-input 자체도 캡처에서는 높이를 고정해서 흔들림 제거 */
+        .pdf-export .editable-input,
+        .pdf-export input[type="number"],
+        .pdf-export input[type="text"]{
+        line-height:1 !important;
+        padding:0 !important;
+        height:auto !important;
+        }
+
+        /* 2) 원형 주식 로고: grid 대신 flex로 (캡처 안정) */
+        .pdf-export .stock-logo{
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        line-height:1 !important;
+        }
+
+        /* 3) 플레이 스타일 아이콘(이모지) 박스 고정: 폰트/라인박스 영향 차단 */
+        .pdf-export .booth-icon{
+        width:44px;           /* 기존 min-width와 맞춤 */
+        height:44px;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        line-height:1 !important;
+        }
+
+        /* 4) 이모지 폰트 폴백을 명시해서 환경차 최소화 */
+        .pdf-export{
+        font-family: Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+        }
+        .pdf-export .booth-icon,
+        .pdf-export .trait-btn .emo{
+        font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif !important;
+        }
+        /* =========================
+        [명예의 전당] 1등 제외 행 압축
+        - 2등~이하: 폰트 1px ↓, 패딩 ↓
+        - 개인/팀 두 표 모두 적용
+        ========================= */
+
+        /* 2등~이하 전체 셀: 기본 폰트/패딩 압축 */
+        #indivTableBody tr:not(:first-child) td,
+        #teamTableBody  tr:not(:first-child) td {
+        padding: 9px 6px !important;   /* 기존 10px 6px -> 9px 6px */
+        font-size: 17px !important;    /* 기존 td 18px -> 17px */
+        line-height: 1.15 !important;  /* 살짝 조여서 세로 길이 감소 */
+        }
+
+        /* 이름 칸: 20 -> 19 */
+        #indivTableBody tr:not(:first-child) td.name-col,
+        #teamTableBody  tr:not(:first-child) td.name-col {
+        font-size: 19px !important;
+        }
+
+        /* 총자산 칸: 20 -> 19 */
+        #indivTableBody tr:not(:first-child) td.asset-col,
+        #teamTableBody  tr:not(:first-child) td.asset-col {
+        font-size: 19px !important;
+        }
+
+        /* 현금/주식 칸: 20 -> 19 */
+        #indivTableBody tr:not(:first-child) td.sub-asset-col {
+        font-size: 19px !important;
+        }
+
+        /* 날짜 칸: 15 -> 14 (이미 작지만 더 압축) */
+        #indivTableBody tr:not(:first-child) td.date-col,
+        #teamTableBody  tr:not(:first-child) td.date-col {
+        font-size: 14px !important;
+        }
+
+        /* 팀원 칸(팀전 표): 16 -> 15 */
+        #teamTableBody tr:not(:first-child) td.member-col {
+        font-size: 15px !important;
+        }
+
+        /* 순위 칸(2등~이하): 1px씩 축소 */
+        #indivTableBody tr:not(:first-child) td.rank-col,
+        #teamTableBody  tr:not(:first-child) td.rank-col {
+        font-size: 19px !important; /* rank-col 기본 20 -> 19 */
+        }
+        /* [시민권자 신규 등록 모달] */
+        .modal-backdrop{
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-backdrop.show{
+            display: flex;
+        }
+        .modal-card{
+            width: 100%;
+            max-width: 520px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+            overflow: hidden;
+        }
+        .modal-header{
+            padding: 18px 22px;
+            background: linear-gradient(135deg, var(--mv-blue-deep), var(--mv-blue-light));
+            color: #fff;
+        }
+        .modal-header h3{
+            margin: 0;
+            font-size: 22px;
+            font-weight: 900;
+        }
+        .modal-header p{
+            margin: 6px 0 0;
+            font-size: 13px;
+            opacity: 0.92;
+        }
+        .modal-body{
+            padding: 22px;
+        }
+        .form-group{
+            margin-bottom: 16px;
+        }
+        .form-group label{
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #444;
+        }
+        .form-group input,
+        .form-group select{
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 12px;
+            border: 1px solid #d6dbe3;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus{
+            outline: none;
+            border-color: var(--mv-blue-light);
+            box-shadow: 0 0 0 3px rgba(0,114,206,0.12);
+        }
+        .form-hint{
+            margin-top: 6px;
+            font-size: 12px;
+            color: #777;
+        }
+        .form-error{
+            min-height: 20px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #d32f2f;
+            font-weight: 700;
+        }
+        .modal-footer{
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 22px 22px;
+        }
+        .btn[disabled]{
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .spinner{
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin{
+            to { transform: rotate(360deg); }
+        }

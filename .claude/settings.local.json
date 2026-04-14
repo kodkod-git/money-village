@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/USER/AppData/Roaming/npm\")",
+      "Bash(clasp push:*)"
+    ]
+  }
+}
