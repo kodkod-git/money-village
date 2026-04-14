@@ -5,11 +5,16 @@
     <title>머니빌리지 통합 관리 시스템</title>
     <script>
         (function() {
-            const PASSWORD = 'moneyvillage2026!';
+            const HASH = 'f1e8d7d4dbad359476ea3786d3bcb02ba1909934fcfe059f3580edaeacead4db';
             const SESSION_KEY = 'mv_auth';
-            if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+            async function sha256(str) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+            async function checkAuth() {
+                if (sessionStorage.getItem(SESSION_KEY) === '1') return;
                 const input = prompt('비밀번호를 입력하세요');
-                if (input !== PASSWORD) {
+                if (!input || await sha256(input) !== HASH) {
                     document.documentElement.innerHTML = '';
                     alert('비밀번호가 올바르지 않습니다.');
                     location.replace('about:blank');
@@ -17,6 +22,8 @@
                 }
                 sessionStorage.setItem(SESSION_KEY, '1');
             }
+            document.documentElement.style.visibility = 'hidden';
+            checkAuth().then(() => { document.documentElement.style.visibility = ''; });
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
