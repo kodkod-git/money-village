@@ -134,11 +134,16 @@ clasp 설정 파일: `gas/.clasp.json` (scriptId 설정 필요)
 npm install -g @google/clasp
 clasp login
 
-# 이후 배포는 Claude가 직접 실행
-clasp push --rootDir ./gas
+# 이후 배포는 Claude가 직접 실행 (gas/ 디렉토리에서)
+cd gas && clasp push --force
 ```
 
 `gas/.clasp.json`의 `scriptId`는 GAS 에디터 → 프로젝트 설정 → 스크립트 ID에서 확인.
+
+## 배포 규칙
+
+- **GAS 코드** (`gas/Code.js`): `gas/` 디렉토리에서 `clasp push --force`로 직접 배포. `.gitignore`에 등록되어 있어 GitHub에는 올라가지 않음.
+- **나머지 코드** (`index.html`, `js/`, `css/` 등): 변경 후 반드시 `git push origin main`으로 GitHub에 반영.
 
 ## Citizen Registration
 
