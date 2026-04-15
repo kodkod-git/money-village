@@ -749,7 +749,12 @@
     }
 
     function enterCitizenEditMode() {
-        document.getElementById('citizenCheckColHeader').style.display = 'none';
+        const checkedBoxes = Array.from(document.querySelectorAll('.citizen-row-check:checked'));
+        if (checkedBoxes.length === 0) {
+            alert('수정할 시민권자를 선택해주세요.');
+            return;
+        }
+
         document.getElementById('btnEditCitizens').style.display = 'none';
         document.getElementById('btnSaveCitizens').style.display = 'inline-flex';
         document.getElementById('btnDeleteCitizens').style.display = 'none';
@@ -757,18 +762,21 @@
         const searchInput = document.getElementById('citizenSearchInput');
         if (searchInput) { searchInput.disabled = true; searchInput.style.opacity = '0.4'; }
 
-        const tbody = document.getElementById('citizenTableBody');
-        if (!citizenListData || citizenListData.length === 0) return;
+        // 모든 체크박스 비활성화 (수정 중 선택 변경 방지)
+        document.querySelectorAll('.citizen-row-check').forEach(cb => { cb.disabled = true; });
 
         const inputStyle = 'width:90px; padding:4px 6px; border:1px solid #d6dbe3; border-radius:6px; text-align:center; font-size:13px; box-sizing:border-box;';
         const selectStyle = 'padding:4px 6px; border:1px solid #d6dbe3; border-radius:6px; font-size:13px; background:#fff;';
 
-        tbody.innerHTML = citizenListData.map(row => {
-            const nickname  = row.nickname     || '';
-            const realName  = row.real_name    || '';
-            const efti      = row.default_EFTI || '-';
-            const joinDate  = row.join_date    || '-';
-            const status    = row.status       || 'active';
+        // 체크된 행만 수정 가능하도록 in-place 변환
+        checkedBoxes.forEach(cb => {
+            const tr = cb.closest('tr');
+            const nickname = tr.dataset.originalNickname || '';
+            const realName = tr.dataset.originalRealname || '';
+            const efti     = tr.dataset.originalEfti     || '-';
+            const status   = tr.dataset.originalStatus   || 'active';
+            const tds      = tr.querySelectorAll('td');
+            const joinDate = tds[4] ? tds[4].textContent.trim() : '-';
 
             const eftiOptions = EFTI_OPTIONS.map(v =>
                 `<option value="${v}"${v === efti ? ' selected' : ''}>${v}</option>`
@@ -778,31 +786,27 @@
                 `<option value="${v}"${v === status ? ' selected' : ''}>${v}</option>`
             ).join('');
 
-            return `
-                <tr data-original-nickname="${nickname}"
-                    data-original-realname="${realName}"
-                    data-original-efti="${efti}"
-                    data-original-status="${status}">
-                    <td class="citizen-check-cell" style="display:none; padding:10px; border-bottom:1px solid #eee;"></td>
-                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                        <input type="text" class="citizen-edit-nickname" value="${nickname}" style="${inputStyle}">
-                    </td>
-                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                        <input type="text" class="citizen-edit-realname" value="${realName}" style="${inputStyle}">
-                    </td>
-                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                        <select class="citizen-edit-efti" style="${selectStyle}">${eftiOptions}</select>
-                    </td>
-                    <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:#888;">${joinDate}</td>
-                    <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                        <select class="citizen-edit-status" style="${selectStyle}">${statusOptions}</select>
-                    </td>
-                </tr>`;
-        }).join('');
+            tr.innerHTML = `
+                <td class="citizen-check-cell" style="padding:10px; border-bottom:1px solid #eee; text-align:center;">
+                    <input type="checkbox" class="citizen-row-check" data-nickname="${nickname}" checked disabled>
+                </td>
+                <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
+                    <input type="text" class="citizen-edit-nickname" value="${nickname}" style="${inputStyle}">
+                </td>
+                <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
+                    <input type="text" class="citizen-edit-realname" value="${realName}" style="${inputStyle}">
+                </td>
+                <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
+                    <select class="citizen-edit-efti" style="${selectStyle}">${eftiOptions}</select>
+                </td>
+                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:#888;">${joinDate}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
+                    <select class="citizen-edit-status" style="${selectStyle}">${statusOptions}</select>
+                </td>`;
+        });
     }
 
     function exitCitizenEditMode() {
-        document.getElementById('citizenCheckColHeader').style.display = '';
         document.getElementById('btnEditCitizens').style.display = 'inline-flex';
         document.getElementById('btnSaveCitizens').style.display = 'none';
         document.getElementById('btnDeleteCitizens').style.display = '';
