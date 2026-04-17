@@ -543,6 +543,30 @@
 
 
     // 중복제거 안됨
+    async function saveTraits(gameId, players) {
+        const payload = {
+            action: "saveTraits",
+            traits: players.map(p => ({
+                nickname:  p.nickname || '',
+                game_id:   gameId,
+                diligent:  !!(p.traits && p.traits.diligent),
+                saving:    !!(p.traits && p.traits.saving),
+                invest:    !!(p.traits && p.traits.invest),
+                career:    !!(p.traits && p.traits.career),
+                luck:      !!(p.traits && p.traits.luck),
+                adventure: !!(p.traits && p.traits.adventure)
+            }))
+        };
+        const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`Traits 저장 실패: HTTP ${res.status}`);
+        return await res.json();
+    }
+
     async function saveToDrive() {
         if (isSavingDrive) return;
 
@@ -582,6 +606,7 @@
             }
 
             await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+            await saveTraits(gameId, players);
 
             const exportData = {
                 action: "saveGameResult",
@@ -739,6 +764,38 @@
                     }
                 }));
                 console.groupEnd();
+
+                // Traits 시트에서 traits 로드
+                const firstGameId = players[0]?.gameId;
+                if (firstGameId) {
+                    try {
+                        const traitsUrl = `${SCRIPT_URL}?action=loadTraitsByGameId&gameId=${encodeURIComponent(firstGameId)}`;
+                        const traitsRes = await fetch(traitsUrl, { method: 'GET', mode: 'cors', cache: 'no-store' });
+                        if (traitsRes.ok) {
+                            const traitsData = await traitsRes.json();
+                            if (traitsData.success && Array.isArray(traitsData.traits)) {
+                                const traitsMap = {};
+                                traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                                players.forEach(p => {
+                                    const t = traitsMap[p.nickname];
+                                    if (t) {
+                                        p.traits = {
+                                            diligent:  !!t.diligent,
+                                            saving:    !!t.saving,
+                                            invest:    !!t.invest,
+                                            career:    !!t.career,
+                                            luck:      !!t.luck,
+                                            adventure: !!t.adventure
+                                        };
+                                    }
+                                });
+                                console.log(`[loadTraits] ${traitsData.traits.length}명 traits 로드 완료`);
+                            }
+                        }
+                    } catch(e) {
+                        console.warn("[loadTraits] 로드 실패:", e);
+                    }
+                }
 
                 loadedDate = targetDate;
                 alert(`✅ [${targetDate}] 참가자 ${players.length}명의 데이터를 성공적으로 불러왔습니다.`);
