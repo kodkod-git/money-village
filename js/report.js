@@ -711,6 +711,17 @@
                     };
                 });
 
+                // Users 시트 기반 EFTI 반영
+                if (citizenListData.length === 0) {
+                    try { await fetchCitizenList(); } catch(e) { console.warn("시민권자 목록 불러오기 실패:", e); }
+                }
+                players.forEach(p => {
+                    const citizen = citizenListData.find(c => c.nickname === p.nickname);
+                    if (citizen && citizen.default_EFTI) {
+                        p.efti = citizen.default_EFTI;
+                    }
+                });
+
                 // 유저별 보유 수량 로드
                 console.group(`[loadUserBalance] ${targetDate} 보유 수량 로드`);
                 await Promise.all(players.map(async p => {
