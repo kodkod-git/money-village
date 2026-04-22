@@ -2,3 +2,4 @@ gas/
 node_modules/
 .env
 .env.local
+.supabase/
