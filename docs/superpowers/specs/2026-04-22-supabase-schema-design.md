@@ -158,10 +158,13 @@ supabase/
 
 프로젝트 루트에서:
 ```bash
-supabase init
-supabase link --project-ref <project-ref>
-# 마이그레이션 파일 작성 후
-supabase db push
+# 1. supabase.com에서 새 프로젝트 생성 (대시보드에서 수동)
+# 2. CLI 설치 및 초기화
+npm install supabase --save-dev
+npx supabase init
+npx supabase link --project-ref <project-ref>  # 대시보드 Settings > General > Reference ID
+# 3. 마이그레이션 파일 작성 후 적용
+npx supabase db push
 ```
 
 ## 범위 밖
