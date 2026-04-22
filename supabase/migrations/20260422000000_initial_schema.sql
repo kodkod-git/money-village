@@ -28,7 +28,7 @@ CREATE TABLE game_individual (
   diligence_reward  integer     DEFAULT 0,
   game_id           varchar     NOT NULL,
   team_id           varchar,
-  UNIQUE (date, nickname)
+  UNIQUE (game_id, nickname)
 );
 ALTER TABLE game_individual DISABLE ROW LEVEL SECURITY;
 
@@ -38,8 +38,9 @@ ALTER TABLE game_individual DISABLE ROW LEVEL SECURITY;
 -- =====================
 CREATE TABLE game_team (
   team_id          varchar    PRIMARY KEY,
+  game_id          varchar    NOT NULL,
   date             date       NOT NULL,
-  team_name        varchar(5),
+  team_name        varchar(5) NOT NULL,
   team_total_asset integer    DEFAULT 0,
   members          text
 );
