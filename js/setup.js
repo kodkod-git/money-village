@@ -494,33 +494,14 @@
         setCitizenSubmitLoading(true);
 
         try {
-            const payload = {
-                action: "registerCitizen",
+            const json = await sbRegisterCitizen({
+                nickname,
                 real_name: realName,
-                nickname: nickname,
                 default_EFTI: defaultEFTI
-            };
-
-            const res = await fetch(SCRIPT_URL, {
-                method: "POST",
-                cache: "no-store",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
             });
 
-            const text = await res.text();
-            console.log("[submitCitizenRegistration] status =", res.status, res.statusText);
-            console.log("[submitCitizenRegistration] raw response =", text);
-
-            let json = null;
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                throw new Error("서버 응답이 JSON 형식이 아닙니다: " + text.slice(0, 200));
-            }
-
-            if (!res.ok || !json.success) {
-                if (json && json.code === 'DUPLICATE_NICKNAME') {
+            if (!json.success) {
+                if (json.code === 'DUPLICATE_NICKNAME') {
                     setCitizenFormError("이미 존재하는 닉네임입니다. 다른 닉네임을 사용해주세요.");
                     nicknameEl.focus();
                     return;
@@ -572,31 +553,14 @@
         setCitizenSubmitLoadingInline(true);
 
         try {
-            const payload = {
-                action: "registerCitizen",
+            const json = await sbRegisterCitizen({
+                nickname,
                 real_name: realName,
-                nickname: nickname,
                 default_EFTI: defaultEFTI
-            };
-
-            const res = await fetch(SCRIPT_URL, {
-                method: "POST",
-                cache: "no-store",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
             });
 
-            const text = await res.text();
-            let json = null;
-
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                throw new Error("서버 응답이 JSON 형식이 아닙니다: " + text.slice(0, 200));
-            }
-
-            if (!res.ok || !json.success) {
-                if (json && json.code === 'DUPLICATE_NICKNAME') {
+            if (!json.success) {
+                if (json.code === 'DUPLICATE_NICKNAME') {
                     setCitizenFormErrorInline("이미 존재하는 닉네임입니다. 다른 닉네임을 사용해주세요.");
                     nicknameEl.focus();
                     return;
@@ -624,17 +588,7 @@
         tbody.innerHTML = `<tr><td colspan="5" style="padding:16px; text-align:center; color:#999;">불러오는 중...</td></tr>`;
 
         try {
-            const url = `${SCRIPT_URL}?action=listCitizens&_ts=${Date.now()}`;
-            const response = await fetch(url, { method: 'GET', cache: 'no-store' });
-            const text = await response.text();
-
-            let json;
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                throw new Error("서버 응답이 JSON 형식이 아닙니다: " + text.slice(0, 200));
-            }
-
+            const json = await sbListCitizens();
             const rows = Array.isArray(json.users) ? json.users : [];
             citizenListData = rows;
             renderCitizenTable(rows);
@@ -695,14 +649,8 @@
         const errors = [];
         for (const nickname of nicknames) {
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    cache: 'no-store',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'deleteCitizen', nickname })
-                });
-                const json = await res.json();
-                if (!res.ok || !json.success) {
+                const json = await sbDeleteCitizen(nickname);
+                if (!json.success) {
                     errors.push(`${nickname}: ${json?.message || '실패'}`);
                 }
             } catch (e) {
@@ -861,14 +809,8 @@
         const errors = [];
         for (const update of updates) {
             try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    cache: 'no-store',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'updateCitizen', ...update })
-                });
-                const json = await res.json();
-                if (!res.ok || !json.success) {
+                const json = await sbUpdateCitizen(update);
+                if (!json.success) {
                     errors.push(`${update.original_nickname}: ${json?.message || '실패'}`);
                 }
             } catch (e) {

@@ -12,8 +12,6 @@
     let citizenListData = [];
     let isSavingDrive = false;
 
-    // ★ [중요] 사용자가 제공한 Apps Script URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLNJhwwb0vmPl4BLP_g3GL66QfSjusWlJIl6tKSQknhRnGuxe_oEnU7IjY28eNdC0wZg/exec";
 
     const stockInfo = {
         "SASUNG": { name: "SASUNG", price: 1500, color: "#1428a0" },
@@ -222,20 +220,7 @@
 
     async function loadUserBalance(nickname, gameId) {
         try {
-            const url = `${SCRIPT_URL}?action=loadUserBalance&nickname=${encodeURIComponent(nickname)}&gameId=${encodeURIComponent(gameId)}`;
-            const res = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
-            if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
-            const data = await res.json();
-            if (!data.success || !data.data?.stocks) return null;
-            const s = data.data.stocks;
-            return {
-                SASUNG:  s.SASUNG  || 0,
-                LGI:     s.LGI     || 0,
-                SKEI:    s.SKEI    || 0,
-                CACAO:   s.CACAO   || 0,
-                HYUNDE: s.HYUNDE  || 0,
-                NABER:   s.NABER   || 0
-            };
+            return await sbLoadUserBalance(nickname, gameId);
         } catch (e) {
             console.error(`[loadUserBalance] ${nickname} 오류:`, e);
             return null;
@@ -244,37 +229,17 @@
 
     async function saveUserBalance(nickname, gameId, assets) {
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                cache: 'no-store',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'saveUserBalance', nickname, gameId, assets })
-            });
-            const json = await res.json();
-            if (!res.ok || json.status !== 'success') {
-                console.error('[saveUserBalance] 실패:', json?.message);
-            }
+            await sbSaveUserBalance(nickname, gameId, assets);
         } catch (e) {
-            console.error('[saveUserBalance] 네트워크 오류:', e);
+            console.error('[saveUserBalance] 오류:', e);
         }
     }
 
     async function saveStockValue(stockValues) {
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                cache: 'no-store',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'saveStockValue', stockValues })
-            });
-            const json = await res.json();
-            if (!res.ok || json.status !== 'success') {
-                console.error('[saveStockValue] 실패:', json?.message);
-                return null;
-            }
-            return json.gameId ?? null;
+            return await sbSaveStockValue(stockValues);
         } catch (e) {
-            console.error('[saveStockValue] 네트워크 오류:', e);
+            console.error('[saveStockValue] 오류:', e);
             return null;
         }
     }

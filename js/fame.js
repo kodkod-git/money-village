@@ -15,18 +15,15 @@
     async function fetchFameData() {
         document.getElementById('loadingOverlay').style.display = 'flex';
         try {
-            const response = await fetch(SCRIPT_URL, {method: 'GET', mode: 'cors', cache: 'no-store' });
-            const text = await response.text();
-            let json;
-            try { json = JSON.parse(text); }
-            catch { throw new Error("서버가 JSON을 안 줌: " + text.slice(0,200)); }
+            const json = await sbLoadHallOfFame();
 
             if (json.indiv && json.indiv.length > 0) {
                 fameIndivData = json.indiv.map(d => ({
                     ...d,
-                    total: Number(d.total ?? 0),
-                    cash: Number(d.manualCash ?? 0),
-                    stock: Number(d.stockVal ?? 0),
+                    name: d.nickname,
+                    total: Number(d.total_asset ?? 0),
+                    cash: Number(d.cash ?? 0),
+                    stock: Number(d.stock ?? 0),
                     diligence_reward: Number(d.diligence_reward ?? 0)
                 }));
             } else {
@@ -36,7 +33,8 @@
             if (json.team && json.team.length > 0) {
                 fameTeamData = json.team.map(d => ({
                     ...d,
-                    total: Number(d.total)
+                    name: d.team_name,
+                    total: Number(d.team_total_asset ?? 0)
                 }));
             } else {
                 fameTeamData = [];

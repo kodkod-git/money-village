@@ -447,24 +447,9 @@
                     real_name: realName
                 };
 
-                const res = await fetch(SCRIPT_URL, {
-                    method: "POST",
-                    cache: "no-store",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-
-                const text = await res.text();
-
-                let json;
-                try {
-                    json = JSON.parse(text);
-                } catch (e) {
-                    throw new Error(`서버 응답이 JSON 형식이 아닙니다. (${i + 1}/${players.length})\n${text.slice(0, 300)}`);
-                }
-
-                if (!res.ok || !json.success) {
-                    throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || text.slice(0, 300)}`);
+                const json = await sbUploadPDF(payload);
+                if (!json.success) {
+                    throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || ''}`);
                 }
             }
 
@@ -494,7 +479,7 @@
 
             const rawDateText = (document.getElementById('rptDateInput')?.value || '').trim();
             const gameDate = rawDateText || formatFolderDate(new Date());
-            const fileName = `${gameDate}_머니빌리지_명예의전당.pdf`;
+            const fileName = `${gameDate.replace(/-/g, '')}_HallOfFame.pdf`;
             const pdfBase64 = await getPdfBase64FromElement('pdfAreaFame', fileName);
 
 
@@ -508,27 +493,12 @@
                 real_name: ""
             };
 
-            const res = await fetch(SCRIPT_URL, {
-                method: "POST",
-                cache: "no-store",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            });
-
-            const text = await res.text();
-
-            let json;
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                throw new Error("서버 응답이 JSON 형식이 아닙니다: " + text.slice(0, 200));
-            }
-
-            if (!res.ok || !json.success) {
+            const json = await sbUploadPDF(payload);
+            if (!json.success) {
                 throw new Error(json?.message || "명예의 전당 PDF 저장에 실패했습니다.");
             }
 
-            alert(`✅ 명예의 전당 PDF를 드라이브에 저장했습니다.\n파일명: ${json.fileName}`);
+            alert(`✅ 명예의 전당 PDF가 저장됐습니다.\n경로: ${json.path}`);
         } catch (err) {
             console.error("[uploadFamePdfToDrive] ERROR", err);
             alert("❌ 명예의 전당 PDF 저장 실패:\n" + (err?.message || String(err)));
@@ -544,27 +514,7 @@
 
     // 중복제거 안됨
     async function saveTraits(gameId, players) {
-        const payload = {
-            action: "saveTraits",
-            traits: players.map(p => ({
-                nickname:  p.nickname || '',
-                game_id:   gameId,
-                diligent:  !!(p.traits && p.traits.diligent),
-                saving:    !!(p.traits && p.traits.saving),
-                invest:    !!(p.traits && p.traits.invest),
-                career:    !!(p.traits && p.traits.career),
-                luck:      !!(p.traits && p.traits.luck),
-                adventure: !!(p.traits && p.traits.adventure)
-            }))
-        };
-        const res = await fetch(SCRIPT_URL, {
-            method: "POST",
-            cache: "no-store",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error(`Traits 저장 실패: HTTP ${res.status}`);
-        return await res.json();
+        return await sbSaveTraits(gameId, players);
     }
 
     async function saveToDrive() {
@@ -654,32 +604,13 @@
             console.log("[saveToDrive] payload preview", exportData);
             // alert("DEBUG: 요청 보냄 (콘솔/네트워크 탭 확인)");
 
-            const res = await fetch(SCRIPT_URL, {
-            method: "POST",
-            cache: "no-store",
-            // ✅ 프리플라이트 피하기: 'application/json' 금지
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(exportData),
-            });
-
-
-            console.log("[saveToDrive] response", {
-                ok: res.ok,
-                status: res.status,
-                statusText: res.statusText,
-                type: res.type,
-                url: res.url
-            });
-
-            const text = await res.text();
-            console.log("[saveToDrive] response text:", text);
-
-            if (!res.ok) {
-                alert(`❌ 저장 실패\nHTTP ${res.status} ${res.statusText}\n\n응답:\n${text.slice(0, 500)}`);
+            const result = await sbSaveGameResult(exportData);
+            if (!result.success) {
+                alert("❌ 저장 실패");
                 return;
             }
 
-            alert("✅ 저장 완료: " + text);
+            alert("✅ 저장 완료");
         } catch (err) {
             console.error("[saveToDrive] ERROR", err);
             alert("❌ fetch 예외 발생:\n" + (err?.message || String(err)));
@@ -694,7 +625,8 @@
         const date = loadedDate ? loadedDate.trim() : formatFolderDate(new Date());
         const teamPrefix = (currentMode === 'team' && p.team && p.team !== '-') ? `[${p.team}]_` : '';
         const displayName = (p.nickname || p.realName || p.name || `참가자${index + 1}`).trim();
-        return `${date}_${teamPrefix}${displayName}_자산리포트.pdf`;
+        const dateCompact = date.replace(/-/g, '');
+        return `${dateCompact}_${teamPrefix}${displayName}_AssetReport.pdf`;
     }
     async function promptAndLoadPastAssets() {
         const targetDate = prompt("수정할 게임 일자를 입력하세요.\n(예: 2026-04-02)");
@@ -704,12 +636,7 @@
         console.log(`${targetDate} 데이터 로딩 중...`);
 
         try {
-            const url = `${SCRIPT_URL}?action=loadAssetsByDate&date=${encodeURIComponent(targetDate)}`;
-            const res = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
-
-            if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
-
-            const data = await res.json();
+            const data = await sbLoadAssetsByDate(targetDate);
 
             // 백엔드 응답 구조에 맞게 조건문 수정
             console.table(data.history)
@@ -726,8 +653,8 @@
                         team: p.team || '-',
                         teamId: p.team_id || null,
                         assets: p.assets || (typeof initAssets === 'function' ? initAssets() : {}),
-                        total: Number(p.total) || 0,
-                        manualCash: Number(p.manualCash) || 0,
+                        total: Number(p.total_asset) || 0,
+                        manualCash: Number(p.cash) || 0,
                         diligenceReward: Number(p.diligence_reward) || 0,
                         rankIndiv: 0,
                         rankTeam: 0,
@@ -769,28 +696,24 @@
                 const firstGameId = players[0]?.gameId;
                 if (firstGameId) {
                     try {
-                        const traitsUrl = `${SCRIPT_URL}?action=loadTraitsByGameId&gameId=${encodeURIComponent(firstGameId)}`;
-                        const traitsRes = await fetch(traitsUrl, { method: 'GET', mode: 'cors', cache: 'no-store' });
-                        if (traitsRes.ok) {
-                            const traitsData = await traitsRes.json();
-                            if (traitsData.success && Array.isArray(traitsData.traits)) {
-                                const traitsMap = {};
-                                traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
-                                players.forEach(p => {
-                                    const t = traitsMap[p.nickname];
-                                    if (t) {
-                                        p.traits = {
-                                            diligent:  !!t.diligent,
-                                            saving:    !!t.saving,
-                                            invest:    !!t.invest,
-                                            career:    !!t.career,
-                                            luck:      !!t.luck,
-                                            adventure: !!t.adventure
-                                        };
-                                    }
-                                });
-                                console.log(`[loadTraits] ${traitsData.traits.length}명 traits 로드 완료`);
-                            }
+                        const traitsData = await sbLoadTraitsByGameId(firstGameId);
+                        if (traitsData.success && Array.isArray(traitsData.traits)) {
+                            const traitsMap = {};
+                            traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                            players.forEach(p => {
+                                const t = traitsMap[p.nickname];
+                                if (t) {
+                                    p.traits = {
+                                        diligent:  !!t.diligent,
+                                        saving:    !!t.saving,
+                                        invest:    !!t.invest,
+                                        career:    !!t.career,
+                                        luck:      !!t.luck,
+                                        adventure: !!t.adventure
+                                    };
+                                }
+                            });
+                            console.log(`[loadTraits] ${traitsData.traits.length}명 traits 로드 완료`);
                         }
                     } catch(e) {
                         console.warn("[loadTraits] 로드 실패:", e);
