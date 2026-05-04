@@ -9,9 +9,13 @@ function _toStorageKey(fileName) {
     let h = 0;
     for (let i = 0; i < fileName.length; i++) h = (Math.imul(31, h) + fileName.charCodeAt(i)) | 0;
     const hash = Math.abs(h).toString(36).slice(0, 6);
-    const ext = fileName.includes('.') ? '.' + fileName.split('.').pop() : '';
-    const base = fileName.replace(/[^\x00-\x7F]/g, '').replace(/_+/g, '_').replace(/^_+|_+(?=\.|$)/g, '');
-    return `${base || hash}_${hash}${ext}`;
+    const dotIdx = fileName.lastIndexOf('.');
+    const ext = dotIdx !== -1 ? fileName.slice(dotIdx) : '';
+    const nameOnly = dotIdx !== -1 ? fileName.slice(0, dotIdx) : fileName;
+    const base = nameOnly.split('_').map(part =>
+        /[^\x00-\x7F]/.test(part) ? hash : part
+    ).filter(Boolean).join('_');
+    return `${base}${ext}`;
 }
 
 function _nick(raw) {
