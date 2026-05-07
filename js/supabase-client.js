@@ -19,7 +19,7 @@ function _toStorageKey(fileName) {
 }
 
 function _nick(raw) {
-    return String(raw || '').replace(/\s+/g, '').replace(/[^\w가-힣]/g, '').slice(0, 5);
+    return String(raw || '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 5);
 }
 function _text(raw, maxLen = 5) {
     return String(raw || '').replace(/\s+/g, '').trim().slice(0, maxLen);
@@ -229,19 +229,22 @@ async function sbLoadUserBalance(nickname, gameId) {
 }
 
 async function sbSaveTraits(gameId, players) {
-    for (const p of players) {
-        const nickname = _nick(p.nickname || '');
-        if (!nickname || !gameId) continue;
-        await _sb.from('traits').upsert({
-            nickname, game_id: gameId,
+    if (!gameId) return;
+    const rows = players
+        .map(p => ({
+            nickname:  _nick(p.nickname || ''),
+            game_id:   gameId,
             diligent:  !!(p.traits && p.traits.diligent),
             saving:    !!(p.traits && p.traits.saving),
             invest:    !!(p.traits && p.traits.invest),
             career:    !!(p.traits && p.traits.career),
             luck:      !!(p.traits && p.traits.luck),
             adventure: !!(p.traits && p.traits.adventure)
-        }, { onConflict: 'game_id,nickname' });
-    }
+        }))
+        .filter(r => r.nickname);
+    if (rows.length === 0) return;
+    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,nickname' });
+    if (error) console.error('[sbSaveTraits]', error);
 }
 
 async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
