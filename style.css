@@ -820,7 +820,7 @@
         }
         .btn-quiz { background: #7B3F99; color: #fff; }
         .btn-citizen { background: #1565C0; color: #fff; }
-        .btn-game-start { background: #1B5E20; color: #fff; }
+        .btn-game-start { background: #F59E0B; color: #fff; }
 
         /* 게임 시작 모달 */
         .game-start-modal-card { max-width: 600px; }
@@ -835,7 +835,7 @@
             background: #e5e7eb; border: 3px solid #e5e7eb;
             transition: all 0.2s;
         }
-        .gs-dot.active { background: #2E7D32; border-color: #2E7D32; }
+        .gs-dot.active { background: #F59E0B; border-color: #F59E0B; }
         .gs-line { flex: 1; height: 3px; background: #e5e7eb; margin-bottom: 22px; }
         .gs-label { font-size: 12px; color: #888; font-weight: 700; white-space: nowrap; }
 
