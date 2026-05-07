@@ -820,7 +820,7 @@
         }
         .btn-quiz { background: #7B3F99; color: #fff; }
         .btn-citizen { background: #1565C0; color: #fff; }
-        .btn-game-start { background: #F59E0B; color: #fff; }
+        .btn-game-start { background: #F59E0B; color: #000; }
 
         /* 게임 시작 모달 */
         .game-start-modal-card { max-width: 600px; }
