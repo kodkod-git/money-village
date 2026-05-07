@@ -341,9 +341,12 @@ function _quizShowResult() {
             if (newProgress >= 2) {
                 // 개인 [2/2] 달성 — 보상 저장
                 sbSaveQuestReward(_quiz.gameId, p.nickname, _quiz.reward).catch(console.error);
+                btnOk.textContent   = `${_quiz.reward.toLocaleString()}원 획득`;
+                btnOk.style.display = 'block';
+            } else {
+                btnOk.textContent   = '확인 (1/2)';
+                btnOk.style.display = 'block';
             }
-            btnOk.textContent   = `${_quiz.reward.toLocaleString()}원 획득`;
-            btnOk.style.display = 'block';
         }
     } else {
         msg.textContent        = '틀렸습니다!';

@@ -568,7 +568,7 @@
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     nickname: p.nickname || '',
-                    real_name: p.real_name || p.name || '',
+                    real_name: p.realName || p.name || '',
                     efti_type: p.efti || '',
                     total: p.total,
                     manualCash: p.manualCash,

@@ -63,11 +63,16 @@ async function sbDeleteCitizen(nickname) {
     const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    await _sb.from('stock_balance').delete().eq('nickname', nick);
-    await _sb.from('cash_balance').delete().eq('nickname', nick);
-    await _sb.from('traits').delete().eq('nickname', nick);
-    await _sb.from('game_individual').delete().eq('nickname', nick);
-    await _sb.from('users').delete().eq('nickname', nick);
+    const { error: e1 } = await _sb.from('stock_balance').delete().eq('nickname', nick);
+    if (e1) return { success: false, code: 'DELETE_FAILED', message: e1.message };
+    const { error: e2 } = await _sb.from('cash_balance').delete().eq('nickname', nick);
+    if (e2) return { success: false, code: 'DELETE_FAILED', message: e2.message };
+    const { error: e3 } = await _sb.from('traits').delete().eq('nickname', nick);
+    if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
+    const { error: e4 } = await _sb.from('game_individual').delete().eq('nickname', nick);
+    if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+    const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
+    if (e5) return { success: false, code: 'DELETE_FAILED', message: e5.message };
 
     return { success: true, nickname: nick };
 }
@@ -117,7 +122,7 @@ async function sbInitGame(gameId, mode, players, stockValues) {
     const today = new Date().toISOString().slice(0, 10);
 
     // stock_price
-    await _sb.from('stock_price').insert({
+    const { error: spErr } = await _sb.from('stock_price').insert({
         game_id: gameId,
         sasung:  Number(stockValues[0] ?? 1500),
         lgi:     Number(stockValues[1] ?? 600),
@@ -125,17 +130,19 @@ async function sbInitGame(gameId, mode, players, stockValues) {
         cacao:   Number(stockValues[3] ?? 4000),
         hyunde:  Number(stockValues[4] ?? 6000),
         naber:   Number(stockValues[5] ?? 7000)
-    }).then(({ error }) => { if (error) console.error('[sbInitGame] stock_price', error); });
+    });
+    if (spErr) console.error('[sbInitGame] stock_price', spErr);
 
     // game_info (section_num 자동 계산)
     const { count } = await _sb.from('game_info').select('*', { count: 'exact', head: true }).eq('date', today);
-    await _sb.from('game_info').insert({
+    const { error: giErr } = await _sb.from('game_info').insert({
         game_id:      gameId,
         date:         today,
         player_count: players.length,
         game_type:    mode,
         section_num:  (count || 0) + 1
-    }).then(({ error }) => { if (error) console.error('[sbInitGame] game_info', error); });
+    });
+    if (giErr) console.error('[sbInitGame] game_info', giErr);
 
     // game_individual (자산 0)
     const indivRows = players
@@ -276,10 +283,11 @@ async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
         for (const t of teams) {
             const teamId   = String(t.team_id || '').trim();
             const teamName = _text(t.name ?? '');
-            if (!teamId || !teamName) continue;
+            const gameId   = String(t.game_id || '').trim();
+            if (!teamId || !teamName || !gameId) continue;
             await _sb.from('game_team').upsert({
                 team_id:          teamId,
-                game_id:          String(t.game_id || '').trim(),
+                game_id:          gameId,
                 date,
                 team_name:        teamName,
                 team_total_asset: Number(t.total ?? 0),

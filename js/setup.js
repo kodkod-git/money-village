@@ -674,6 +674,12 @@
             </tr>
         `).join('');
     }
+    function updateDeleteButtonVisibility() {
+        const btn = document.getElementById('btnDeleteCitizens');
+        if (!btn) return;
+        const anyChecked = document.querySelectorAll('.citizen-row-check:checked').length > 0;
+        btn.style.display = anyChecked ? 'inline-flex' : 'none';
+    }
     function toggleAllCitizenChecks(masterCheckbox) {
         document.querySelectorAll('.citizen-row-check').forEach(cb => {
             cb.checked = masterCheckbox.checked;
