@@ -549,6 +549,9 @@
             if (loadedDate) {
                 // 과거 데이터 수정 시: 기존 game_id 유지
                 gameId = players[0]?.gameId ?? null;
+            } else if (players[0]?.gameId) {
+                // sbInitGame에서 이미 stock_price 삽입 완료 — 재사용
+                gameId = players[0].gameId;
             } else {
                 const stockValues = Object.values(stockInfo).map(s => s.price);
                 gameId = await saveStockValue(stockValues);
@@ -628,114 +631,163 @@
         const dateCompact = date.replace(/-/g, '');
         return `${dateCompact}_${teamPrefix}${displayName}_AssetReport.pdf`;
     }
+    // ── 과거 게임 모달 ──────────────────────────────────────────
     async function promptAndLoadPastAssets() {
-        const targetDate = prompt("수정할 게임 일자를 입력하세요.\n(예: 2026-04-02)");
-        if (!targetDate) return;
+        const modal = document.getElementById('pastGameModal');
+        const select = document.getElementById('pastGameDateSelect');
+        const grid = document.getElementById('pastGameCardsGrid');
+        const loading = document.getElementById('pastGameLoading');
 
-        // 사용자 피드백을 위한 로딩 표시 (선택 사항)
-        console.log(`${targetDate} 데이터 로딩 중...`);
+        // 초기화
+        select.innerHTML = '<option value="">-- 날짜를 선택하세요 --</option>';
+        grid.innerHTML = '';
+        loading.style.display = 'none';
+        modal.classList.add('show');
 
+        // 날짜 목록 로드
         try {
-            const data = await sbLoadAssetsByDate(targetDate);
-
-            // 백엔드 응답 구조에 맞게 조건문 수정
-            console.table(data.history)
-            if (data.success && Array.isArray(data.history) && data.history.length > 0) {
-                players = data.history.map((p, index) => {
-                    const nameValue = p.real_name || 'Unknown';
-                    return {
-                        id: index,
-                        gameId: p.game_id || null,
-                        nickname: p.nickname || '',
-                        realName: nameValue,
-                        name: nameValue,
-                        efti: p.efti || '-',
-                        team: p.team || '-',
-                        teamId: p.team_id || null,
-                        assets: p.assets || (typeof initAssets === 'function' ? initAssets() : {}),
-                        total: Number(p.total_asset) || 0,
-                        manualCash: Number(p.cash) || 0,
-                        diligenceReward: Number(p.diligence_reward) || 0,
-                        rankIndiv: 0,
-                        rankTeam: 0,
-                        teamTotal: 0,
-                        traits: p.traits || (typeof initTraitsState === 'function' ? initTraitsState() : {})
-                    };
-                });
-
-                // Users 시트 기반 EFTI 반영
-                if (citizenListData.length === 0) {
-                    try { await fetchCitizenList(); } catch(e) { console.warn("시민권자 목록 불러오기 실패:", e); }
-                }
-                players.forEach(p => {
-                    const citizen = citizenListData.find(c => c.nickname === p.nickname);
-                    if (citizen && citizen.default_EFTI) {
-                        p.efti = citizen.default_EFTI;
-                    }
-                });
-
-                // 유저별 보유 수량 로드
-                console.group(`[loadUserBalance] ${targetDate} 보유 수량 로드`);
-                await Promise.all(players.map(async p => {
-                    if (!p.gameId) {
-                        console.warn(`  ⚠️ ${p.nickname}: gameId 없음 — 건너뜀`);
-                        return;
-                    }
-                    const stocks = await loadUserBalance(p.nickname, p.gameId);
-                    if (stocks) {
-                        Object.assign(p.assets, stocks);
-                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0);
-                        console.log(`  ✅ ${p.nickname} (gameId: ${p.gameId})`, stocks, `→ total: ${p.total}`);
-                    } else {
-                        console.warn(`  ❌ ${p.nickname} (gameId: ${p.gameId}): 데이터 없음`);
-                    }
-                }));
-                console.groupEnd();
-
-                // Traits 시트에서 traits 로드
-                const firstGameId = players[0]?.gameId;
-                if (firstGameId) {
-                    try {
-                        const traitsData = await sbLoadTraitsByGameId(firstGameId);
-                        if (traitsData.success && Array.isArray(traitsData.traits)) {
-                            const traitsMap = {};
-                            traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
-                            players.forEach(p => {
-                                const t = traitsMap[p.nickname];
-                                if (t) {
-                                    p.traits = {
-                                        diligent:  !!t.diligent,
-                                        saving:    !!t.saving,
-                                        invest:    !!t.invest,
-                                        career:    !!t.career,
-                                        luck:      !!t.luck,
-                                        adventure: !!t.adventure
-                                    };
-                                }
-                            });
-                            console.log(`[loadTraits] ${traitsData.traits.length}명 traits 로드 완료`);
-                        }
-                    } catch(e) {
-                        console.warn("[loadTraits] 로드 실패:", e);
-                    }
-                }
-
-                loadedDate = targetDate;
-                alert(`✅ [${targetDate}] 참가자 ${players.length}명의 데이터를 성공적으로 불러왔습니다.`);
-
-                // 데이터 기반 모드 설정
-                currentMode = (players[0] && players[0].team !== '-') ? 'team' : 'individual';
-
-                // UI 업데이트 시퀀스
-                recalculateAllRankings();
-                switchScreen('countingScreen');
-                renderSidebar();
-                selectCountingPlayer(0);
-            } else {
-                alert(`ℹ️ 해당 날짜(${targetDate})의 데이터가 존재하지 않거나 형식이 잘못되었습니다.`);
+            loading.style.display = 'block';
+            const dates = await sbGetGameDates();
+            loading.style.display = 'none';
+            if (dates.length === 0) {
+                grid.innerHTML = '<p style="color:#888; font-size:13px; text-align:center;">저장된 게임 기록이 없습니다.</p>';
+                return;
             }
-        } catch (error) {
-            console.error("Fetch Error:", error);
+            dates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                select.appendChild(opt);
+            });
+        } catch(e) {
+            loading.style.display = 'none';
+            grid.innerHTML = '<p style="color:#d32f2f; font-size:13px; text-align:center;">날짜 목록 불러오기 실패</p>';
+        }
+    }
+
+    function closePastGameModal() {
+        document.getElementById('pastGameModal').classList.remove('show');
+    }
+
+    function handlePastGameBackdrop(e) {
+        if (e.target === document.getElementById('pastGameModal')) closePastGameModal();
+    }
+
+    async function onPastGameDateChange() {
+        const date = document.getElementById('pastGameDateSelect').value;
+        const grid = document.getElementById('pastGameCardsGrid');
+        const loading = document.getElementById('pastGameLoading');
+
+        grid.innerHTML = '';
+        if (!date) return;
+
+        loading.style.display = 'block';
+        try {
+            const games = await sbGetGamesByDate(date);
+            loading.style.display = 'none';
+            if (!games || games.length === 0) {
+                grid.innerHTML = '<p style="color:#888; font-size:13px; text-align:center;">해당 날짜에 게임 기록이 없습니다.</p>';
+                return;
+            }
+            games.forEach(g => {
+                const sectionLabel = String(g.section_num).padStart(2, '0') + '분반';
+                const typeLabel = g.game_type === 'team' ? '팀전' : '개인전';
+                const typeTag = g.game_type === 'team' ? 'tag-team' : 'tag-individual';
+                const names = (g.preview_names || []).join(', ') + (g.player_count > 6 ? ' 등' : '');
+                const card = document.createElement('div');
+                card.className = 'past-game-card';
+                card.innerHTML = `
+                    <div class="past-game-card-title">${sectionLabel}</div>
+                    <div class="past-game-card-meta">
+                        <span>${names || '참가자 정보 없음'}</span>
+                        <span>참여인원: ${g.player_count}명</span>
+                        <span class="${typeTag}">${typeLabel}</span>
+                    </div>`;
+                card.onclick = () => _loadPastGame(g.game_id, g.date);
+                grid.appendChild(card);
+            });
+        } catch(e) {
+            loading.style.display = 'none';
+            grid.innerHTML = '<p style="color:#d32f2f; font-size:13px; text-align:center;">불러오기 실패: ' + e.message + '</p>';
+        }
+    }
+
+    async function _loadPastGame(gameId, gameDate) {
+        closePastGameModal();
+        try {
+            const data = await sbLoadAssetsByGameId(gameId);
+            if (!data.success || !Array.isArray(data.history) || data.history.length === 0) {
+                alert(`ℹ️ 해당 게임(${gameId})의 데이터가 없습니다.`);
+                return;
+            }
+
+            players = data.history.map((p, index) => {
+                const nameValue = p.real_name || 'Unknown';
+                return {
+                    id: index,
+                    gameId: p.game_id || null,
+                    nickname: p.nickname || '',
+                    realName: nameValue,
+                    name: nameValue,
+                    efti: p.efti || '-',
+                    team: p.team || '-',
+                    teamId: p.team_id || null,
+                    assets: p.assets || (typeof initAssets === 'function' ? initAssets() : {}),
+                    total: Number(p.total_asset) || 0,
+                    manualCash: Number(p.cash) || 0,
+                    diligenceReward: Number(p.diligence_reward) || 0,
+                    rankIndiv: 0,
+                    rankTeam: 0,
+                    teamTotal: 0,
+                    traits: p.traits || (typeof initTraitsState === 'function' ? initTraitsState() : {})
+                };
+            });
+
+            // EFTI 반영
+            if (citizenListData.length === 0) {
+                try { await fetchCitizenList(); } catch(e) { console.warn("시민권자 목록 불러오기 실패:", e); }
+            }
+            players.forEach(p => {
+                const citizen = citizenListData.find(c => c.nickname === p.nickname);
+                if (citizen && citizen.default_EFTI) p.efti = citizen.default_EFTI;
+            });
+
+            // 주식 보유 수량 로드
+            console.group(`[loadUserBalance] gameId=${gameId}`);
+            await Promise.all(players.map(async p => {
+                if (!p.gameId) { console.warn(`  ⚠️ ${p.nickname}: gameId 없음`); return; }
+                const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
+                if (stocks) {
+                    Object.assign(p.assets, stocks);
+                    p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0);
+                } else {
+                    console.warn(`  ❌ ${p.nickname}: 잔고 없음`);
+                }
+            }));
+            console.groupEnd();
+
+            // Traits 로드
+            try {
+                const traitsData = await sbLoadTraitsByGameId(gameId);
+                if (traitsData.success && Array.isArray(traitsData.traits)) {
+                    const traitsMap = {};
+                    traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                    players.forEach(p => {
+                        const t = traitsMap[p.nickname];
+                        if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
+                    });
+                }
+            } catch(e) { console.warn("[loadTraits] 실패:", e); }
+
+            loadedDate = gameDate;
+            currentMode = (players[0] && players[0].team !== '-') ? 'team' : 'individual';
+            recalculateAllRankings();
+            switchScreen('countingScreen');
+            renderSidebar();
+            selectCountingPlayer(0);
+            alert(`✅ 참가자 ${players.length}명의 데이터를 불러왔습니다.`);
+        } catch(error) {
+            console.error("_loadPastGame 오류:", error);
             alert("❌ 불러오기 실패: " + error.message);
         }
     }

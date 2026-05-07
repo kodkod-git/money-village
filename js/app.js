@@ -177,47 +177,6 @@
     function calcStock(a){ let s=0; for(let k in stockInfo) s+=a[k]*stockInfo[k].price; return s; }
 
 
-
-    function runSample(mode) {
-        isSampleMode = true;
-        // [수정] 샘플 모드 시 수정 버튼 숨기기
-        document.getElementById('btnEditPrev').style.display = 'none';
-
-        currentMode = mode;
-        for(let k in stockInfo) {
-            const v = document.getElementById(`conf_${k}`).value;
-            if(v) stockInfo[k].price = parseInt(v);
-        }
-        players = [];
-        if(mode==='individual') for(let i=1;i<=5;i++) players.push(randP(`참가자 ${i}`, '-'));
-        else ['A팀','B팀'].forEach(t=>{ for(let i=1;i<=3;i++) players.push(randP(`참가자${i}`, t)); });
-        finishGame();
-    }
-    function randP(n,t) {
-        let p = {
-            id: Math.random(),
-            nickname: n,
-            realName: n,
-            name: n,
-            efti: '',
-            team: t,
-            assets: initAssets(),
-            total: 0,
-            rankIndiv: 0,
-            rankTeam: 0,
-            teamTotal: 0,
-            manualCash: 0,
-            diligenceReward: 0,
-            traits: initTraitsState()
-        };
-
-        p.manualCash = (Math.floor(Math.random() * 20) + 1) * 10000;
-        p.diligenceReward = Math.floor(Math.random() * 11) * 10000; // 0 ~ 100,000
-        for (let k in p.assets) p.assets[k] = Math.floor(Math.random() * 5) + 1;
-
-        return p;
-    }
-
     async function loadUserBalance(nickname, gameId) {
         try {
             return await sbLoadUserBalance(nickname, gameId);

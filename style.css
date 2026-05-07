@@ -588,6 +588,211 @@
             gap: 8px;
             padding: 16px 22px 22px;
         }
+        /* 은행 예금 버튼 */
+        .btn-bank { background: #00897b; color: #fff; }
+
+        /* 은행 예금 모달 */
+        .bank-modal-card { max-width: 580px; }
+        .bank-modal-card .modal-body { max-height: 58vh; overflow-y: auto; }
+
+        .past-game-card.bank-selected {
+            border-color: var(--mv-blue-light);
+            background: #eef4ff;
+            box-shadow: 0 3px 12px rgba(0,114,206,0.18);
+        }
+        .bank-section-divider {
+            font-size: 14px;
+            font-weight: 800;
+            color: #444;
+            margin: 16px 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #e0e6f0;
+        }
+        .bank-ratio-card {
+            background: #F8FAFF;
+            border: 1px solid #E0EAFF;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .bank-ratio-title { font-size: 15px; font-weight: 900; color: var(--mv-blue-deep); margin-bottom: 10px; }
+        .bank-ratio-sub   { font-size: 12px; font-weight: 500; color: #888; margin-left: 6px; }
+
+        /* Stepper */
+        .bank-stepper { display: flex; align-items: center; gap: 8px; }
+        .bank-stepper-btn {
+            min-width: 48px; min-height: 48px;
+            border: 1.5px solid #D0DCF0; border-radius: 10px;
+            background: #fff; font-size: 18px; font-weight: 900;
+            color: var(--mv-blue-deep); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, border-color 0.15s; flex-shrink: 0;
+        }
+        .bank-stepper-btn:hover { background: #F7C948; border-color: #F7C948; }
+        .bank-stepper-val {
+            flex: 1; text-align: center; font-size: 17px; font-weight: 900;
+            color: var(--mv-blue-deep); background: #fff;
+            border: 1.5px solid #D0DCF0; border-radius: 8px; padding: 12px 8px;
+        }
+
+        /* 플레이어 그리드 */
+        .bank-player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .bank-player-card {
+            border: 2px solid #e0e6f0; border-radius: 12px;
+            padding: 14px; cursor: pointer; background: #f8fafd;
+            transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+        }
+        .bank-player-card:hover {
+            border-color: var(--mv-blue-light); background: #eef4ff;
+            box-shadow: 0 3px 12px rgba(0,114,206,0.12);
+        }
+        .bank-player-nickname { font-size: 16px; font-weight: 900; color: var(--mv-blue-deep); margin-bottom: 4px; }
+        .bank-player-realname { font-size: 13px; color: #555; margin-bottom: 6px; }
+        .bank-player-efti {
+            font-size: 11px; color: #888; background: #e3eaf5;
+            border-radius: 4px; padding: 2px 6px; display: inline-block;
+        }
+        .bank-player-team {
+            font-size: 11px; font-weight: 700;
+            padding: 2px 7px; border-radius: 8px;
+            background: #EDE7F6; color: #5E35B1;
+        }
+        .bank-player-card.completed { background: #f0f7f0; border-color: #b2dfb2; }
+        .bank-player-card.in-progress { background: #FFFDE7; border-color: #FB8C00; }
+        .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+        .bank-status-type  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
+        .bank-status-done  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
+        .bank-status-pending { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 5px; background: #f0f0f0; color: #999; }
+
+        /* 예금 종류 카드 */
+        .bank-type-cards { display: flex; gap: 8px; }
+        .bank-type-card {
+            flex: 1; padding: 12px 6px; border: 1.5px solid #E0EAFF;
+            border-radius: 12px; background: #fff; cursor: pointer;
+            text-align: center; transition: all 0.2s;
+        }
+        .bank-type-card:hover { border-color: var(--mv-blue-light); }
+        .bank-type-card.selected { background: #FFFD3B; border-color: #F7C948; }
+        .bank-tc-name  { font-size: 14px; font-weight: 900; color: var(--mv-blue-deep); margin-bottom: 3px; }
+        .bank-tc-round { font-size: 11px; color: #999; font-weight: 500; margin-bottom: 4px; }
+        .bank-type-card.selected .bank-tc-round { color: #666; }
+        .bank-tc-info  { font-size: 13px; font-weight: 700; color: var(--mv-blue-deep); }
+
+        /* 미리보기 */
+        .bank-preview-box {
+            background: #F8FAFF; border: 1.5px dashed var(--mv-blue-light);
+            border-radius: 12px; padding: 14px; text-align: center;
+            font-size: 15px; color: var(--mv-blue-deep); font-weight: 700;
+            min-height: 52px; display: flex; align-items: center; justify-content: center;
+            margin-top: 4px; line-height: 1.6;
+        }
+
+        /* 결과 카드 */
+        .bank-result-card {
+            background: #F8FAFF; border: 1px solid #E0EAFF;
+            border-radius: 12px; padding: 20px;
+        }
+        .bank-result-badge {
+            display: inline-block; padding: 4px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 700; margin-bottom: 16px;
+            background: #E8F5E9; color: #2E7D32;
+        }
+        .bank-result-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #E0EAFF; font-size: 14px;
+        }
+        .bank-result-row:last-child { border-bottom: none; }
+        .bank-r-label { color: #666; font-weight: 500; }
+        .bank-r-value { font-weight: 700; color: var(--mv-blue-deep); }
+        .bank-r-total { font-size: 16px; font-weight: 900; }
+
+        /* 은행 예금 화면 (bankScreen) */
+        #bankScreen {
+            background: #F0F4F8;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto;
+            padding: 0 16px 48px;
+        }
+        .bank-screen-wrap {
+            max-width: 480px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 24px;
+        }
+        .bank-screen-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .bank-back-btn {
+            width: 42px; height: 42px;
+            border: 1.5px solid #D0DCF0; border-radius: 10px;
+            background: #fff; font-size: 18px; font-weight: 900;
+            color: var(--mv-blue-deep); cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .bank-back-btn:hover { background: #F7C948; border-color: #F7C948; }
+        .bank-screen-title { font-size: 20px; font-weight: 900; color: var(--mv-blue-deep); }
+        .bank-screen-subtitle { font-size: 13px; color: #888; margin-top: 3px; }
+        .bank-step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .bank-step-dot { width: 12px; height: 12px; border-radius: 50%; background: #cdd9e8; transition: background 0.3s; }
+        .bank-step-dot.on { background: var(--mv-blue-light); }
+        .bank-screen-card {
+            background: #F8FAFF; border: 1px solid #E0EAFF;
+            border-radius: 12px; padding: 16px; margin-bottom: 14px;
+        }
+        .bank-screen-card-title { font-size: 15px; font-weight: 900; color: var(--mv-blue-deep); margin-bottom: 12px; }
+
+        /* 과거 게임 모달 */
+        .past-game-modal-card{
+            max-width: 640px;
+        }
+        .past-game-cards-grid{
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .past-game-card{
+            border: 2px solid #e0e6f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+            background: #f8fafd;
+        }
+        .past-game-card:hover{
+            border-color: var(--mv-blue-light);
+            background: #eef4ff;
+            box-shadow: 0 3px 12px rgba(0,114,206,0.12);
+        }
+        .past-game-card-title{
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--mv-blue-deep);
+            margin-bottom: 5px;
+        }
+        .past-game-card-meta{
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .past-game-card-meta span{
+            background: #e3eaf5;
+            border-radius: 6px;
+            padding: 2px 8px;
+        }
+        .past-game-card-meta .tag-team{ background: #fce8d3; color: #b24800; }
+        .past-game-card-meta .tag-individual{ background: #d3eafc; color: #005a9e; }
+
         .btn[disabled]{
             opacity: 0.65;
             cursor: not-allowed;
@@ -604,3 +809,203 @@
         @keyframes spin{
             to { transform: rotate(360deg); }
         }
+
+        /* ── 퀴즈 퀘스트 ─────────────────────────────────────── */
+        #quizScreen {
+            background: #F0F4F8;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto;
+            padding: 0 16px 48px;
+        }
+        .btn-quiz { background: #7B3F99; color: #fff; }
+        .btn-citizen { background: #1565C0; color: #fff; }
+        .btn-game-start { background: #1B5E20; color: #fff; }
+
+        /* 게임 시작 모달 */
+        .game-start-modal-card { max-width: 600px; }
+        .game-start-modal-card .modal-body { max-height: 62vh; overflow-y: auto; }
+        .gs-step-indicator {
+            display: flex; align-items: center;
+            padding: 16px 36px 0; gap: 0;
+        }
+        .gs-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .gs-dot {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #e5e7eb; border: 3px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        .gs-dot.active { background: #2E7D32; border-color: #2E7D32; }
+        .gs-line { flex: 1; height: 3px; background: #e5e7eb; margin-bottom: 22px; }
+        .gs-label { font-size: 12px; color: #888; font-weight: 700; white-space: nowrap; }
+
+        .citizen-tab-row {
+            display: flex; gap: 0;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 0 20px;
+        }
+        .citizen-tab-btn {
+            flex: 1; padding: 12px 0; font-size: 15px; font-weight: 700;
+            background: none; border: none; border-bottom: 3px solid transparent;
+            color: #888; cursor: pointer; transition: all 0.15s;
+            margin-bottom: -2px;
+        }
+        .citizen-tab-btn.active {
+            color: #1565C0; border-bottom-color: #1565C0;
+        }
+        .quiz-reward-badge {
+            background: #FFF8E1; color: #F57F17;
+            font-weight: 700; padding: 4px 14px;
+            border-radius: 20px; font-size: 13px;
+            display: inline-block;
+        }
+        .quiz-progress-badge {
+            font-size: 12px; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px;
+            background: #e8edf2; color: #555;
+        }
+        .quiz-progress-badge.quiz-in-progress {
+            background: #FFF8C5; color: #E65100;
+        }
+        .quiz-progress-badge.quiz-done {
+            background: #e0f2e9; color: #2e7d32;
+        }
+
+        /* 퀴즈 게임 뷰 (fixed overlay) */
+        #quizGameView {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #fff;
+            flex-direction: column;
+        }
+        .quiz-game-topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .quiz-game-player-name { font-size: 15px; font-weight: 700; color: #333; }
+        .quiz-game-body {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: #fff;
+        }
+        .in-app-quiz-wrapper {
+            position: relative;
+            height: 100%;
+            width: auto;
+        }
+        .in-app-quiz-img {
+            height: 100%;
+            width: auto;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+        }
+
+        /* OX 버튼 (quiz.html과 동일) */
+        .ox-btn {
+            position: absolute;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: background 0.15s, outline 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .ox-btn.selected-o {
+            background: rgba(40, 120, 185, 0.35);
+            outline: 3px solid rgba(40, 120, 185, 0.8);
+            outline-offset: -2px;
+        }
+        .ox-btn.selected-x {
+            background: rgba(220, 50, 50, 0.35);
+            outline: 3px solid rgba(220, 50, 50, 0.8);
+            outline-offset: -2px;
+        }
+
+        /* 보상 금액 표시 */
+        .reward-text {
+            position: absolute;
+            left: 8%; width: 86%;
+            top: 31.3%; height: 10%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #EA5432;
+            font-size: 3dvh;
+            font-weight: 900;
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            pointer-events: none;
+        }
+
+        /* 제출 확인 오버레이 */
+        .quiz-confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .quiz-confirm-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 48px;
+            text-align: center;
+        }
+        .quiz-confirm-title {
+            font-size: 22px; font-weight: 900;
+            margin-bottom: 24px; color: #333;
+        }
+        .quiz-confirm-btns { display: flex; gap: 12px; justify-content: center; }
+        .quiz-confirm-btn {
+            padding: 12px 32px; border-radius: 12px;
+            border: none; font-size: 16px; font-weight: 700; cursor: pointer;
+        }
+        .quiz-confirm-yes { background: #2980B9; color: #fff; }
+        .quiz-confirm-no  { background: #eee; color: #555; }
+
+        /* 결과 오버레이 (quiz.html 스타일 이식) */
+        .result-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .result-overlay.show { display: flex; }
+        .result-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 52px 64px;
+            text-align: center;
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        }
+        .result-msg { font-size: 52px; font-weight: 900; line-height: 1.2; }
+        .result-msg.correct { color: #2980B9; }
+        .result-msg.wrong   { color: #E74C3C; }
+        .quiz-result-reward {
+            font-size: 20px; font-weight: 700;
+            color: #2e7d32; margin-top: 12px;
+        }
+        .btn-retry {
+            margin-top: 32px;
+            display: block; width: 100%;
+            padding: 16px; font-size: 18px; font-weight: 700;
+            color: #fff; background: #555;
+            border: none; border-radius: 12px; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-retry:active { background: #333; }

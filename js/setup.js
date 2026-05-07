@@ -7,38 +7,17 @@
     }
     function resetNameInputsUI() {
         const area = document.getElementById('nameInputArea');
-        const btn = document.getElementById('toggleNameBtn');
-        const startBtn = document.getElementById('startGameBtn');
-
-        area.innerHTML = '';
-        area.style.display = 'none';
-
-        startBtn.style.display = 'none';
-        btn.innerText = '명단 입력하기 ▼';
-
+        if (area) { area.innerHTML = ''; area.style.display = 'none'; }
         nameInputsVisible = false;
     }
 
     function selectMode(m) {
-        if (currentMode !== m) {
-            resetNameInputsUI();
-        }
-
+        if (currentMode !== m) resetNameInputsUI();
         currentMode = m;
-
         document.getElementById('btnIndiv').className = m === 'individual' ? 'mode-btn selected' : 'mode-btn';
         document.getElementById('btnTeam').className  = m === 'team' ? 'mode-btn selected' : 'mode-btn';
-
         document.getElementById('individualConfig').style.display = m === 'individual' ? 'block' : 'none';
         document.getElementById('teamConfig').style.display       = m === 'team' ? 'block' : 'none';
-
-        // 아래 버튼/영역 상태 강제 복구
-        document.getElementById('toggleNameBtn').style.display = 'inline-flex';
-        document.getElementById('toggleNameBtn').innerText = '명단 입력하기 ▼';
-        document.getElementById('startGameBtn').style.display = 'none';
-        document.getElementById('nameInputArea').style.display = 'none';
-        document.getElementById('nameInputArea').innerHTML = '';
-
         nameInputsVisible = false;
     }
     function generateInputs() {
@@ -46,31 +25,22 @@
         area.innerHTML = '';
 
         if (currentMode === 'individual') {
-            const cnt = parseInt(document.getElementById('playerCount').value, 10) || 1;
+            const cnt = parseInt(document.getElementById('playerCount')?.value, 10) || 4;
             for (let i = 0; i < cnt; i++) {
                 area.innerHTML += makeInp(`참가자 ${i + 1}`, `참가자 ${i + 1}`, '');
             }
         } else {
-            const tCnt = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount').value, 10) || 2));
-            const mCnt = Math.min(20, Math.max(1, parseInt(document.getElementById('memberPerTeam').value, 10) || 1));
-            area.innerHTML += `
-            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
-                <button class="btn btn-primary btn-mini" onclick="addTeam()">➕ 팀 추가</button>
-                <button class="btn btn-dark btn-mini" onclick="normalizeTeamNames()">🔤 팀명 A,B,C 정렬</button>
-            </div>
-            `;
+            const tCnt = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount')?.value, 10) || 2));
+            const mCnt = 2; // 팀당 인원 고정
 
             for (let t = 0; t < tCnt; t++) {
                 const teamName = String.fromCharCode(65 + t) + "팀";
-                const teamEl = addTeam(teamName, false);
-                for (let m = 0; m < mCnt; m++) addMember(teamEl, false);
-                renumberMembers(teamEl);
+                addTeam(teamName, false);
             }
 
             syncTeamCountInput();
         }
 
-        document.getElementById('startGameBtn').style.display = 'block';
         afterGenerateInputsUI();
         applyNameLengthBindings(area);
     }
@@ -81,16 +51,14 @@
         const area = document.getElementById('nameInputArea');
         if (!area || area.innerHTML.trim() === '') return;
 
-        const desiredTeamCount = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount').value, 10) || 2));
-        const desiredMemberCount = Math.min(20, Math.max(1, parseInt(document.getElementById('memberPerTeam').value, 10) || 1));
+        const desiredTeamCount = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount')?.value, 10) || 2));
+        const desiredMemberCount = 2; // 팀당 인원 고정
         let teamSections = Array.from(area.querySelectorAll('.team-section'));
 
         while (teamSections.length < desiredTeamCount) {
             const nextIndex = teamSections.length;
             const teamName = String.fromCharCode(65 + nextIndex) + "팀";
-            const teamEl = addTeam(teamName, false);
-            for (let i = 0; i < desiredMemberCount; i++) addMember(teamEl, false);
-            renumberMembers(teamEl);
+            addTeam(teamName, false);
             teamSections = Array.from(area.querySelectorAll('.team-section'));
         }
 
@@ -118,30 +86,22 @@
 
     async function toggleNameInputs() {
         const area = document.getElementById('nameInputArea');
-        const btn = document.getElementById('toggleNameBtn');
-        const startBtn = document.getElementById('startGameBtn');
-
+        if (!area) return;
         if (!nameInputsVisible) {
             if (citizenListData.length === 0) {
                 try { await fetchCitizenList(); } catch(e) {}
             }
-
             if (area.innerHTML.trim() === '') generateInputs();
             area.style.display = 'block';
-            btn.innerText = '명단 접기 ▲';
-            startBtn.style.display = 'block';
             nameInputsVisible = true;
         } else {
             area.style.display = 'none';
-            btn.innerText = '명단 입력하기 ▼';
-            startBtn.style.display = 'none';
             nameInputsVisible = false;
         }
     }
     function afterGenerateInputsUI() {
-        document.getElementById('nameInputArea').style.display = 'block';
-        document.getElementById('toggleNameBtn').innerText = '명단 접기 ▲';
-        document.getElementById('startGameBtn').style.display = 'block';
+        const area = document.getElementById('nameInputArea');
+        if (area) area.style.display = 'block';
         nameInputsVisible = true;
     }
     function buildCitizenOptions() {
@@ -200,12 +160,15 @@
     }
     function startGame() {
         isSampleMode = false;
+        document.getElementById('gameStartModal')?.classList.remove('show');
         document.getElementById('btnEditPrev').style.display = 'inline-flex';
 
         for(let k in stockInfo) {
             const v = document.getElementById(`conf_${k}`).value;
             if(v) stockInfo[k].price = parseInt(v);
         }
+        const gameId = crypto.randomUUID().split('-')[0];
+
         players = [];
         if (currentMode === 'individual') {
             document.querySelectorAll('#nameInputArea .citizen-row').forEach((row, i) => {
@@ -215,6 +178,7 @@
 
             players.push({
                 id: i,
+                gameId,
                 nickname,
                 realName,
                 name: realName,
@@ -247,6 +211,7 @@
 
                     players.push({
                         id: idx++,
+                        gameId,
                         nickname,
                         realName,
                         name: realName,
@@ -265,8 +230,13 @@
                 });
             });
         }
-        if(players.length===0) return alert("명단을 입력하세요.");
- 
+        if (players.length === 0) return alert("명단을 입력하세요.");
+
+        // 게임 초기 데이터 DB 삽입 (백그라운드)
+        const stockValues = Object.values(stockInfo).map(s => s.price);
+        sbInitGame(gameId, currentMode, players, stockValues)
+            .catch(e => console.error('[sbInitGame]', e));
+
         switchScreen('countingScreen');
         renderSidebar();
         selectCountingPlayer(0);
@@ -287,15 +257,19 @@
             <input class="team-name-input" type="text" value="${defaultName}">
             </div>
             <div class="team-btns">
-            <button class="btn btn-primary btn-mini" onclick="addMember(this.closest('.team-section'))">➕ 인원</button>
-            <button class="btn btn-dark btn-mini" onclick="removeMember(this.closest('.team-section'))">➖ 인원</button>
-            <button class="btn btn-danger btn-mini" onclick="removeTeam(this.closest('.team-section'))">🗑️ 팀 삭제</button>
+            <button class="btn btn-danger btn-mini" style="font-size:11px; padding:3px 8px;" onclick="removeTeam(this.closest('.team-section'))">🗑️ 삭제</button>
             </div>
         </div>
         <div class="team-members"></div>
         `;
 
         area.appendChild(wrapper);
+
+        // 팀당 인원 고정 2명 자동 추가
+        addMember(wrapper, false);
+        addMember(wrapper, false);
+        renumberMembers(wrapper);
+
         if (focus) wrapper.querySelector('.team-name-input')?.focus();
 
         syncTeamCountInput();
@@ -378,17 +352,89 @@
         });
     }
 
-    function toggleCitizenPanel() {
-        const panel = document.getElementById('citizenPanel');
-        const btn = document.getElementById('toggleCitizenPanelBtn');
-        const isOpen = panel.style.display === 'block';
+    let currentGameStep = 1;
 
-        panel.style.display = isOpen ? 'none' : 'block';
-        btn.innerText = isOpen ? '👥 시민권자 관리 열기 ▼' : '👥 시민권자 관리 닫기 ▲';
+    function openGameStartModal() {
+        currentGameStep = 1;
+        gsGoToStep(1);
+        document.getElementById('gameStartModal').classList.add('show');
+    }
 
-        if (!isOpen && citizenListData.length === 0) {
-            fetchCitizenList();
+    function closeGameStartModal() {
+        document.getElementById('gameStartModal').classList.remove('show');
+    }
+
+    function handleGameStartBackdrop(e) {
+        if (e.target.id === 'gameStartModal') closeGameStartModal();
+    }
+
+    async function gsGoToStep(step) {
+        if (step < 1 || step > 3) return;
+
+        if (step === 3) {
+            if (citizenListData.length === 0) {
+                try { await fetchCitizenList(); } catch(e) {}
+            }
+            const area = document.getElementById('nameInputArea');
+            if (area.innerHTML.trim() === '') generateInputs();
+            const indivBar = document.getElementById('indivAddRemoveBar');
+            if (indivBar) indivBar.style.display = currentMode === 'individual' ? 'flex' : 'none';
+            const teamBar = document.getElementById('teamAddBar');
+            if (teamBar) teamBar.style.display = currentMode === 'team' ? 'flex' : 'none';
         }
+
+        currentGameStep = step;
+
+        document.getElementById('gameStep1').style.display = step === 1 ? 'block' : 'none';
+        document.getElementById('gameStep2').style.display = step === 2 ? 'block' : 'none';
+        document.getElementById('gameStep3').style.display = step === 3 ? 'block' : 'none';
+
+        [1, 2, 3].forEach(i => {
+            const dot = document.getElementById(`gsDot${i}`);
+            if (dot) dot.classList.toggle('active', i <= step);
+        });
+
+        document.getElementById('gsPrevBtn').style.display = step > 1 ? 'inline-flex' : 'none';
+        document.getElementById('gsNextBtn').style.display = step < 3 ? 'inline-flex' : 'none';
+        document.getElementById('gsStartBtn').style.display = step === 3 ? 'inline-flex' : 'none';
+    }
+
+    function addIndividualPlayer() {
+        const area = document.getElementById('nameInputArea');
+        const count = area.querySelectorAll('.citizen-row').length;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = makeInp(`참가자 ${count + 1}`, `참가자${count + 1}`, '');
+        area.appendChild(wrapper.firstElementChild);
+        applyNameLengthBindings(area);
+    }
+
+    function removeIndividualPlayer() {
+        const area = document.getElementById('nameInputArea');
+        const rows = area.querySelectorAll('.citizen-row');
+        if (rows.length <= 1) { alert("최소 1명은 있어야 합니다."); return; }
+        rows[rows.length - 1].remove();
+    }
+
+    function openCitizenMgmtModal() {
+        switchCitizenTab('reg');
+        document.getElementById('citizenMgmtModal').classList.add('show');
+        if (citizenListData.length === 0) fetchCitizenList();
+    }
+
+    function closeCitizenMgmtModal() {
+        document.getElementById('citizenMgmtModal').classList.remove('show');
+    }
+
+    function handleCitizenMgmtBackdrop(e) {
+        if (e.target.id === 'citizenMgmtModal') closeCitizenMgmtModal();
+    }
+
+    function switchCitizenTab(tab) {
+        const isReg = tab === 'reg';
+        document.getElementById('citizenTabReg').style.display = isReg ? 'block' : 'none';
+        document.getElementById('citizenTabList').style.display = isReg ? 'none' : 'block';
+        document.getElementById('citizenTabRegBtn').classList.toggle('active', isReg);
+        document.getElementById('citizenTabListBtn').classList.toggle('active', !isReg);
     }
 
     function setCitizenFormErrorInline(msg) {

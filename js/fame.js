@@ -40,46 +40,18 @@
                 fameTeamData = [];
             }
 
-            if (fameIndivData.length === 0 && fameTeamData.length === 0) {
-                loadFameSamples(false);
-            } else {
-                renderFame();
-                document.getElementById('todayDate').innerText = formatFolderDate();
-            }
+            renderFame();
+            document.getElementById('todayDate').innerText = formatFolderDate();
         } catch (e) {
             console.error("DB 로드 실패:", e);
-            loadFameSamples(false);
+            fameIndivData = [];
+            fameTeamData = [];
+            renderFame();
         } finally {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
     }
 
-    function loadFameSamples(alertMsg = true) {
-        const S_INDIV = [
-            { name: "이영재", total: 6000000, cash: 2300000, stock: 3200000, diligence_reward: 500000, date: "2025.12.25" },
-            { name: "정주식", total: 5500000, cash: 400000, stock: 4800000, diligence_reward: 300000, date: "2026.01.10" },
-            { name: "강현금", total: 5200000, cash: 4700000, stock: 200000, diligence_reward: 300000, date: "2025.12.30" },
-            { name: "김부자", total: 4850000, cash: 1550000, stock: 2900000, diligence_reward: 400000, date: "2026.01.05" },
-            { name: "박스마트", total: 4120000, cash: 920000, stock: 2800000, diligence_reward: 400000, date: "2025.12.30" },
-            { name: "최성실", total: 3900000, cash: 700000, stock: 2800000, diligence_reward: 400000, date: "2025.12.25" },
-            { name: "조전략", total: 3050000, cash: 850000, stock: 1800000, diligence_reward: 400000, date: "2026.01.05" },
-            { name: "윤행운", total: 2980000, cash: 780000, stock: 1800000, diligence_reward: 400000, date: "2025.12.25" },
-            { name: "장투자", total: 2800000, cash: 500000, stock: 2000000, diligence_reward: 300000, date: "2026.01.10" },
-            { name: "임저축", total: 2750000, cash: 1800000, stock: 650000, diligence_reward: 300000, date: "2025.12.30" }
-        ];
-        const S_TEAM = [
-            { name: "어벤져스팀", total: 12500000, members: "김철수, 박민지, 최동훈, 이서연", date: "2026.01.05" },
-            { name: "황금거위팀", total: 10200000, members: "이영희, 정우성, 강동원, 한지민", date: "2025.12.30" },
-            { name: "미래에셋팀", total: 9800000, members: "장투자, 정주식, 박수익, 김성공", date: "2026.01.10" },
-            { name: "주식왕팀", total: 8500000, members: "최성실, 윤행운, 김노력, 이도전", date: "2025.12.25" },
-            { name: "티끌모아팀", total: 7200000, members: "임저축, 강현금, 송성실, 나부자", date: "2025.12.30" }
-        ];
-        fameIndivData = S_INDIV;
-        fameTeamData = S_TEAM;
-        renderFame();
-        document.getElementById('todayDate').innerText = "Sample Data";
-        if(alertMsg) alert("샘플 데이터를 불러왔습니다.");
-    }
 
     function renderFame() {
         fameIndivData.sort((a,b) => b.total - a.total);

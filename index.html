@@ -41,124 +41,18 @@
             <button class="btn btn-purple" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;"onclick="promptAndLoadPastAssets()">
                 📅 과거 자산 내역 불러오기
             </button>
-            <div class="logo-uploader">
-                <div style="font-weight:bold; margin-bottom:5px;">로고 이미지 설정 (선택)</div>
-                <input type="file" id="logoInput" accept="image/*" onchange="loadLogo(event)">
-                <div style="font-size:12px; color:#888; margin-top:5px;">파일을 선택하면 성적표 우측 상단에 표시됩니다.</div>
-            </div>
-            <div class="stock-config-area">
-                <div class="stock-config-title">📈 주식 가격 설정 (4R)</div>
-                <div class="stock-inputs-grid" id="stockConfigInputs"></div>
-            </div>
-            <div class="mode-select">
-                <div class="mode-btn selected" onclick="selectMode('individual')" id="btnIndiv">
-                    <span class="mode-ico">👤</span><span class="mode-txt">개인전</span>
-                </div>
-                <div class="mode-btn" onclick="selectMode('team')" id="btnTeam">
-                    <span class="mode-ico">👥</span><span class="mode-txt">팀전</span>
-                </div>
-            </div>
-            <div id="individualConfig"><div class="input-row">참가 인원: <input type="number" id="playerCount" value="4" min="1" class="input-num"> 명</div></div>
-            <div id="teamConfig" style="display:none;">
-                <div class="input-row">
-                    팀 개수:
-                    <input type="number" id="teamCount" value="2" min="2" max="20" class="input-num"
-                        oninput="clampTeamConfigInput(this, 2, 20)">
-                    팀
-                </div>
-                <div class="input-row">
-                    팀당 인원:
-                    <input type="number" id="memberPerTeam" value="3" min="1" max="20" class="input-num"
-                        oninput="clampTeamConfigInput(this, 1, 20)">
-                    명
-                </div>
-            </div>
-            <button id="toggleNameBtn" class="btn btn-primary"
-                style="width:100%; padding:15px; font-size:16px; justify-content:center;"
-                onclick="toggleNameInputs()">
-                명단 입력하기 ▼
+            <button class="btn btn-bank" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openBankModal()">
+                🏦 머니빌리지 은행 예금
             </button>
-            <div id="nameInputArea" class="player-list-input"></div>
-            <button id="startGameBtn" class="btn btn-success" style="display:none; width:100%; margin-top:20px; font-size:18px; padding:15px; justify-content: center;" onclick="startGame()">🚀 게임 시작</button>
-            <div style="margin-top:30px; border-top:1px dashed #ddd; padding-top:10px;">
-                <button class="btn btn-purple btn-setup-big" onclick="runSample('individual')">🧪 개인전 샘플</button>
-                <button class="btn btn-purple btn-setup-big" onclick="runSample('team')">🧪 팀전 샘플</button>
-            </div>
-            <div style="margin-top:24px; border-top:1px dashed #ddd; padding-top:14px; text-align:left;">
-                <button id="toggleCitizenPanelBtn" class="btn btn-dark"
-                        style="width:100%; justify-content:center; padding:14px; font-size:16px;"
-                        onclick="toggleCitizenPanel()">
-                    👥 시민권자 관리 열기 ▼
-                </button>
-
-                <div id="citizenPanel" style="display:none; margin-top:14px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:14px; padding:16px;">
-                    <div style="font-size:18px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:12px;">시민권자 등록</div>
-
-                    <div class="form-group">
-                        <label for="citizenRealNameInline">실명 *</label>
-                        <input type="text" id="citizenRealNameInline" placeholder="예) 홍길동">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="citizenNicknameInline">닉네임 *</label>
-                        <input type="text" id="citizenNicknameInline" placeholder="예) 머니킹">
-                        <div class="form-hint">특수문자 제외, 공백 자동 제거, 중복 불가</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="citizenEFTIInline">기본 EFTI</label>
-                        <select id="citizenEFTIInline"></select>
-                    </div>
-
-                    <div id="citizenFormErrorInline" class="form-error"></div>
-
-                    <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:18px;">
-                        <button class="btn btn-dark" type="button" onclick="resetCitizenFormInline()">초기화</button>
-                        <button class="btn btn-success" type="button" id="citizenSubmitBtnInline" onclick="submitCitizenRegistrationInline()">
-                            <span id="citizenSubmitTextInline">등록하기</span>
-                        </button>
-                    </div>
-
-                    <div style="border-top:1px solid #e5e7eb; padding-top:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-                            <div style="font-size:18px; font-weight:900; color:var(--mv-blue-deep);">시민권자 조회</div>
-                            <input type="text" id="citizenSearchInput" placeholder="닉네임 / 실명 검색"
-                                style="padding:10px 12px; border:1px solid #d6dbe3; border-radius:10px; min-width:220px;"
-                                oninput="filterCitizenTable()">
-                        </div>
-
-                        <div id="citizenTableLoading" style="display:none; font-size:13px; color:#666; margin-bottom:8px;">
-                            불러오는 중...
-                        </div>
-
-                        <div style="overflow:auto; max-height:320px; border:1px solid #e5e7eb; border-radius:12px; background:#fff;">
-                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                                <thead style="position:sticky; top:0; background:#eef6ff;">
-                                    <tr>
-                                        <th id="citizenCheckColHeader" style="padding:10px; border-bottom:1px solid #ddd; text-align:center; width:36px;"></th>
-                                        <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">닉네임</th>
-                                        <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">실명</th>
-                                        <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">EFTI</th>
-                                        <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">가입일</th>
-                                        <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">상태</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="citizenTableBody">
-                                    <tr>
-                                        <td colspan="6" style="padding:16px; text-align:center; color:#999;">데이터를 불러오세요.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
-                            <button class="btn btn-primary" id="btnFetchCitizens" onclick="fetchCitizenList()">🔄 데이터 불러오기</button>
-                            <button class="btn btn-dark" id="btnEditCitizens" onclick="enterCitizenEditMode()" style="display:none;">✏️ 수정하기</button>
-                            <button class="btn btn-success" id="btnSaveCitizens" onclick="saveCitizenEdits()" style="display:none;">💾 저장하기</button>
-                            <button class="btn btn-danger" id="btnDeleteCitizens" onclick="deleteSelectedCitizens()">🗑️ 삭제하기</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <button class="btn btn-quiz" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openQuizModal()">
+                🧩 머니빌리지 퀴즈 퀘스트
+            </button>
+            <button class="btn btn-citizen" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openCitizenMgmtModal()">
+                👥 머니빌리지 시민권자 관리
+            </button>
+            <button class="btn btn-game-start" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openGameStartModal()">
+                🎮 머니빌리지 게임 시작
+            </button>
         </div>
     </div>
 
@@ -370,7 +264,6 @@
             <div class="controls-title" style="font-size:18px; font-weight:bold;">🏆 명예의 전당</div>
             <div class="controls-actions">
                 <button class="btn btn-primary" onclick="switchScreen('setupScreen')">🏠 처음으로</button>
-                <button class="btn btn-purple" onclick="loadFameSamples()">🧪 샘플 보기</button>
                 <button class="btn btn-drive" onclick="fetchFameData()">🔄 데이터 새로고침</button>
                 <button class="btn btn-danger" id="btnUploadFamePdf" onclick="uploadFamePdfToDrive()">📄 PDF 저장</button>                <button class="btn btn-success" onclick="printFame()">🖨️ 출력</button>
             </div>
@@ -453,43 +346,423 @@
             </div>
         </div>
     </div>
-    <!-- [시민권자 신규 등록 모달] -->
-    <div id="citizenModal" class="modal-backdrop" onclick="handleCitizenBackdrop(event)">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>시민권자 신규 등록</h3>
-                <p>Users 마스터 시트에 학생 기본 정보를 저장합니다.</p>
+    <!-- 머니빌리지 은행 예금 화면 -->
+    <div id="bankScreen" class="screen">
+        <div class="bank-screen-wrap">
+
+            <!-- View 2: 플레이어 리스트 -->
+            <div id="bankView2">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                    <div>
+                        <div class="bank-screen-title">👥 예금 신청자 선택</div>
+                        <div id="bankGameInfo" class="bank-screen-subtitle"></div>
+                    </div>
+                </div>
+                <div class="bank-step-indicator">
+                    <div class="bank-step-dot on"></div>
+                    <div class="bank-step-dot"></div>
+                    <div class="bank-step-dot"></div>
+                </div>
+                <div id="bankPlayerGrid" class="bank-player-grid"></div>
             </div>
 
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="citizenRealName">실명 *</label>
-                    <input type="text" id="citizenRealName" placeholder="예) 홍길동">
+            <!-- View 3: 예금 신청서 -->
+            <div id="bankView3" style="display:none;">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="bankBackToList()">←</button>
+                    <div class="bank-screen-title">💰 예금 신청서</div>
+                </div>
+                <div class="bank-step-indicator">
+                    <div class="bank-step-dot on"></div>
+                    <div class="bank-step-dot on"></div>
+                    <div class="bank-step-dot"></div>
+                </div>
+                <p id="bankDepositPlayerName" class="bank-screen-subtitle" style="text-align:center; margin-bottom:16px;"></p>
+
+                <div class="bank-screen-card">
+                    <div class="bank-screen-card-title">예금 종류</div>
+                    <div class="bank-type-cards">
+                        <div class="bank-type-card" id="bankTcLong" onclick="bankPickType('long')">
+                            <div class="bank-tc-name">장기 🏦</div>
+                            <div class="bank-tc-round">1라운드</div>
+                            <div class="bank-tc-info" id="bankTcInfoLong">—</div>
+                        </div>
+                        <div class="bank-type-card" id="bankTcMid" onclick="bankPickType('mid')">
+                            <div class="bank-tc-name">중기 ⏳</div>
+                            <div class="bank-tc-round">2라운드</div>
+                            <div class="bank-tc-info" id="bankTcInfoMid">—</div>
+                        </div>
+                        <div class="bank-type-card" id="bankTcShort" onclick="bankPickType('short')">
+                            <div class="bank-tc-name">단기 ⚡</div>
+                            <div class="bank-tc-round">3라운드</div>
+                            <div class="bank-tc-info" id="bankTcInfoShort">—</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="citizenNickname">닉네임 *</label>
-                    <input type="text" id="citizenNickname" placeholder="예) 머니킹">
-                    <div class="form-hint">특수문자 제외, 공백 자동 제거, 중복 불가</div>
+                <div class="bank-screen-card">
+                    <div class="bank-screen-card-title">예금 금액</div>
+                    <div class="bank-stepper">
+                        <button class="bank-stepper-btn" onclick="bankAdjustAmount(-1000)">▼</button>
+                        <div class="bank-stepper-val" id="bankAmountDisplay">1,000원</div>
+                        <button class="bank-stepper-btn" onclick="bankAdjustAmount(1000)">▲</button>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="citizenEFTI">기본 EFTI</label>
-                    <select id="citizenEFTI"></select>
-                </div>
-
-                <div id="citizenFormError" class="form-error"></div>
+                <div class="bank-preview-box" id="bankPreviewBox" style="margin-bottom:16px;">종류를 선택하면 미리보기가 나와요!</div>
+                <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center;" onclick="bankStep2Submit()">💰 예금 신청!</button>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-dark" type="button" onclick="resetCitizenForm()">초기화</button>
-                <button class="btn btn-danger" type="button" onclick="closeCitizenModal()">닫기</button>
-                <button class="btn btn-success" type="button" id="citizenSubmitBtn" onclick="submitCitizenRegistration()">
-                    <span id="citizenSubmitText">등록하기</span>
-                </button>
+            <!-- View 4: 결과 -->
+            <div id="bankView4" style="display:none;">
+                <div class="bank-step-indicator">
+                    <div class="bank-step-dot on"></div>
+                    <div class="bank-step-dot on"></div>
+                    <div class="bank-step-dot on"></div>
+                </div>
+                <div class="bank-screen-title" style="text-align:center; margin-bottom:20px;">🎉 예금 신청 완료</div>
+                <div class="bank-result-card">
+                    <div class="bank-result-badge" id="bankResultRoundBadge">1라운드</div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">예금 종류</span>
+                        <span class="bank-r-value" id="bankRType">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">예금자</span>
+                        <span class="bank-r-value" id="bankRPlayer">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">원금</span>
+                        <span class="bank-r-value" id="bankRPrincipal">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">이자</span>
+                        <span class="bank-r-value" id="bankRInterest">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label bank-r-total">만기 시 받을 금액</span>
+                        <span class="bank-r-value bank-r-total" id="bankRTotal">—</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center; margin-top:20px;" onclick="bankNextStudent()">다른 학생 예금 접수</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 퀴즈 퀘스트 화면 -->
+    <div id="quizScreen" class="screen">
+        <div id="quizView2">
+            <div class="bank-screen-wrap">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                    <div>
+                        <div class="bank-screen-title">🧩 퀴즈 퀘스트</div>
+                        <div id="quizGameInfo" class="bank-screen-subtitle"></div>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span class="quiz-reward-badge">보상: <span id="quizRewardBadge">1,000원</span></span>
+                </div>
+                <div id="quizPlayerGrid" class="bank-player-grid"></div>
             </div>
         </div>
     </div>
+
+    <!-- 퀴즈 게임 뷰 (fixed overlay) -->
+    <div id="quizGameView" style="display:none;">
+        <div class="quiz-game-topbar">
+            <button class="bank-back-btn" onclick="quizBackToList()">←</button>
+            <span id="quizGamePlayerName" class="quiz-game-player-name"></span>
+        </div>
+        <div class="quiz-game-body">
+            <div class="in-app-quiz-wrapper" id="quizGameWrapper">
+                <img class="in-app-quiz-img" id="quizGameImg" draggable="false" alt="OX 퀴즈" />
+                <div class="reward-text" id="quizGameRewardText"></div>
+            </div>
+        </div>
+        <div class="quiz-confirm-overlay" id="quizConfirmOverlay" style="display:none;">
+            <div class="quiz-confirm-box">
+                <div class="quiz-confirm-title">제출하시겠습니까?</div>
+                <div class="quiz-confirm-btns">
+                    <button class="quiz-confirm-btn quiz-confirm-yes" onclick="quizConfirmYes()">예</button>
+                    <button class="quiz-confirm-btn quiz-confirm-no" onclick="quizConfirmNo()">아니오</button>
+                </div>
+            </div>
+        </div>
+        <div class="result-overlay" id="quizResultOverlay">
+            <div class="result-box">
+                <div class="result-msg" id="quizResultMsg"></div>
+                <div class="quiz-result-reward" id="quizResultReward" style="display:none;"></div>
+                <button class="btn-retry" id="quizBtnConfirm" style="background:#2e7d32;" onclick="quizResultNext()">확인</button>
+                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#1565C0;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
+                <button class="btn-retry" id="quizBtnRetry" style="display:none; background:#E74C3C;" onclick="quizRetry()">다시 풀기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 머니빌리지 은행 예금 모달 -->
+    <div id="bankModal" class="modal-backdrop" onclick="handleBankModalBackdrop(event)">
+        <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
+
+            <!-- View 1: 게임 선택 + 배율 설정 -->
+            <div id="bankView1">
+                <div class="modal-header">
+                    <h3>🏦 머니빌리지 은행 예금</h3>
+                    <p>날짜와 분반을 선택한 뒤 이자 배율을 설정하세요</p>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>게임 날짜</label>
+                        <select id="bankDateSelect" onchange="onBankDateChange()">
+                            <option value="">-- 날짜를 선택하세요 --</option>
+                        </select>
+                    </div>
+                    <div id="bankGameLoading" style="display:none; text-align:center; padding:10px; color:#888; font-size:14px;">불러오는 중...</div>
+                    <div id="bankGameCardsGrid" class="past-game-cards-grid"></div>
+
+                    <div id="bankRatioSection">
+                        <div class="bank-section-divider">📊 이자 배율 설정</div>
+                        <div class="bank-ratio-card">
+                            <div class="bank-ratio-title">장기 🏦 <span class="bank-ratio-sub">1라운드</span></div>
+                            <div class="bank-stepper">
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('long', -0.1)">▼</button>
+                                <div class="bank-stepper-val" id="bankLongRatioDisplay">2.0배</div>
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('long', 0.1)">▲</button>
+                            </div>
+                        </div>
+                        <div class="bank-ratio-card">
+                            <div class="bank-ratio-title">중기 ⏳ <span class="bank-ratio-sub">2라운드</span></div>
+                            <div class="bank-stepper">
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('mid', -0.1)">▼</button>
+                                <div class="bank-stepper-val" id="bankMidRatioDisplay">1.5배</div>
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('mid', 0.1)">▲</button>
+                            </div>
+                        </div>
+                        <div class="bank-ratio-card">
+                            <div class="bank-ratio-title">단기 ⚡ <span class="bank-ratio-sub">3라운드</span></div>
+                            <div class="bank-stepper">
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('short', -0.1)">▼</button>
+                                <div class="bank-stepper-val" id="bankShortRatioDisplay">1.2배</div>
+                                <button class="bank-stepper-btn" onclick="bankAdjustRatio('short', 0.1)">▲</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" onclick="closeBankModal()">닫기</button>
+                    <button class="btn btn-success" id="bankStep1Btn" onclick="bankStep1Complete()" disabled>설정 완료</button>
+                </div>
+            </div>
+
+            <!-- View 2: 플레이어 리스트 -->
+
+        </div>
+    </div>
+
+    <!-- 퀴즈 퀘스트 모달 -->
+    <div id="quizModal" class="modal-backdrop" onclick="handleQuizModalBackdrop(event)">
+        <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🧩 머니빌리지 퀴즈 퀘스트</h3>
+                <p>날짜와 분반을 선택한 뒤 보상 금액을 설정하세요</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>게임 날짜</label>
+                    <select id="quizDateSelect" onchange="onQuizDateChange()">
+                        <option value="">-- 날짜를 선택하세요 --</option>
+                    </select>
+                </div>
+                <div id="quizGameLoading" style="display:none; text-align:center; padding:10px; color:#888; font-size:14px;">불러오는 중...</div>
+                <div id="quizGameCardsGrid" class="past-game-cards-grid"></div>
+
+                <div style="margin-top:16px;">
+                    <div class="bank-section-divider">🎁 보상 설정</div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">퀴즈 보상금액</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="quizAdjustReward(-1000)">▼</button>
+                            <div class="bank-stepper-val" id="quizRewardDisplay">1,000원</div>
+                            <button class="bank-stepper-btn" onclick="quizAdjustReward(1000)">▲</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeQuizModal()">닫기</button>
+                <button class="btn btn-success" id="quizStep1Btn" onclick="quizStep1Complete()" disabled>설정 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 시민권자 관리 모달 -->
+    <div id="citizenMgmtModal" class="modal-backdrop" onclick="handleCitizenMgmtBackdrop(event)">
+        <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>👥 머니빌리지 시민권자 관리</h3>
+            </div>
+            <!-- 탭 -->
+            <div class="citizen-tab-row">
+                <button class="citizen-tab-btn active" id="citizenTabRegBtn" onclick="switchCitizenTab('reg')">✏️ 시민권자 등록</button>
+                <button class="citizen-tab-btn" id="citizenTabListBtn" onclick="switchCitizenTab('list')">🔍 시민권자 조회</button>
+            </div>
+            <div class="modal-body">
+                <!-- 등록 탭 -->
+                <div id="citizenTabReg">
+                    <div class="form-group">
+                        <label for="citizenRealNameInline">실명 *</label>
+                        <input type="text" id="citizenRealNameInline" placeholder="예) 홍길동">
+                    </div>
+                    <div class="form-group">
+                        <label for="citizenNicknameInline">닉네임 *</label>
+                        <input type="text" id="citizenNicknameInline" placeholder="예) 머니킹">
+                        <div class="form-hint">특수문자 제외, 공백 자동 제거, 중복 불가</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="citizenEFTIInline">기본 EFTI</label>
+                        <select id="citizenEFTIInline"></select>
+                    </div>
+                    <div id="citizenFormErrorInline" class="form-error"></div>
+                    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+                        <button class="btn btn-dark" type="button" onclick="resetCitizenFormInline()">초기화</button>
+                        <button class="btn btn-success" type="button" id="citizenSubmitBtnInline" onclick="submitCitizenRegistrationInline()">
+                            <span id="citizenSubmitTextInline">등록하기</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- 조회 탭 -->
+                <div id="citizenTabList" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                        <input type="text" id="citizenSearchInput" placeholder="닉네임 / 실명 검색"
+                            style="padding:10px 12px; border:1px solid #d6dbe3; border-radius:10px; flex:1;"
+                            oninput="filterCitizenTable()">
+                    </div>
+                    <div id="citizenTableLoading" style="display:none; font-size:13px; color:#666; margin-bottom:8px;">불러오는 중...</div>
+                    <div style="overflow:auto; max-height:300px; border:1px solid #e5e7eb; border-radius:12px; background:#fff;">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                            <thead style="position:sticky; top:0; background:#eef6ff;">
+                                <tr>
+                                    <th id="citizenCheckColHeader" style="padding:10px; border-bottom:1px solid #ddd; text-align:center; width:36px;"></th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">닉네임</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">실명</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">EFTI</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">가입일</th>
+                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="citizenTableBody">
+                                <tr><td colspan="6" style="padding:16px; text-align:center; color:#999;">데이터를 불러오세요.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+                        <button class="btn btn-primary" id="btnFetchCitizens" onclick="fetchCitizenList()">🔄 데이터 불러오기</button>
+                        <button class="btn btn-dark" id="btnEditCitizens" onclick="enterCitizenEditMode()" style="display:none;">✏️ 수정하기</button>
+                        <button class="btn btn-success" id="btnSaveCitizens" onclick="saveCitizenEdits()" style="display:none;">💾 저장하기</button>
+                        <button class="btn btn-danger" id="btnDeleteCitizens" onclick="deleteSelectedCitizens()">🗑️ 삭제하기</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeCitizenMgmtModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 시작 모달 -->
+    <div id="gameStartModal" class="modal-backdrop" onclick="handleGameStartBackdrop(event)">
+        <div class="modal-card game-start-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🎮 머니빌리지 게임 설정</h3>
+            </div>
+            <div class="gs-step-indicator">
+                <div class="gs-step">
+                    <div class="gs-dot active" id="gsDot1"></div>
+                    <div class="gs-label">게임 종류</div>
+                </div>
+                <div class="gs-line"></div>
+                <div class="gs-step">
+                    <div class="gs-dot" id="gsDot2"></div>
+                    <div class="gs-label">주식 가격</div>
+                </div>
+                <div class="gs-line"></div>
+                <div class="gs-step">
+                    <div class="gs-dot" id="gsDot3"></div>
+                    <div class="gs-label">명단 입력</div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: 게임 종류 -->
+                <div id="gameStep1">
+                    <div class="mode-select">
+                        <div class="mode-btn selected" onclick="selectMode('individual')" id="btnIndiv">
+                            <span class="mode-ico">👤</span><span class="mode-txt">개인전</span>
+                        </div>
+                        <div class="mode-btn" onclick="selectMode('team')" id="btnTeam">
+                            <span class="mode-ico">👥</span><span class="mode-txt">팀전</span>
+                        </div>
+                    </div>
+                    <div id="individualConfig" style="margin-top:4px;">
+                        <input type="hidden" id="playerCount" value="4">
+                    </div>
+                    <div id="teamConfig" style="display:none; margin-top:4px;">
+                        <input type="hidden" id="teamCount" value="2">
+                        <input type="hidden" id="memberPerTeam" value="2">
+                    </div>
+                </div>
+                <!-- Step 2: 주식 가격 설정 -->
+                <div id="gameStep2" style="display:none;">
+                    <div class="stock-config-area">
+                        <div class="stock-config-title">📈 주식 가격 설정 (4R)</div>
+                        <div class="stock-inputs-grid" id="stockConfigInputs"></div>
+                    </div>
+                </div>
+                <!-- Step 3: 명단 입력 -->
+                <div id="gameStep3" style="display:none;">
+                    <div id="indivAddRemoveBar" style="display:flex; gap:8px; margin-bottom:12px;">
+                        <button class="btn btn-primary btn-mini" onclick="addIndividualPlayer()">➕ 참가자 추가</button>
+                        <button class="btn btn-dark btn-mini" onclick="removeIndividualPlayer()">➖ 참가자 삭제</button>
+                    </div>
+                    <div id="nameInputArea" class="player-list-input" style="max-height:320px; overflow-y:auto;"></div>
+                    <div id="teamAddBar" style="display:none; justify-content:center; margin-top:10px;">
+                        <button class="btn btn-primary btn-mini" onclick="addTeam()">➕ 팀 추가</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeGameStartModal()">닫기</button>
+                <button class="btn btn-dark" id="gsPrevBtn" style="display:none;" onclick="gsGoToStep(currentGameStep - 1)">◀ 이전</button>
+                <button class="btn btn-success" id="gsNextBtn" onclick="gsGoToStep(currentGameStep + 1)">다음 ▶</button>
+                <button class="btn btn-success" id="gsStartBtn" style="display:none;" onclick="startGame()">🚀 게임 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 과거 게임 불러오기 모달 -->
+    <div id="pastGameModal" class="modal-backdrop" onclick="handlePastGameBackdrop(event)">
+        <div class="modal-card past-game-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📅 과거 자산 내역 불러오기</h3>
+                <p>날짜를 선택한 뒤 불러올 분반을 클릭하세요</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>게임 날짜</label>
+                    <select id="pastGameDateSelect" onchange="onPastGameDateChange()">
+                        <option value="">-- 날짜를 선택하세요 --</option>
+                    </select>
+                </div>
+                <div id="pastGameLoading" style="display:none; text-align:center; padding:16px; color:#888; font-size:14px;">불러오는 중...</div>
+                <div id="pastGameCardsGrid" class="past-game-cards-grid"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closePastGameModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -504,5 +777,7 @@
 <script src="js/report.js"></script>
 <script src="js/fame.js"></script>
 <script src="js/arduino.js"></script>
+<script src="js/bank.js"></script>
+<script src="js/quiz.js"></script>
 </body>
 </html>
