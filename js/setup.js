@@ -31,7 +31,6 @@
             }
         } else {
             const tCnt = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount')?.value, 10) || 2));
-            const mCnt = 2; // 팀당 인원 고정
 
             for (let t = 0; t < tCnt; t++) {
                 const teamName = String.fromCharCode(65 + t) + "팀";
@@ -52,7 +51,6 @@
         if (!area || area.innerHTML.trim() === '') return;
 
         const desiredTeamCount = Math.min(20, Math.max(2, parseInt(document.getElementById('teamCount')?.value, 10) || 2));
-        const desiredMemberCount = 2; // 팀당 인원 고정
         let teamSections = Array.from(area.querySelectorAll('.team-section'));
 
         while (teamSections.length < desiredTeamCount) {
@@ -67,18 +65,7 @@
             teamSections = Array.from(area.querySelectorAll('.team-section'));
         }
 
-        teamSections.forEach(teamEl => {
-            let members = teamEl.querySelectorAll('.p-input-group');
-            while (members.length < desiredMemberCount) {
-                addMember(teamEl, false);
-                members = teamEl.querySelectorAll('.p-input-group');
-            }
-            while (members.length > desiredMemberCount) {
-                members[members.length - 1].remove();
-                members = teamEl.querySelectorAll('.p-input-group');
-            }
-            renumberMembers(teamEl);
-        });
+        teamSections.forEach(teamEl => renumberMembers(teamEl));
 
         syncTeamCountInput();
         applyNameLengthBindings(area);
@@ -257,6 +244,8 @@
             <input class="team-name-input" type="text" value="${defaultName}">
             </div>
             <div class="team-btns">
+            <button class="btn btn-primary btn-mini" style="font-size:11px; padding:3px 8px;" onclick="addMember(this.closest('.team-section'))">➕ 팀원</button>
+            <button class="btn btn-dark btn-mini" style="font-size:11px; padding:3px 8px;" onclick="removeMember(this.closest('.team-section'))">➖ 팀원</button>
             <button class="btn btn-danger btn-mini" style="font-size:11px; padding:3px 8px;" onclick="removeTeam(this.closest('.team-section'))">🗑️ 삭제</button>
             </div>
         </div>
@@ -265,8 +254,7 @@
 
         area.appendChild(wrapper);
 
-        // 팀당 인원 고정 2명 자동 추가
-        addMember(wrapper, false);
+        // 초기 1명 자동 추가 (➕팀원 버튼으로 자유롭게 추가 가능)
         addMember(wrapper, false);
         renumberMembers(wrapper);
 
@@ -924,9 +912,6 @@
 
         // 팀 개수 바뀔 때
         document.getElementById('teamCount')?.addEventListener('input', syncTeamUiToConfig);
-
-        // 팀당 인원 바뀔 때
-        document.getElementById('memberPerTeam')?.addEventListener('input', syncTeamUiToConfig);
 
         // 개인전 인원 바뀔 때
         document.getElementById('playerCount')?.addEventListener('input', () => {

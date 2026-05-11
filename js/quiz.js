@@ -6,15 +6,27 @@ const _quiz = {
     sectionNum:       null,
     gameType:         'individual', // 'individual' | 'team'
     players:          [],
-    reward:           1000,
-    progress:         {},   // individual: { [playerIdx]: 0|1|2 }
+    reward:           1000,  // 개인탭 보상
+    teamReward:       1000,  // 팀탭 보상 (팀전 전용)
+    earnedRewards:    {},    // { nickname: 누적보상합계 } — 덮어쓰기 방지용
+    progress:         {},   // individual: { [playerIdx]: 0|1 }
     teamProgress:     {},   // team: { [team_name]: 0|1|2 }
     teamPlayers:      {},   // team: { [team_name]: Set<playerIdx> } 이미 정답 맞춘 플레이어
+    cooldowns:           {},   // 개인탭: { [playerIdx]: timestamp }
+    teamPlayerCooldowns: {},   // 팀탭: { [playerIdx]: timestamp } — 개인탭과 독립
+    teamCooldowns:       {},   // (미사용, 보존)
+    cooldownTimer:    null,
+    viewMode:         'team', // 팀전 목록 보기: 'team' | 'individual'
     currentPlayerIdx: null,
-    currentQuizNum:   null, // 0=quiz2.png, 1=quiz3.png
+    currentQuizNum:   null, // team only: 0=quiz2.png, 1=quiz3.png
     selections:       [],
 };
 
+// 개인전: 문제 1개
+const _QUIZ_INDIV_IMAGE  = 'image/quiz1.png';
+const _QUIZ_INDIV_ANSWER = ['X', 'O', 'O', 'X'];
+
+// 팀전: 문제 2개
 const _QUIZ_IMAGES  = ['image/quiz2.png', 'image/quiz3.png'];
 const _QUIZ_ANSWERS = {
     'image/quiz2.png': ['O', 'X', 'O', 'X'],
@@ -72,8 +84,11 @@ function _quizResetModal() {
     document.getElementById('quizGameCardsGrid').innerHTML = '';
     document.getElementById('quizGameLoading').style.display = 'none';
     document.getElementById('quizStep1Btn').disabled = true;
-    document.getElementById('quizRewardDisplay').textContent =
-        _quiz.reward.toLocaleString() + '원';
+    document.getElementById('quizRewardSection').style.display = 'none';
+    document.getElementById('quizTeamRewardCard').style.display = 'none';
+    document.getElementById('quizIndivRewardLabel').textContent = '퀴즈 보상금액';
+    document.getElementById('quizRewardDisplay').textContent = _quiz.reward.toLocaleString() + '원';
+    document.getElementById('quizTeamRewardDisplay').textContent = _quiz.teamReward.toLocaleString() + '원';
     _quiz.gameId   = null;
     _quiz.gameDate = null;
 }
@@ -85,6 +100,7 @@ async function onQuizDateChange() {
 
     grid.innerHTML = '';
     document.getElementById('quizStep1Btn').disabled = true;
+    document.getElementById('quizRewardSection').style.display = 'none';
     _quiz.gameId = null;
 
     if (!date) return;
@@ -128,7 +144,16 @@ function _quizSelectGame(gameId, date, sectionNum, gameType, cardEl) {
     _quiz.gameDate   = date;
     _quiz.sectionNum = sectionNum;
     _quiz.gameType   = gameType || 'individual';
+    const isTeam = _quiz.gameType === 'team';
+    document.getElementById('quizRewardSection').style.display = 'block';
+    document.getElementById('quizTeamRewardCard').style.display = isTeam ? 'block' : 'none';
+    document.getElementById('quizIndivRewardLabel').textContent = isTeam ? '개인 보상금액' : '퀴즈 보상금액';
     document.getElementById('quizStep1Btn').disabled = false;
+}
+
+function _quizSaveReward(nickname, amount) {
+    _quiz.earnedRewards[nickname] = (_quiz.earnedRewards[nickname] || 0) + amount;
+    sbSaveQuestReward(_quiz.gameId, nickname, _quiz.earnedRewards[nickname]).catch(console.error);
 }
 
 function quizAdjustReward(delta) {
@@ -136,6 +161,13 @@ function quizAdjustReward(delta) {
     if (next < 0) return;
     _quiz.reward = next;
     document.getElementById('quizRewardDisplay').textContent = next.toLocaleString() + '원';
+}
+
+function quizAdjustTeamReward(delta) {
+    const next = _quiz.teamReward + delta;
+    if (next < 0) return;
+    _quiz.teamReward = next;
+    document.getElementById('quizTeamRewardDisplay').textContent = next.toLocaleString() + '원';
 }
 
 async function quizStep1Complete() {
@@ -159,12 +191,20 @@ async function quizStep1Complete() {
         const infoEl  = document.getElementById('quizGameInfo');
         if (infoEl) infoEl.textContent = `${_quiz.gameDate} · ${section}분반`;
 
-        document.getElementById('quizRewardBadge').textContent =
-            _quiz.reward.toLocaleString() + '원';
+        _quizUpdateRewardBadge();
 
-        _quiz.progress     = {};
-        _quiz.teamProgress = {};
-        _quiz.teamPlayers  = {};
+        _quiz.progress      = {};
+        _quiz.teamProgress  = {};
+        _quiz.teamPlayers   = {};
+        _quiz.cooldowns           = {};
+        _quiz.teamPlayerCooldowns = {};
+        _quiz.teamCooldowns       = {};
+        _quiz.earnedRewards       = {};
+        _quiz.viewMode      = 'team';
+        if (_quiz.cooldownTimer) {
+            clearInterval(_quiz.cooldownTimer);
+            _quiz.cooldownTimer = null;
+        }
         _quizRenderPlayerList();
         closeQuizModal();
         switchScreen('quizScreen');
@@ -176,57 +216,200 @@ async function quizStep1Complete() {
 }
 
 // ── 플레이어 리스트 ───────────────────────────────────────────────────
+const _QUIZ_COOLDOWN_MS = 60000;
+
+function quizSetViewMode(mode) {
+    _quiz.viewMode = mode;
+    _quizUpdateRewardBadge();
+    _quizRenderPlayerList();
+}
+
+function _quizUpdateRewardBadge() {
+    const reward = (_quiz.gameType === 'team' && _quiz.viewMode === 'team')
+        ? _quiz.teamReward
+        : _quiz.reward;
+    document.getElementById('quizRewardBadge').textContent = reward.toLocaleString() + '원';
+}
+
 function _quizRenderPlayerList() {
-    const grid     = document.getElementById('quizPlayerGrid');
-    const isTeam   = _quiz.gameType === 'team';
+    const grid   = document.getElementById('quizPlayerGrid');
+    const isTeam = _quiz.gameType === 'team';
+    const now    = Date.now();
     grid.innerHTML = '';
 
+    // 탭바 표시/업데이트
+    const tabBar = document.getElementById('quizTabBar');
+    tabBar.style.display = isTeam ? 'flex' : 'none';
+    if (isTeam) {
+        document.getElementById('quizTabTeam').classList.toggle('active', _quiz.viewMode === 'team');
+        document.getElementById('quizTabIndiv').classList.toggle('active', _quiz.viewMode === 'individual');
+    }
+
+    // 팀전 개인 뷰: 그룹 없이 팀 상태 기준으로 플레이어 카드 나열
+    const isTeamIndivView = isTeam && _quiz.viewMode === 'individual';
+    grid.classList.toggle('is-team', isTeam && _quiz.viewMode === 'team');
+
+    if (!isTeam) {
+        _quiz.players.forEach((p, idx) => {
+            const count = _quiz.progress[idx] || 0;
+            const done  = count >= 1;
+
+            let onCooldown = false, remaining = 0;
+            if (!done) {
+                const start = _quiz.cooldowns[idx];
+                if (start) {
+                    remaining  = Math.ceil((start + _QUIZ_COOLDOWN_MS - now) / 1000);
+                    onCooldown = remaining > 0;
+                }
+            }
+
+            const isClickable   = !done && !onCooldown;
+            const badgeClass    = done ? ' quiz-done' : '';
+            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
+
+            const card = document.createElement('div');
+            card.className = 'bank-player-card' + (done ? ' completed' : '');
+            if (!isClickable) card.style.opacity = '0.55';
+            card.innerHTML = `
+                <div class="bank-player-nickname">${p.nickname}</div>
+                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-status">
+                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
+                    <span class="quiz-progress-badge${badgeClass}">[${count}/1]</span>
+                    ${cooldownBadge}
+                </div>`;
+            if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
+            grid.appendChild(card);
+        });
+        _quizManageCooldownTimer();
+        return;
+    }
+
+    // 팀전 - 개인 탭: 개인 추적(progress[idx]) 기준으로 quiz1.png 사용
+    if (isTeamIndivView) {
+        _quiz.players.forEach((p, idx) => {
+            const count = _quiz.progress[idx] || 0;
+            const done  = count >= 1;
+
+            let onCooldown = false, remaining = 0;
+            if (!done) {
+                const start = _quiz.cooldowns[idx];
+                if (start) {
+                    remaining  = Math.ceil((start + _QUIZ_COOLDOWN_MS - now) / 1000);
+                    onCooldown = remaining > 0;
+                }
+            }
+
+            const isClickable   = !done && !onCooldown;
+            const badgeClass    = done ? ' quiz-done' : '';
+            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
+
+            const card = document.createElement('div');
+            card.className = 'bank-player-card' + (done ? ' completed' : '');
+            if (!isClickable) card.style.opacity = '0.55';
+            card.innerHTML = `
+                <div class="bank-player-nickname">${p.nickname}</div>
+                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-status">
+                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
+                    <span class="quiz-progress-badge${badgeClass}">[${count}/1]</span>
+                    ${cooldownBadge}
+                </div>`;
+            if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
+            grid.appendChild(card);
+        });
+        _quizManageCooldownTimer();
+        return;
+    }
+
+    // 팀전 - 팀 탭: team_name 기준으로 그룹핑
+    const teams = new Map();
     _quiz.players.forEach((p, idx) => {
-        let count, done, inProgress, playerAlreadyDone;
-
-        if (isTeam && p.team_name) {
-            count             = _quiz.teamProgress[p.team_name] || 0;
-            done              = count >= 2;
-            inProgress        = count === 1;
-            playerAlreadyDone = !!(_quiz.teamPlayers[p.team_name]?.has(idx));
-        } else {
-            count             = _quiz.progress[idx] || 0;
-            done              = count >= 2;
-            inProgress        = count === 1;
-            playerAlreadyDone = done;
-        }
-
-        const isClickable = !done && !playerAlreadyDone;
-        const badgeClass  = done ? ' quiz-done' : inProgress ? ' quiz-in-progress' : '';
-        const teamTag     = p.team_name ? `<span class="bank-player-team">${p.team_name}</span>` : '';
-
-        const card = document.createElement('div');
-        card.className = 'bank-player-card'
-            + (done ? ' completed' : inProgress ? ' in-progress' : '');
-        if (!isClickable) card.style.opacity = '0.55';
-
-        card.innerHTML = `
-            <div class="bank-player-nickname">${p.nickname}</div>
-            <div class="bank-player-realname">${p.real_name}</div>
-            <div class="bank-player-status">
-                <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                ${teamTag}
-                <span class="quiz-progress-badge${badgeClass}">[${count}/2]</span>
-            </div>`;
-
-        if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
-        grid.appendChild(card);
+        const key = p.team_name;
+        if (!teams.has(key)) teams.set(key, []);
+        teams.get(key).push({ p, idx });
     });
+
+    teams.forEach((members, teamKey) => {
+        const count      = _quiz.teamProgress[teamKey] || 0;
+        const done       = count >= 2;
+        const inProgress = count === 1;
+
+        const groupEl = document.createElement('div');
+        groupEl.className = 'team-group';
+        groupEl.innerHTML = `<div class="team-group-header">
+            <span>${teamKey || '무소속'}</span>
+            <span class="quiz-progress-badge">[${count}/2]</span>
+        </div>`;
+
+        const playersEl = document.createElement('div');
+        playersEl.className = 'team-group-players';
+
+        members.forEach(({ p, idx }) => {
+            const playerAlreadyDone = !!(_quiz.teamPlayers[teamKey]?.has(idx));
+
+            let onCooldown = false, remaining = 0;
+            if (!done && !playerAlreadyDone) {
+                const start = _quiz.teamPlayerCooldowns[idx];
+                if (start) {
+                    remaining  = Math.ceil((start + _QUIZ_COOLDOWN_MS - now) / 1000);
+                    onCooldown = remaining > 0;
+                }
+            }
+
+            const isClickable   = !done && !playerAlreadyDone && !onCooldown;
+            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
+
+            const card = document.createElement('div');
+            card.className = 'bank-player-card' + (playerAlreadyDone ? ' completed' : '');
+            if (!isClickable) card.style.opacity = '0.55';
+            card.innerHTML = `
+                <div class="bank-player-nickname">${p.nickname}</div>
+                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-status">
+                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
+                    ${playerAlreadyDone ? '<span class="bank-status-done">정답</span>' : ''}
+                    ${cooldownBadge}
+                </div>`;
+            if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
+            playersEl.appendChild(card);
+        });
+
+        groupEl.appendChild(playersEl);
+        grid.appendChild(groupEl);
+    });
+
+    _quizManageCooldownTimer();
+}
+
+function _quizManageCooldownTimer() {
+    const now = Date.now();
+
+    const hasActive = _quiz.players.some((p, idx) => {
+        const check = s => s && (s + _QUIZ_COOLDOWN_MS - now) > 0;
+        return check(_quiz.cooldowns[idx]) || check(_quiz.teamPlayerCooldowns[idx]);
+    });
+
+    if (hasActive && !_quiz.cooldownTimer) {
+        _quiz.cooldownTimer = setInterval(() => {
+            if (document.getElementById('quizGameView').style.display === 'none') {
+                _quizRenderPlayerList();
+            }
+        }, 1000);
+    } else if (!hasActive && _quiz.cooldownTimer) {
+        clearInterval(_quiz.cooldownTimer);
+        _quiz.cooldownTimer = null;
+    }
 }
 
 function _quizSelectPlayer(idx) {
     _quiz.currentPlayerIdx = idx;
     const p = _quiz.players[idx];
 
-    if (_quiz.gameType === 'team' && p.team_name) {
+    if (_quiz.gameType === 'team' && _quiz.viewMode === 'team' && p.team_name) {
         _quiz.currentQuizNum = _quiz.teamProgress[p.team_name] || 0;
     } else {
-        _quiz.currentQuizNum = _quiz.progress[idx] || 0;
+        _quiz.currentQuizNum = 0;
     }
 
     _quizStartGame();
@@ -234,8 +417,10 @@ function _quizSelectPlayer(idx) {
 
 // ── 퀴즈 게임 ────────────────────────────────────────────────────────
 function _quizStartGame() {
-    const imgSrc = _QUIZ_IMAGES[_quiz.currentQuizNum];
-    const p      = _quiz.players[_quiz.currentPlayerIdx];
+    const imgSrc = (_quiz.gameType === 'team' && _quiz.viewMode === 'team')
+        ? _QUIZ_IMAGES[_quiz.currentQuizNum]
+        : _QUIZ_INDIV_IMAGE;
+    const p = _quiz.players[_quiz.currentPlayerIdx];
 
     _quiz.selections = new Array(4).fill(null);
 
@@ -299,8 +484,9 @@ function quizConfirmNo() {
 }
 
 function _quizShowResult() {
-    const imgSrc     = _QUIZ_IMAGES[_quiz.currentQuizNum];
-    const answers    = _QUIZ_ANSWERS[imgSrc];
+    const isTeamMode = _quiz.gameType === 'team' && _quiz.viewMode === 'team';
+    const imgSrc     = isTeamMode ? _QUIZ_IMAGES[_quiz.currentQuizNum] : _QUIZ_INDIV_IMAGE;
+    const answers    = isTeamMode ? _QUIZ_ANSWERS[imgSrc] : _QUIZ_INDIV_ANSWER;
     const allCorrect = answers.every((ans, i) => _quiz.selections[i] === ans);
 
     const msg          = document.getElementById('quizResultMsg');
@@ -317,7 +503,7 @@ function _quizShowResult() {
         msg.className   = 'result-msg correct';
 
         const p      = _quiz.players[_quiz.currentPlayerIdx];
-        const isTeam = _quiz.gameType === 'team' && p.team_name;
+        const isTeam = isTeamMode && p.team_name;
 
         if (isTeam) {
             if (!_quiz.teamPlayers[p.team_name]) _quiz.teamPlayers[p.team_name] = new Set();
@@ -328,30 +514,31 @@ function _quizShowResult() {
                 // 팀 [2/2] 달성 — 팀원 전체에 보상 저장
                 for (const pidx of _quiz.teamPlayers[p.team_name]) {
                     const nick = _quiz.players[pidx].nickname;
-                    sbSaveQuestReward(_quiz.gameId, nick, _quiz.reward).catch(console.error);
+                    _quizSaveReward(nick, _quiz.teamReward);
                 }
-                btnOk.textContent   = `${_quiz.reward.toLocaleString()}원 획득`;
+                btnOk.textContent   = `${_quiz.teamReward.toLocaleString()}원 획득`;
                 btnOk.style.display = 'block';
             } else {
                 btnTeamNext.style.display = 'block';
             }
         } else {
-            const newProgress = (_quiz.progress[_quiz.currentPlayerIdx] || 0) + 1;
-            _quiz.progress[_quiz.currentPlayerIdx] = newProgress;
-            if (newProgress >= 2) {
-                // 개인 [2/2] 달성 — 보상 저장
-                sbSaveQuestReward(_quiz.gameId, p.nickname, _quiz.reward).catch(console.error);
-                btnOk.textContent   = `${_quiz.reward.toLocaleString()}원 획득`;
-                btnOk.style.display = 'block';
-            } else {
-                btnOk.textContent   = '확인 (1/2)';
-                btnOk.style.display = 'block';
-            }
+            // 개인 [1/1] 달성 — 즉시 보상 저장
+            _quiz.progress[_quiz.currentPlayerIdx] = 1;
+            _quizSaveReward(p.nickname, _quiz.reward);
+            btnOk.textContent   = `${_quiz.reward.toLocaleString()}원 획득`;
+            btnOk.style.display = 'block';
         }
     } else {
         msg.textContent        = '틀렸습니다!';
         msg.className          = 'result-msg wrong';
         btnRetry.style.display = 'block';
+
+        const p = _quiz.players[_quiz.currentPlayerIdx];
+        if (isTeamMode) {
+            _quiz.teamPlayerCooldowns[_quiz.currentPlayerIdx] = Date.now();
+        } else {
+            _quiz.cooldowns[_quiz.currentPlayerIdx] = Date.now();
+        }
     }
 
     document.getElementById('quizResultOverlay').classList.add('show');

@@ -62,11 +62,15 @@
     function applyInputsToPlayer(p, prefix) {
         if (!p) return;
 
-        const cashEl = document.getElementById(prefix === 'cnt' ? 'cntCashInput' : 'rptCashInput');
+        const cashEl      = document.getElementById(prefix === 'cnt' ? 'cntCashInput'      : 'rptCashInput');
         const diligenceEl = document.getElementById(prefix === 'cnt' ? 'cntDiligenceInput' : 'rptDiligenceInput');
+        const depositEl   = prefix === 'rpt' ? document.getElementById('rptDepositInput') : null;
+        const questEl     = prefix === 'rpt' ? document.getElementById('rptQuestInput')   : null;
 
-        p.manualCash = parseInt(cashEl?.value, 10) || 0;
+        p.manualCash      = parseInt(cashEl?.value,      10) || 0;
         p.diligenceReward = parseInt(diligenceEl?.value, 10) || 0;
+        if (depositEl) p.depositReward = parseInt(depositEl.value, 10) || 0;
+        if (questEl)   p.questReward   = parseInt(questEl.value,   10) || 0;
 
         const stockPrefix = prefix === 'cnt' ? 'ui' : 'rpt';
         for (let k in stockInfo) {
@@ -76,12 +80,12 @@
             }
         }
 
-        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0);
+        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
     }
 
     function recalculateAllRankings() {
         players.forEach(p => {
-            p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0);
+            p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
         });
 
         let sorted = [...players].sort((a, b) => b.total - a.total);

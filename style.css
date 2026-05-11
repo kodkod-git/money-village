@@ -146,9 +146,9 @@
         .rank-1st { color: #d4a000; font-weight:bold; } 
         .rank-name { font-size: 16px; font-weight: 800; color: #333; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 85px; }
 
-        .asset-box {padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to right, #fcfcfc, #f4f8ff); border-radius: 12px; padding: 10px 25px; margin-bottom: 15px; border: 1px solid #eee; height: 95px; }
-        .asset-text .money { font-size: 44px; font-weight: 900; color: #333; letter-spacing: -1px; margin-bottom: 10px; }
-        .asset-detail { margin-top: 3px; font-size: 16px; font-weight: 700; display: flex; align-items: center; }
+        .asset-box { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to right, #fcfcfc, #f4f8ff); border-radius: 12px; padding: 10px 18px; margin-bottom: 15px; border: 1px solid #eee; min-height: 95px; height: auto; }
+        .asset-text .money { font-size: 32px; font-weight: 900; color: #333; letter-spacing: -1px; margin-bottom: 6px; }
+        .asset-detail { margin-top: 3px; font-size: 13px; font-weight: 700; display: flex; align-items: center; }
         .chart-container { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
         .chart-center { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; pointer-events: none; }
         .chart-center div:first-child { font-size: 14px; font-weight: bold; color: #666; line-height: 1.2; margin-bottom: 0px; }
@@ -659,6 +659,46 @@
         }
         .bank-player-card.completed { background: #f0f7f0; border-color: #b2dfb2; }
         .bank-player-card.in-progress { background: #FFFDE7; border-color: #FB8C00; }
+
+        /* 플레이어 목록 탭 (팀전 전용) */
+        .player-tab-bar {
+            display: flex;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1.5px solid #C5CAE9;
+        }
+        .player-tab {
+            flex: 1;
+            padding: 9px 0;
+            font-size: 14px;
+            font-weight: 700;
+            background: #F3F4FC;
+            color: #5E35B1;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .player-tab + .player-tab { border-left: 1.5px solid #C5CAE9; }
+        .player-tab.active { background: #5E35B1; color: #fff; }
+
+        /* 팀 그룹 카드 */
+        .bank-player-grid.is-team { grid-template-columns: 1fr; }
+        .team-group {
+            border: 2px solid #C5CAE9; border-radius: 14px;
+            padding: 12px; background: #F3F4FC;
+        }
+        .team-group.team-done { background: #f0f7f0; border-color: #b2dfb2; }
+        .team-group.team-in-progress { background: #FFFDE7; border-color: #FB8C00; }
+        .team-group-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 900; color: #3949AB;
+            margin-bottom: 10px; padding-bottom: 8px;
+            border-bottom: 1.5px solid #C5CAE9;
+        }
+        .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
+        .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
+        .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
         .bank-status-type  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
         .bank-status-done  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
@@ -869,6 +909,11 @@
         }
         .quiz-progress-badge.quiz-done {
             background: #e0f2e9; color: #2e7d32;
+        }
+        .quiz-cooldown-badge {
+            font-size: 12px; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px;
+            background: #fdecea; color: #c62828;
         }
 
         /* 퀴즈 게임 뷰 (fixed overlay) */
