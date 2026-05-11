@@ -19,7 +19,7 @@ function _toStorageKey(fileName) {
 }
 
 function _nick(raw) {
-    return String(raw || '').replace(/\s+/g, '').replace(/[^\w가-힣]/g, '').slice(0, 5);
+    return String(raw || '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 5);
 }
 function _text(raw, maxLen = 5) {
     return String(raw || '').replace(/\s+/g, '').trim().slice(0, maxLen);
@@ -63,11 +63,16 @@ async function sbDeleteCitizen(nickname) {
     const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    await _sb.from('stock_balance').delete().eq('nickname', nick);
-    await _sb.from('cash_balance').delete().eq('nickname', nick);
-    await _sb.from('traits').delete().eq('nickname', nick);
-    await _sb.from('game_individual').delete().eq('nickname', nick);
-    await _sb.from('users').delete().eq('nickname', nick);
+    const { error: e1 } = await _sb.from('stock_balance').delete().eq('nickname', nick);
+    if (e1) return { success: false, code: 'DELETE_FAILED', message: e1.message };
+    const { error: e2 } = await _sb.from('cash_balance').delete().eq('nickname', nick);
+    if (e2) return { success: false, code: 'DELETE_FAILED', message: e2.message };
+    const { error: e3 } = await _sb.from('traits').delete().eq('nickname', nick);
+    if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
+    const { error: e4 } = await _sb.from('game_individual').delete().eq('nickname', nick);
+    if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+    const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
+    if (e5) return { success: false, code: 'DELETE_FAILED', message: e5.message };
 
     return { success: true, nickname: nick };
 }
@@ -112,6 +117,79 @@ async function sbSaveStockValue(stockValues) {
     return gameId;
 }
 
+// 게임 시작 시 초기 레코드 삽입 (자산 = 0)
+async function sbInitGame(gameId, mode, players, stockValues) {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // stock_price
+    const { error: spErr } = await _sb.from('stock_price').insert({
+        game_id: gameId,
+        sasung:  Number(stockValues[0] ?? 1500),
+        lgi:     Number(stockValues[1] ?? 600),
+        skei:    Number(stockValues[2] ?? 1600),
+        cacao:   Number(stockValues[3] ?? 4000),
+        hyunde:  Number(stockValues[4] ?? 6000),
+        naber:   Number(stockValues[5] ?? 7000)
+    });
+    if (spErr) console.error('[sbInitGame] stock_price', spErr);
+
+    // game_info (section_num 자동 계산)
+    const { count } = await _sb.from('game_info').select('*', { count: 'exact', head: true }).eq('date', today);
+    const { error: giErr } = await _sb.from('game_info').insert({
+        game_id:      gameId,
+        date:         today,
+        player_count: players.length,
+        game_type:    mode,
+        section_num:  (count || 0) + 1
+    });
+    if (giErr) console.error('[sbInitGame] game_info', giErr);
+
+    // game_individual (자산 0)
+    const indivRows = players
+        .map(p => ({
+            date:             today,
+            nickname:         _nick(p.nickname || p.name || ''),
+            real_name:        _text(p.realName || p.name || ''),
+            total_asset:      0,
+            cash:             0,
+            stock:            0,
+            diligence_reward: 0,
+            game_id:          gameId,
+            team_id:          p.teamId || null
+        }))
+        .filter(r => r.nickname);
+
+    if (indivRows.length > 0) {
+        const { error } = await _sb.from('game_individual').insert(indivRows);
+        if (error) console.error('[sbInitGame] game_individual', error);
+    }
+
+    // game_team (팀전인 경우, 총자산 0)
+    if (mode === 'team') {
+        const teamMap = {};
+        players.forEach(p => {
+            const tid = p.teamId || '';
+            if (!tid) return;
+            if (!teamMap[tid]) teamMap[tid] = { name: p.team || '', members: [] };
+            const nick = _nick(p.nickname || p.name || '');
+            if (nick) teamMap[tid].members.push(nick);
+        });
+
+        for (const [tid, t] of Object.entries(teamMap)) {
+            if (!tid || !t.name) continue;
+            const { error } = await _sb.from('game_team').upsert({
+                team_id:          tid,
+                game_id:          gameId,
+                date:             today,
+                team_name:        _text(t.name),
+                team_total_asset: 0,
+                members:          t.members.join(', ')
+            }, { onConflict: 'team_id' });
+            if (error) console.error('[sbInitGame] game_team', error);
+        }
+    }
+}
+
 async function sbSaveUserBalance(nickname, gameId, assets) {
     const nick = _nick(nickname);
     const gid  = String(gameId || '').trim();
@@ -151,19 +229,22 @@ async function sbLoadUserBalance(nickname, gameId) {
 }
 
 async function sbSaveTraits(gameId, players) {
-    for (const p of players) {
-        const nickname = _nick(p.nickname || '');
-        if (!nickname || !gameId) continue;
-        await _sb.from('traits').upsert({
-            nickname, game_id: gameId,
+    if (!gameId) return;
+    const rows = players
+        .map(p => ({
+            nickname:  _nick(p.nickname || ''),
+            game_id:   gameId,
             diligent:  !!(p.traits && p.traits.diligent),
             saving:    !!(p.traits && p.traits.saving),
             invest:    !!(p.traits && p.traits.invest),
             career:    !!(p.traits && p.traits.career),
             luck:      !!(p.traits && p.traits.luck),
             adventure: !!(p.traits && p.traits.adventure)
-        }, { onConflict: 'game_id,nickname' });
-    }
+        }))
+        .filter(r => r.nickname);
+    if (rows.length === 0) return;
+    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,nickname' });
+    if (error) console.error('[sbSaveTraits]', error);
 }
 
 async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
@@ -205,15 +286,37 @@ async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
         for (const t of teams) {
             const teamId   = String(t.team_id || '').trim();
             const teamName = _text(t.name ?? '');
-            if (!teamId || !teamName) continue;
+            const gameId   = String(t.game_id || '').trim();
+            if (!teamId || !teamName || !gameId) continue;
             await _sb.from('game_team').upsert({
                 team_id:          teamId,
-                game_id:          String(t.game_id || '').trim(),
+                game_id:          gameId,
                 date,
                 team_name:        teamName,
                 team_total_asset: Number(t.total ?? 0),
                 members:          String(t.members ?? '')
             }, { onConflict: 'team_id' });
+        }
+    }
+
+    // game_info upsert: 날짜 내 section_num 자동 계산
+    const gameId = String((individuals[0] || teams[0] || {}).game_id || '').trim();
+    if (gameId) {
+        const { data: existing } = await _sb.from('game_info').select('game_id').eq('game_id', gameId).maybeSingle();
+        if (!existing) {
+            const { count } = await _sb.from('game_info').select('*', { count: 'exact', head: true }).eq('date', date);
+            await _sb.from('game_info').insert({
+                game_id:      gameId,
+                date,
+                player_count: individuals.length,
+                game_type:    mode,
+                section_num:  (count || 0) + 1
+            });
+        } else {
+            await _sb.from('game_info').update({
+                player_count: individuals.length,
+                game_type:    mode
+            }).eq('game_id', gameId);
         }
     }
 
@@ -225,6 +328,73 @@ async function sbLoadAssetsByDate(date) {
     if (date) query = query.eq('date', date);
     const { data } = await query;
     return { success: true, history: data || [] };
+}
+
+// 과거 게임 날짜 목록 (dropdown용)
+async function sbGetGameDates() {
+    const { data } = await _sb.from('game_info').select('date').order('date', { ascending: false });
+    if (!data) return [];
+    const seen = new Set();
+    return data.map(r => r.date).filter(d => { if (seen.has(d)) return false; seen.add(d); return true; });
+}
+
+// 특정 날짜의 게임 목록 + 참가자 미리보기 (카드용)
+async function sbGetGamesByDate(date) {
+    const { data: games } = await _sb.from('game_info').select('*').eq('date', date).order('section_num');
+    if (!games || games.length === 0) return [];
+    return Promise.all(games.map(async game => {
+        const { data: rows } = await _sb.from('game_individual')
+            .select('real_name').eq('game_id', game.game_id).limit(6);
+        return { ...game, preview_names: (rows || []).map(r => r.real_name).filter(Boolean) };
+    }));
+}
+
+// game_id 기반 플레이어 전체 로드
+async function sbLoadAssetsByGameId(gameId) {
+    const { data } = await _sb.from('game_individual').select('*')
+        .eq('game_id', gameId).order('total_asset', { ascending: false });
+    return { success: true, history: data || [] };
+}
+
+// game_id 참가자 목록 (nickname, real_name, default_efti)
+async function sbGetPlayersByGameId(gameId) {
+    const { data: rows } = await _sb.from('game_individual')
+        .select('nickname, real_name, team_id').eq('game_id', gameId);
+    if (!rows || rows.length === 0) return [];
+
+    const nicknames = rows.map(r => r.nickname).filter(Boolean);
+    const { data: users } = await _sb.from('users')
+        .select('nickname, real_name, default_efti').in('nickname', nicknames);
+    const userMap = Object.fromEntries((users || []).map(u => [u.nickname, u]));
+
+    const teamIds = [...new Set(rows.map(r => r.team_id).filter(Boolean))];
+    let teamMap = {};
+    if (teamIds.length > 0) {
+        const { data: teams } = await _sb.from('game_team')
+            .select('team_id, team_name').in('team_id', teamIds);
+        teamMap = Object.fromEntries((teams || []).map(t => [t.team_id, t.team_name]));
+    }
+
+    return rows.map(r => ({
+        nickname:     r.nickname,
+        real_name:    userMap[r.nickname]?.real_name || r.real_name || '',
+        default_efti: userMap[r.nickname]?.default_efti || 'FAEN',
+        team_name:    r.team_id ? (teamMap[r.team_id] || '') : ''
+    }));
+}
+
+async function sbSaveDepositReward(gameId, nickname, depositReward) {
+    await _sb.from('game_individual')
+        .update({ deposit_reward: Number(depositReward) })
+        .eq('game_id', gameId)
+        .eq('nickname', nickname);
+}
+
+async function sbSaveQuestReward(gameId, nickname, questReward) {
+    await _sb.from('game_individual')
+        .update({ quest_reward: Number(questReward) })
+        .eq('game_id', gameId)
+        .eq('nickname', nickname);
 }
 
 async function sbLoadTraitsByGameId(gameId) {
