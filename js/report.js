@@ -314,11 +314,15 @@
         const depositPercent   = (deposit   / total) * 100;
         const questPercent     = (quest     / total) * 100;
 
-        setDonutSegment(cashCircle,      cashPercent,      0);
-        setDonutSegment(stockCircle,     stockPercent,     cashPercent);
-        setDonutSegment(diligenceCircle, diligencePercent, cashPercent + stockPercent);
-        if (depositCircle) setDonutSegment(depositCircle, depositPercent, cashPercent + stockPercent + diligencePercent);
-        if (questCircle)   setDonutSegment(questCircle,   questPercent,   cashPercent + stockPercent + diligencePercent + depositPercent);
+        const _seg = (el, pct, off) => {
+            if (!el) return;
+            pct > 0 ? setDonutSegment(el, pct, off) : clearDonutSegment(el);
+        };
+        _seg(cashCircle,      cashPercent,      0);
+        _seg(stockCircle,     stockPercent,     cashPercent);
+        _seg(diligenceCircle, diligencePercent, cashPercent + stockPercent);
+        _seg(depositCircle,   depositPercent,   cashPercent + stockPercent + diligencePercent);
+        _seg(questCircle,     questPercent,     cashPercent + stockPercent + diligencePercent + depositPercent);
     }
     function prevPlayer() { if(viewingPlayerIndex>0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); } }
     function nextPlayer() { if(viewingPlayerIndex<players.length-1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); } }
@@ -831,8 +835,21 @@
                 }
             } catch(e) { console.warn("[loadTraits] 실패:", e); }
 
+            // 팀 이름 로드 (game_individual에는 team_id만 있고 team_name은 game_team에 있음)
+            const teamIds = [...new Set(players.map(p => p.teamId).filter(Boolean))];
+            if (teamIds.length > 0) {
+                try {
+                    const { data: teams } = await _sb.from('game_team')
+                        .select('team_id, team_name').in('team_id', teamIds);
+                    const teamNameMap = Object.fromEntries((teams || []).map(t => [t.team_id, t.team_name]));
+                    players.forEach(p => {
+                        if (p.teamId) p.team = teamNameMap[p.teamId] || '-';
+                    });
+                } catch(e) { console.warn('[loadPastGame] 팀 이름 로드 실패:', e); }
+            }
+
             loadedDate = gameDate;
-            currentMode = (players[0] && players[0].team !== '-') ? 'team' : 'individual';
+            currentMode = teamIds.length > 0 ? 'team' : 'individual';
             recalculateAllRankings();
             switchScreen('countingScreen');
             renderSidebar();
