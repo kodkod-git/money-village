@@ -251,7 +251,8 @@ function _bankRenderPlayerList() {
         const done     = _getPlayerDone(p, idx);
         const card     = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
-        const typeTag   = done ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
+        // 팀 탭에서는 예금 종류를 팀 헤더에 표시하므로 개별 카드에서 제외
+        const typeTag   = (!isTeamTab && done) ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
         const statusTag = done
             ? `<span class="bank-status-done">신청 완료</span>`
             : `<span class="bank-status-pending">신청 전</span>`;
@@ -290,7 +291,8 @@ function _bankRenderPlayerList() {
 
         const header = document.createElement('div');
         header.className = 'team-group-header';
-        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>`;
+        const typeLabel = td && td.type ? `<span class="bank-status-type">${_BANK_TYPE[td.type].label}</span>` : '';
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${typeLabel}`;
         groupEl.appendChild(header);
 
         const playersEl = document.createElement('div');
