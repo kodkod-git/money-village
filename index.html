@@ -585,6 +585,33 @@
                                 <button class="bank-stepper-btn" onclick="bankAdjustRatio('short', 0.1)">▲</button>
                             </div>
                         </div>
+                        <div id="bankTeamRatioSection" style="display:none; margin-top:4px;">
+                            <div class="bank-section-divider">🤝 팀 우대 금리 설정</div>
+                            <div class="bank-ratio-card">
+                                <div class="bank-ratio-title">장기 🏦 <span class="bank-ratio-sub">1라운드</span></div>
+                                <div class="bank-stepper">
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('long', -0.1, true)">▼</button>
+                                    <div class="bank-stepper-val" id="bankTeamLongRatioDisplay">2.5배</div>
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('long', 0.1, true)">▲</button>
+                                </div>
+                            </div>
+                            <div class="bank-ratio-card">
+                                <div class="bank-ratio-title">중기 ⏳ <span class="bank-ratio-sub">2라운드</span></div>
+                                <div class="bank-stepper">
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('mid', -0.1, true)">▼</button>
+                                    <div class="bank-stepper-val" id="bankTeamMidRatioDisplay">2.0배</div>
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('mid', 0.1, true)">▲</button>
+                                </div>
+                            </div>
+                            <div class="bank-ratio-card">
+                                <div class="bank-ratio-title">단기 ⚡ <span class="bank-ratio-sub">3라운드</span></div>
+                                <div class="bank-stepper">
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('short', -0.1, true)">▼</button>
+                                    <div class="bank-stepper-val" id="bankTeamShortRatioDisplay">1.5배</div>
+                                    <button class="bank-stepper-btn" onclick="bankAdjustRatio('short', 0.1, true)">▲</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
