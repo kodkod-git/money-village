@@ -94,8 +94,11 @@ function _bankResetModal() {
     document.getElementById('bankStep1Btn').disabled = true;
     document.getElementById('bankStep1Btn').textContent = '설정 완료';
     document.getElementById('bankRatioSection').style.display = 'none';
-    _bank.gameId = null;
+    const teamSection = document.getElementById('bankTeamRatioSection');
+    if (teamSection) teamSection.style.display = 'none';
+    _bank.gameId   = null;
     _bank.gameDate = null;
+    _bank.gameType = null;
 }
 
 // ── View 1(모달): 날짜·게임 선택 + 배율 설정 ──────────────────────
@@ -136,7 +139,7 @@ async function onBankDateChange() {
                     <span class="${typeTag}">${typeLabel}</span>
                     <span class="${variantTag}">${variantLabel}</span>
                 </div>`;
-            card.onclick = () => _bankSelectGame(g.game_id, date, g.section_num, card);
+            card.onclick = () => _bankSelectGame(g.game_id, date, g.section_num, g.game_type, card);
             grid.appendChild(card);
         });
     } catch(e) {
@@ -145,14 +148,17 @@ async function onBankDateChange() {
     }
 }
 
-function _bankSelectGame(gameId, date, sectionNum, cardEl) {
+function _bankSelectGame(gameId, date, sectionNum, gameType, cardEl) {
     document.querySelectorAll('#bankGameCardsGrid .past-game-card')
         .forEach(c => c.classList.remove('bank-selected'));
     cardEl.classList.add('bank-selected');
-    _bank.gameId      = gameId;
-    _bank.gameDate    = date;
-    _bank.sectionNum  = sectionNum;
+    _bank.gameId     = gameId;
+    _bank.gameDate   = date;
+    _bank.sectionNum = sectionNum;
+    _bank.gameType   = gameType;
     document.getElementById('bankRatioSection').style.display = 'block';
+    const teamSection = document.getElementById('bankTeamRatioSection');
+    if (teamSection) teamSection.style.display = gameType === 'team' ? 'block' : 'none';
     document.getElementById('bankStep1Btn').disabled = false;
 }
 
