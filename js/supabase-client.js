@@ -118,7 +118,7 @@ async function sbSaveStockValue(stockValues) {
 }
 
 // 게임 시작 시 초기 레코드 삽입 (자산 = 0)
-async function sbInitGame(gameId, mode, players, stockValues) {
+async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic') {
     const today = new Date().toISOString().slice(0, 10);
 
     // stock_price
@@ -140,7 +140,8 @@ async function sbInitGame(gameId, mode, players, stockValues) {
         date:         today,
         player_count: players.length,
         game_type:    mode,
-        section_num:  (count || 0) + 1
+        section_num:  (count || 0) + 1,
+        game_variant: gameVariant
     });
     if (giErr) console.error('[sbInitGame] game_info', giErr);
 
@@ -407,6 +408,80 @@ async function sbGetRewardsByGameId(gameId) {
 async function sbLoadTraitsByGameId(gameId) {
     const { data } = await _sb.from('traits').select('*').eq('game_id', gameId);
     return { success: true, traits: data || [] };
+}
+
+// =========================================================
+// 심화 모드: 부동산 & 성공요소
+// =========================================================
+
+async function sbSaveEstatePrice(gameId, prices) {
+    const { error } = await _sb.from('estate_price').upsert({
+        game_id:    String(gameId || '').trim(),
+        nooridambi: Number(prices['NOORIDAMBI'] ?? 100000),
+        damigorani: Number(prices['DAMIGORANI'] ?? 100000),
+        girugi:     Number(prices['GIRUGI']     ?? 100000),
+        marusuri:   Number(prices['MARUSURI']   ?? 100000),
+        chorongdam: Number(prices['CHORONGDAM'] ?? 100000),
+        haniyuwoo:  Number(prices['HANIYUWOO']  ?? 100000),
+    }, { onConflict: 'game_id' });
+    if (error) console.error('[sbSaveEstatePrice]', error);
+}
+
+async function sbSaveEstateBalance(nickname, gameId, assets) {
+    const nick = _nick(nickname);
+    const gid  = String(gameId || '').trim();
+    if (!nick || !gid) return;
+    const { error } = await _sb.from('estate_balance').upsert({
+        nickname:   nick,
+        game_id:    gid,
+        nooridambi: Number(assets['NOORIDAMBI'] || 0),
+        damigorani: Number(assets['DAMIGORANI'] || 0),
+        girugi:     Number(assets['GIRUGI']     || 0),
+        marusuri:   Number(assets['MARUSURI']   || 0),
+        chorongdam: Number(assets['CHORONGDAM'] || 0),
+        haniyuwoo:  Number(assets['HANIYUWOO']  || 0),
+    }, { onConflict: 'game_id,nickname' });
+    if (error) console.error('[sbSaveEstateBalance]', error);
+}
+
+async function sbLoadEstateBalance(nickname, gameId) {
+    const { data } = await _sb
+        .from('estate_balance').select('*')
+        .eq('nickname', nickname).eq('game_id', gameId)
+        .maybeSingle();
+    if (!data) return null;
+    return {
+        NOORIDAMBI: data.nooridambi,
+        DAMIGORANI: data.damigorani,
+        GIRUGI:     data.girugi,
+        MARUSURI:   data.marusuri,
+        CHORONGDAM: data.chorongdam,
+        HANIYUWOO:  data.haniyuwoo,
+    };
+}
+
+async function sbSaveSuccessFactors(gameId, players) {
+    if (!gameId) return;
+    const rows = players
+        .map(p => ({
+            nickname:             _nick(p.nickname || ''),
+            game_id:              String(gameId).trim(),
+            financial_management: !!(p.successFactors && p.successFactors.financial_management),
+            communication:        !!(p.successFactors && p.successFactors.communication),
+            critical_thinking:    !!(p.successFactors && p.successFactors.critical_thinking),
+            global_economy:       !!(p.successFactors && p.successFactors.global_economy),
+            credit_trust:         !!(p.successFactors && p.successFactors.credit_trust),
+            entrepreneurship:     !!(p.successFactors && p.successFactors.entrepreneurship),
+        }))
+        .filter(r => r.nickname);
+    if (rows.length === 0) return;
+    const { error } = await _sb.from('success_factors').upsert(rows, { onConflict: 'game_id,nickname' });
+    if (error) console.error('[sbSaveSuccessFactors]', error);
+}
+
+async function sbLoadSuccessFactorsByGameId(gameId) {
+    const { data } = await _sb.from('success_factors').select('*').eq('game_id', gameId);
+    return { success: true, factors: data || [] };
 }
 
 // =========================================================
