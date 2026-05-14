@@ -5,10 +5,26 @@
             grid.innerHTML += `<div class="stock-input-item"><label>${stockInfo[k].name}</label><input type="number" id="conf_${k}" value="${stockInfo[k].price}"></div>`;
         }
     }
+    function initEstateConfig() {
+        const grid = document.getElementById('stockConfigInputs');
+        grid.innerHTML = '';
+        for (let k in estateInfo) {
+            grid.innerHTML += `<div class="stock-input-item"><label>${estateInfo[k].name}</label><input type="number" id="conf_${k}" value="${estateInfo[k].price}"></div>`;
+        }
+    }
     function resetNameInputsUI() {
         const area = document.getElementById('nameInputArea');
         if (area) { area.innerHTML = ''; area.style.display = 'none'; }
         nameInputsVisible = false;
+    }
+
+    function selectGameVariant(v) {
+        currentGameVariant = v;
+        document.getElementById('btnBasic').className    = v === 'basic'    ? 'mode-btn selected' : 'mode-btn';
+        document.getElementById('btnAdvanced').className = v === 'advanced' ? 'mode-btn selected' : 'mode-btn';
+
+        const step2Label = document.getElementById('gsStep2Label');
+        if (step2Label) step2Label.textContent = v === 'advanced' ? '부동산 가격' : '주식 가격';
     }
 
     function selectMode(m) {
@@ -150,9 +166,16 @@
         document.getElementById('gameStartModal')?.classList.remove('show');
         document.getElementById('btnEditPrev').style.display = 'inline-flex';
 
-        for(let k in stockInfo) {
-            const v = document.getElementById(`conf_${k}`).value;
-            if(v) stockInfo[k].price = parseInt(v);
+        if (currentGameVariant === 'advanced') {
+            for (let k in estateInfo) {
+                const v = document.getElementById(`conf_${k}`)?.value;
+                if (v) estateInfo[k].price = parseInt(v);
+            }
+        } else {
+            for (let k in stockInfo) {
+                const v = document.getElementById(`conf_${k}`)?.value;
+                if (v) stockInfo[k].price = parseInt(v);
+            }
         }
         const gameId = crypto.randomUUID().split('-')[0];
 
@@ -178,7 +201,8 @@
                 teamTotal: 0,
                 manualCash: 0,
                 diligenceReward: 0,
-                traits: initTraitsState()
+                traits: initTraitsState(),
+                successFactors: initSuccessFactorsState()
             });
         });
         } else {
@@ -212,7 +236,8 @@
                         teamTotal: 0,
                         manualCash: 0,
                         diligenceReward: 0,
-                        traits: initTraitsState()
+                        traits: initTraitsState(),
+                        successFactors: initSuccessFactorsState()
                     });
                 });
             });
@@ -220,9 +245,18 @@
         if (players.length === 0) return alert("명단을 입력하세요.");
 
         // 게임 초기 데이터 DB 삽입 (백그라운드)
-        const stockValues = Object.values(stockInfo).map(s => s.price);
-        sbInitGame(gameId, currentMode, players, stockValues)
-            .catch(e => console.error('[sbInitGame]', e));
+        if (currentGameVariant === 'advanced') {
+            const estateValues = Object.fromEntries(
+                Object.entries(estateInfo).map(([k, v]) => [k, v.price])
+            );
+            sbInitGame(gameId, currentMode, players, [], currentGameVariant)
+                .then(() => sbSaveEstatePrice(gameId, estateValues))
+                .catch(e => console.error('[sbInitGame]', e));
+        } else {
+            const stockValues = Object.values(stockInfo).map(s => s.price);
+            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant)
+                .catch(e => console.error('[sbInitGame]', e));
+        }
 
         switchScreen('countingScreen');
         renderSidebar();
@@ -358,6 +392,17 @@
 
     async function gsGoToStep(step) {
         if (step < 1 || step > 3) return;
+
+        if (step === 2) {
+            const titleEl = document.getElementById('stockConfigTitle');
+            if (currentGameVariant === 'advanced') {
+                initEstateConfig();
+                if (titleEl) titleEl.textContent = '부동산 가격 설정 (4R)';
+            } else {
+                initStockConfig();
+                if (titleEl) titleEl.textContent = '📈 주식 가격 설정 (4R)';
+            }
+        }
 
         if (step === 3) {
             if (citizenListData.length === 0) {
