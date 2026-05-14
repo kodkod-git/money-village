@@ -33,12 +33,12 @@
     };
 
     const SUCCESS_FACTORS = [
-        { key: "financial_management", emo: "[coin]",  name: "재정관리능력" },
-        { key: "communication",        emo: "[chat]",  name: "의사소통능력" },
-        { key: "critical_thinking",    emo: "[think]", name: "비판적사고력" },
-        { key: "global_economy",       emo: "[bulb]",  name: "글로벌경제이해력" },
-        { key: "credit_trust",         emo: "[shake]", name: "신용과신뢰" },
-        { key: "entrepreneurship",     emo: "[bld]",   name: "기업가정신" },
+        { key: "financial_management", emo: "\u{1FA99}", name: "재정관리능력" },
+        { key: "communication",        emo: "\u{1F4AC}", name: "의사소통능력" },
+        { key: "critical_thinking",    emo: "\u{1F914}", name: "비판적사고력" },
+        { key: "global_economy",       emo: "\u{1F4A1}", name: "글로벌경제이해력" },
+        { key: "credit_trust",         emo: "\u{1F91D}", name: "신용과신뢰" },
+        { key: "entrepreneurship",     emo: "\u{1F3E2}", name: "기업가정신" },
     ];
 
     const TRAITS = [
