@@ -21,6 +21,26 @@
         "HYUNDE":{ name: "HYUNDE", price: 6000, color: "#002c5f" },
         "NABER":  { name: "NABER", price: 7000, color: "#03c75a" }
     };
+    let currentGameVariant = 'basic'; // 'basic' | 'advanced'
+
+    const estateInfo = {
+        "NOORIDAMBI": { name: "누리담비 단독주택", price: 100000, color: "#4e7c3f" },
+        "DAMIGORANI": { name: "다미고라니 단독주택", price: 100000, color: "#7b5ea7" },
+        "GIRUGI":     { name: "기러기 다세대주택",   price: 100000, color: "#c0773d" },
+        "MARUSURI":   { name: "마루수리 다세대주택", price: 100000, color: "#2e7d9b" },
+        "CHORONGDAM": { name: "초롱담 아파트",       price: 100000, color: "#c94b4b" },
+        "HANIYUWOO":  { name: "하늬여우 아파트",     price: 100000, color: "#3d7a5e" },
+    };
+
+    const SUCCESS_FACTORS = [
+        { key: "financial_management", emo: "[coin]",  name: "재정관리능력" },
+        { key: "communication",        emo: "[chat]",  name: "의사소통능력" },
+        { key: "critical_thinking",    emo: "[think]", name: "비판적사고력" },
+        { key: "global_economy",       emo: "[bulb]",  name: "글로벌경제이해력" },
+        { key: "credit_trust",         emo: "[shake]", name: "신용과신뢰" },
+        { key: "entrepreneurship",     emo: "[bld]",   name: "기업가정신" },
+    ];
+
     const TRAITS = [
         { key:"diligent",  emo:"👷", base:"노동",  king:"성실왕",  desc:"성실한 미션 수행과 보상 그대로 가기" },
         { key:"saving",    emo:"🏦", base:"은행",  king:"저축왕",  desc:"저축을 통한 이자 수익" },
@@ -42,6 +62,11 @@
         TRAITS.forEach(t => obj[t.key] = false);
         return obj;
     }
+    function initSuccessFactorsState() {
+        const obj = {};
+        SUCCESS_FACTORS.forEach(f => obj[f.key] = false);
+        return obj;
+    }
     window.onload = function() {
         initStockConfig();
         initCitizenForm();
@@ -57,7 +82,15 @@
         if(id === 'fameScreen') document.getElementById('pdfAreaFame').classList.add('active-print');
     }
 
-    function initAssets(){ return { "100":0,"500":0,"1000":0,"5000":0,"10000":0,"50000":0,"SASUNG":0,"LGI":0,"SKEI":0,"CACAO":0,"HYUNDE":0,"NABER":0 }; }
+    function initAssets() {
+        const bills = { "100":0,"500":0,"1000":0,"5000":0,"10000":0,"50000":0 };
+        if (currentGameVariant === 'advanced') {
+            const est = {};
+            for (let k in estateInfo) est[k] = 0;
+            return { ...bills, ...est };
+        }
+        return { ...bills, "SASUNG":0,"LGI":0,"SKEI":0,"CACAO":0,"HYUNDE":0,"NABER":0 };
+    }
 
     function applyInputsToPlayer(p, prefix) {
         if (!p) return;
@@ -73,19 +106,26 @@
         if (questEl)   p.questReward   = parseInt(questEl.value,   10) || 0;
 
         const stockPrefix = prefix === 'cnt' ? 'ui' : 'rpt';
-        for (let k in stockInfo) {
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
             const input = document.getElementById(`${stockPrefix}_cnt_input_${k}`);
             if (input) {
                 p.assets[k] = parseInt(input.value, 10) || 0;
             }
         }
 
-        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
+        const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
+        p.total = currentGameVariant === 'advanced'
+            ? base * calcSuccessMultiplier(p.successFactors || {})
+            : base;
     }
 
     function recalculateAllRankings() {
         players.forEach(p => {
-            p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+            const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+            p.total = currentGameVariant === 'advanced'
+                ? base * calcSuccessMultiplier(p.successFactors || {})
+                : base;
         });
 
         let sorted = [...players].sort((a, b) => b.total - a.total);
@@ -179,6 +219,24 @@
 
     function calcCashFromBills(a){ return a["100"]*100+a["500"]*500+a["1000"]*1000+a["5000"]*5000+a["10000"]*10000+a["50000"]*50000; }
     function calcStock(a){ let s=0; for(let k in stockInfo) s+=a[k]*stockInfo[k].price; return s; }
+
+    function calcEstate(a) {
+        let s = 0;
+        for (let k in estateInfo) s += (a[k] || 0) * estateInfo[k].price;
+        return s;
+    }
+
+    function calcActiveAsset(assets) {
+        return currentGameVariant === 'advanced' ? calcEstate(assets) : calcStock(assets);
+    }
+
+    function calcSuccessMultiplier(sf) {
+        return Object.values(sf || {}).filter(Boolean).length * 0.25;
+    }
+
+    function getActiveAssetInfo() {
+        return currentGameVariant === 'advanced' ? estateInfo : stockInfo;
+    }
 
 
     async function loadUserBalance(nickname, gameId) {
