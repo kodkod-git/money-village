@@ -203,8 +203,9 @@ async function bankStep1Complete() {
         const infoEl = document.getElementById('bankGameInfo');
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
-        _bank.completed = {};
-        _bank.viewMode  = 'team';
+        _bank.indivCompleted = {};
+        _bank.teamDeposits   = {};
+        _bank.viewMode       = 'team';
         _bankRenderPlayerList();
         closeBankModal();
         switchScreen('bankScreen');
@@ -227,7 +228,6 @@ function _bankRenderPlayerList() {
     const isTeam = _bank.players.some(p => p.team_name);
     grid.innerHTML = '';
 
-    // 탭바 표시/업데이트
     const tabBar = document.getElementById('bankTabBar');
     tabBar.style.display = isTeam ? 'flex' : 'none';
     if (isTeam) {
@@ -237,8 +237,18 @@ function _bankRenderPlayerList() {
 
     grid.classList.toggle('is-team', isTeam && _bank.viewMode === 'team');
 
+    const isTeamTab = isTeam && _bank.viewMode === 'team';
+
+    function _getPlayerDone(p, idx) {
+        if (isTeamTab) {
+            const td = _bank.teamDeposits[p.team_name];
+            return (td && td.members && td.members[idx] !== undefined) ? { type: td.type } : null;
+        }
+        return _bank.indivCompleted[idx] || null;
+    }
+
     function _bankMakePlayerCard(p, idx) {
-        const done     = _bank.completed[idx];
+        const done     = _getPlayerDone(p, idx);
         const card     = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
         const typeTag   = done ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
@@ -262,7 +272,6 @@ function _bankRenderPlayerList() {
         return;
     }
 
-    // 팀전 - 팀 탭: team_name 기준으로 그룹핑
     const teams = new Map();
     _bank.players.forEach((p, idx) => {
         const key = p.team_name;
@@ -271,13 +280,17 @@ function _bankRenderPlayerList() {
     });
 
     teams.forEach((members, teamKey) => {
-        const allDone  = members.every(({ idx }) => !!_bank.completed[idx]);
-        const groupEl  = document.createElement('div');
+        const teamSize     = members.length;
+        const td           = _bank.teamDeposits[teamKey];
+        const completedCnt = td && td.members ? Object.keys(td.members).length : 0;
+        const allDone      = completedCnt === teamSize;
+
+        const groupEl = document.createElement('div');
         groupEl.className = 'team-group' + (allDone ? ' team-done' : '');
 
         const header = document.createElement('div');
-        header.className   = 'team-group-header';
-        header.textContent = teamKey || '무소속';
+        header.className = 'team-group-header';
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>`;
         groupEl.appendChild(header);
 
         const playersEl = document.createElement('div');
