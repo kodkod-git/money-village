@@ -1,39 +1,64 @@
-    function renderPlayStyleReport(p){
-        // 1) 배지 영역
+    function renderPlayStyleReport(p) {
         const badgeWrap = document.getElementById('rptTraitBadges');
-        if(badgeWrap){
-            badgeWrap.innerHTML = '';
-            if(!p.traits) p.traits = initTraitsState();
-
-            const onList = TRAITS.filter(t => p.traits[t.key]);
-            if(onList.length === 0){
-                badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
-            } else {
-                onList.forEach(t => {
-                    badgeWrap.innerHTML += `<span class="rpt-badge on">${t.emo} ${t.king}</span>`;
-                });
-            }
-        }
-
-        // 2) 우측 하단(기존 경제활동 가이드 자리) 출력용 그리드
         const grid = document.getElementById('rptPlayStyleGrid');
-        if(!grid) return;
-        grid.innerHTML = '';
 
-        TRAITS.forEach(t => {
-            const isOn = !!(p.traits && p.traits[t.key]);
-            const title = isOn ? `${t.base} → ${t.king}` : t.base;
+        if (currentGameVariant === 'advanced') {
+            if (!p.successFactors) p.successFactors = initSuccessFactorsState();
+            const onList = SUCCESS_FACTORS.filter(f => p.successFactors[f.key]);
 
-            grid.innerHTML += `
-                <div class="booth-item ${isOn ? 'selected' : ''}">
-                    <div class="booth-icon">${t.emo}</div>
-                    <div class="booth-text">
-                        <h4>${title}</h4>
-                        <p>${t.desc}</p>
-                    </div>
-                </div>
-            `;
-        });
+            if (badgeWrap) {
+                badgeWrap.innerHTML = '';
+                if (onList.length === 0) {
+                    badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
+                } else {
+                    onList.forEach(f => {
+                        badgeWrap.innerHTML += `<span class="rpt-badge on">${f.emo} ${f.name}</span>`;
+                    });
+                }
+            }
+
+            if (!grid) return;
+            grid.innerHTML = '';
+            SUCCESS_FACTORS.forEach(f => {
+                const isOn = !!(p.successFactors && p.successFactors[f.key]);
+                grid.innerHTML += `
+                    <div class="booth-item ${isOn ? 'selected' : ''}">
+                        <div class="booth-icon" style="font-size:22px;">${f.emo}</div>
+                        <div class="booth-text">
+                            <h4 style="font-size:15px; margin:0;">${f.name}</h4>
+                        </div>
+                    </div>`;
+            });
+
+        } else {
+            if (badgeWrap) {
+                badgeWrap.innerHTML = '';
+                if (!p.traits) p.traits = initTraitsState();
+                const onList = TRAITS.filter(t => p.traits[t.key]);
+                if (onList.length === 0) {
+                    badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
+                } else {
+                    onList.forEach(t => {
+                        badgeWrap.innerHTML += `<span class="rpt-badge on">${t.emo} ${t.king}</span>`;
+                    });
+                }
+            }
+
+            if (!grid) return;
+            grid.innerHTML = '';
+            TRAITS.forEach(t => {
+                const isOn = !!(p.traits && p.traits[t.key]);
+                const title = isOn ? `${t.base} → ${t.king}` : t.base;
+                grid.innerHTML += `
+                    <div class="booth-item ${isOn ? 'selected' : ''}">
+                        <div class="booth-icon">${t.emo}</div>
+                        <div class="booth-text">
+                            <h4>${title}</h4>
+                            <p>${t.desc}</p>
+                        </div>
+                    </div>`;
+            });
+        }
     }
     function finishGame() {
         document.getElementById('finishConfirmModal').classList.add('show');
@@ -42,7 +67,7 @@
         document.getElementById('finishConfirmModal').classList.remove('show');
         recalculateAllRankings();
         switchScreen('reportScreen');
-        initStockGrid('rptStockGrid', false, false);
+        initAssetGrid('rptStockGrid', false, false);
         viewingPlayerIndex = 0;
 
         const gameId = players[0]?.gameId;
@@ -100,6 +125,25 @@
             document.getElementById('rptTeamWrapper').style.display = 'none';
             reportArea.classList.remove('team-mode');
         }
+        // 심화/기본 UI 라벨 업데이트
+        const assetLabelEl = document.getElementById('rptAssetLabel');
+        if (assetLabelEl) {
+            assetLabelEl.textContent = currentGameVariant === 'advanced'
+                ? '총 자산 (현금 + 부동산 + 성실활동금 + 예금 + 퀘스트) x (성공요소 개수 x 0.25)'
+                : '총 자산 (현금 + 주식 + 성실활동금 + 예금 + 퀘스트)';
+        }
+        const portfolioHeader = document.getElementById('rptPortfolioHeader');
+        if (portfolioHeader) {
+            portfolioHeader.textContent = currentGameVariant === 'advanced' ? '나의 부동산 포트폴리오' : '나의 주식 포트폴리오';
+        }
+        const styleHeader = document.getElementById('rptStyleHeader');
+        if (styleHeader) {
+            styleHeader.textContent = currentGameVariant === 'advanced' ? '나의 경제적 성공요소' : '나의 플레이 스타일';
+        }
+        const assetTypeLabel = document.getElementById('rptAssetTypeLabel');
+        if (assetTypeLabel) {
+            assetTypeLabel.textContent = currentGameVariant === 'advanced' ? '부동산' : '주식';
+        }
         document.getElementById('rptCashInput').value = p.manualCash;
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
         if (rptDiligenceInput) rptDiligenceInput.value = p.diligenceReward || 0;
@@ -109,9 +153,12 @@
         const rptQuestInput = document.getElementById('rptQuestInput');
         if (rptQuestInput) rptQuestInput.value = p.questReward || 0;
 
-        for(let k in stockInfo) {
-            document.getElementById(`rpt_cnt_input_${k}`).value = p.assets[k];
-            document.getElementById(`rpt_val_${k}`).innerText = (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
+            const inputEl = document.getElementById(`rpt_cnt_input_${k}`);
+            const valEl   = document.getElementById(`rpt_val_${k}`);
+            if (inputEl) inputEl.value = p.assets[k] || 0;
+            if (valEl)   valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
         document.getElementById('rptEftiInput').value = p.efti || '-';
         updateRankUI(p);
@@ -266,28 +313,34 @@
     }
     function refreshDisplayOnly(p) {
         const cash      = Number(p.manualCash      || 0);
-        const stock     = Number(calcStock(p.assets) || 0);
+        const assetVal  = Number(calcActiveAsset(p.assets) || 0);
         const diligence = Number(p.diligenceReward || 0);
         const deposit   = Number(p.depositReward   || 0);
         const quest     = Number(p.questReward     || 0);
-        const total = cash + stock + diligence + deposit + quest;
+        const base = cash + assetVal + diligence + deposit + quest;
 
+        let total;
+        if (currentGameVariant === 'advanced') {
+            total = base * calcSuccessMultiplier(p.successFactors || {});
+        } else {
+            total = base;
+        }
         p.total = total;
 
         document.getElementById('rptTotalAsset').innerText = total.toLocaleString() + " 원";
-        document.getElementById('rptStock').innerText = stock.toLocaleString();
+        document.getElementById('rptStock').innerText = assetVal.toLocaleString();
 
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
         if (rptDiligenceInput) rptDiligenceInput.value = diligence;
-
         const rptDepositInput = document.getElementById('rptDepositInput');
         if (rptDepositInput) rptDepositInput.value = deposit;
         const rptQuestInput = document.getElementById('rptQuestInput');
         if (rptQuestInput) rptQuestInput.value = quest;
 
-        for (let k in stockInfo) {
-            document.getElementById(`rpt_val_${k}`).innerText =
-                (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
+            const valEl = document.getElementById(`rpt_val_${k}`);
+            if (valEl) valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
 
         const cashPct = total > 0 ? Math.round((cash / total) * 100) : 0;
@@ -309,7 +362,7 @@
         }
 
         const cashPercent      = (cash      / total) * 100;
-        const stockPercent     = (stock     / total) * 100;
+        const assetPercent     = (assetVal  / total) * 100;
         const diligencePercent = (diligence / total) * 100;
         const depositPercent   = (deposit   / total) * 100;
         const questPercent     = (quest     / total) * 100;
@@ -319,10 +372,10 @@
             pct > 0 ? setDonutSegment(el, pct, off) : clearDonutSegment(el);
         };
         _seg(cashCircle,      cashPercent,      0);
-        _seg(stockCircle,     stockPercent,     cashPercent);
-        _seg(diligenceCircle, diligencePercent, cashPercent + stockPercent);
-        _seg(depositCircle,   depositPercent,   cashPercent + stockPercent + diligencePercent);
-        _seg(questCircle,     questPercent,     cashPercent + stockPercent + diligencePercent + depositPercent);
+        _seg(stockCircle,     assetPercent,     cashPercent);
+        _seg(diligenceCircle, diligencePercent, cashPercent + assetPercent);
+        _seg(depositCircle,   depositPercent,   cashPercent + assetPercent + diligencePercent);
+        _seg(questCircle,     questPercent,     cashPercent + assetPercent + diligencePercent + depositPercent);
     }
     function prevPlayer() { if(viewingPlayerIndex>0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); } }
     function nextPlayer() { if(viewingPlayerIndex<players.length-1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); } }
