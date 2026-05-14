@@ -477,6 +477,19 @@
                         <span class="bank-r-label bank-r-total">만기 시 받을 금액</span>
                         <span class="bank-r-value bank-r-total" id="bankRTotal">—</span>
                     </div>
+                    <div id="bankTeamStatusSection" style="display:none;">
+                        <div class="bank-result-row">
+                            <span class="bank-r-label">팀 진행 상태</span>
+                            <span class="bank-r-value bank-team-progress-badge" id="bankRTeamBadge">—</span>
+                        </div>
+                        <div class="bank-result-row">
+                            <span class="bank-r-label">팀 합산</span>
+                            <span class="bank-r-value" id="bankRTeamPreview">—</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="bankRTeamPendingMsg" class="bank-team-pending-msg" style="display:none;">
+                    나머지 팀원이 신청하면 보상이 확정됩니다
                 </div>
                 <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center; margin-top:20px;" onclick="bankNextStudent()">다른 학생 예금 접수</button>
             </div>
