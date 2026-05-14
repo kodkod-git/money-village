@@ -156,17 +156,21 @@ function _bankSelectGame(gameId, date, sectionNum, cardEl) {
     document.getElementById('bankStep1Btn').disabled = false;
 }
 
-function bankAdjustRatio(type, delta) {
-    const next = Math.round((_bank.settings[type] + delta) * 10) / 10;
+function bankAdjustRatio(type, delta, isTeam = false) {
+    const store  = isTeam ? _bank.teamSettings : _bank.settings;
+    const prefix = isTeam ? 'bankTeam' : 'bank';
+    const next = Math.round((store[type] + delta) * 10) / 10;
     if (next < 1.0) return;
-    _bank.settings[type] = next;
-    document.getElementById('bank' + _bankCap(type) + 'RatioDisplay').textContent = next.toFixed(1) + '배';
+    store[type] = next;
+    document.getElementById(prefix + _bankCap(type) + 'RatioDisplay').textContent = next.toFixed(1) + '배';
 }
 
 function _bankSyncRatioUI() {
     ['long', 'mid', 'short'].forEach(t => {
         const el = document.getElementById('bank' + _bankCap(t) + 'RatioDisplay');
         if (el) el.textContent = _bank.settings[t].toFixed(1) + '배';
+        const teamEl = document.getElementById('bankTeam' + _bankCap(t) + 'RatioDisplay');
+        if (teamEl) teamEl.textContent = _bank.teamSettings[t].toFixed(1) + '배';
     });
 }
 
