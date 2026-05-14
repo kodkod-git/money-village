@@ -7,7 +7,8 @@ const _bank = {
     players:  [],
     deposit:  { type: null, amount: 1000 },
     currentPlayerIdx: null,
-    completed: {}  // { [playerIdx]: { type } }
+    completed: {},  // { [playerIdx]: { type } }
+    viewMode:  'team' // 팀전 목록 보기: 'team' | 'individual'
 };
 
 const _BANK_TYPE = {
@@ -83,6 +84,7 @@ function _bankResetModal() {
     document.getElementById('bankGameLoading').style.display = 'none';
     document.getElementById('bankStep1Btn').disabled = true;
     document.getElementById('bankStep1Btn').textContent = '설정 완료';
+    document.getElementById('bankRatioSection').style.display = 'none';
     _bank.gameId = null;
     _bank.gameDate = null;
 }
@@ -95,6 +97,7 @@ async function onBankDateChange() {
 
     grid.innerHTML = '';
     document.getElementById('bankStep1Btn').disabled = true;
+    document.getElementById('bankRatioSection').style.display = 'none';
     _bank.gameId = null;
 
     if (!date) return;
@@ -137,6 +140,7 @@ function _bankSelectGame(gameId, date, sectionNum, cardEl) {
     _bank.gameId      = gameId;
     _bank.gameDate    = date;
     _bank.sectionNum  = sectionNum;
+    document.getElementById('bankRatioSection').style.display = 'block';
     document.getElementById('bankStep1Btn').disabled = false;
 }
 
@@ -178,6 +182,7 @@ async function bankStep1Complete() {
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
         _bank.completed = {};
+        _bank.viewMode  = 'team';
         _bankRenderPlayerList();
         closeBankModal();
         switchScreen('bankScreen');
@@ -190,16 +195,32 @@ async function bankStep1Complete() {
 }
 
 // ── View 2: 플레이어 리스트 ─────────────────────────────────────────
+function bankSetViewMode(mode) {
+    _bank.viewMode = mode;
+    _bankRenderPlayerList();
+}
+
 function _bankRenderPlayerList() {
-    const grid = document.getElementById('bankPlayerGrid');
+    const grid   = document.getElementById('bankPlayerGrid');
+    const isTeam = _bank.players.some(p => p.team_name);
     grid.innerHTML = '';
-    _bank.players.forEach((p, idx) => {
-        const done = _bank.completed[idx];
-        const card = document.createElement('div');
+
+    // 탭바 표시/업데이트
+    const tabBar = document.getElementById('bankTabBar');
+    tabBar.style.display = isTeam ? 'flex' : 'none';
+    if (isTeam) {
+        document.getElementById('bankTabTeam').classList.toggle('active', _bank.viewMode === 'team');
+        document.getElementById('bankTabIndiv').classList.toggle('active', _bank.viewMode === 'individual');
+    }
+
+    grid.classList.toggle('is-team', isTeam && _bank.viewMode === 'team');
+
+    function _bankMakePlayerCard(p, idx) {
+        const done     = _bank.completed[idx];
+        const card     = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
-        const teamTag    = p.team_name ? `<span class="bank-player-team">${p.team_name}</span>` : '';
-        const typeTag    = done ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
-        const statusTag  = done
+        const typeTag   = done ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
+        const statusTag = done
             ? `<span class="bank-status-done">신청 완료</span>`
             : `<span class="bank-status-pending">신청 전</span>`;
         card.innerHTML = `
@@ -207,12 +228,42 @@ function _bankRenderPlayerList() {
             <div class="bank-player-realname">${p.real_name}</div>
             <div class="bank-player-status">
                 <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                ${teamTag}
                 ${typeTag}
                 ${statusTag}
             </div>`;
         card.onclick = () => bankSelectPlayer(idx);
-        grid.appendChild(card);
+        return card;
+    }
+
+    if (!isTeam || _bank.viewMode === 'individual') {
+        _bank.players.forEach((p, idx) => grid.appendChild(_bankMakePlayerCard(p, idx)));
+        return;
+    }
+
+    // 팀전 - 팀 탭: team_name 기준으로 그룹핑
+    const teams = new Map();
+    _bank.players.forEach((p, idx) => {
+        const key = p.team_name;
+        if (!teams.has(key)) teams.set(key, []);
+        teams.get(key).push({ p, idx });
+    });
+
+    teams.forEach((members, teamKey) => {
+        const allDone  = members.every(({ idx }) => !!_bank.completed[idx]);
+        const groupEl  = document.createElement('div');
+        groupEl.className = 'team-group' + (allDone ? ' team-done' : '');
+
+        const header = document.createElement('div');
+        header.className   = 'team-group-header';
+        header.textContent = teamKey || '무소속';
+        groupEl.appendChild(header);
+
+        const playersEl = document.createElement('div');
+        playersEl.className = 'team-group-players';
+        members.forEach(({ p, idx }) => playersEl.appendChild(_bankMakePlayerCard(p, idx)));
+
+        groupEl.appendChild(playersEl);
+        grid.appendChild(groupEl);
     });
 }
 

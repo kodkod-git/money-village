@@ -397,6 +397,13 @@ async function sbSaveQuestReward(gameId, nickname, questReward) {
         .eq('nickname', nickname);
 }
 
+async function sbGetRewardsByGameId(gameId) {
+    const { data } = await _sb.from('game_individual')
+        .select('nickname, quest_reward, deposit_reward')
+        .eq('game_id', gameId);
+    return data || [];
+}
+
 async function sbLoadTraitsByGameId(gameId) {
     const { data } = await _sb.from('traits').select('*').eq('game_id', gameId);
     return { success: true, traits: data || [] };

@@ -36,12 +36,35 @@
         });
     }
     function finishGame() {
-        if(!confirm("결과를 발표하시겠습니까?")) return;
+        document.getElementById('finishConfirmModal').classList.add('show');
+    }
+    async function _finishGameConfirmed() {
+        document.getElementById('finishConfirmModal').classList.remove('show');
         recalculateAllRankings();
         switchScreen('reportScreen');
         initStockGrid('rptStockGrid', false, false);
         viewingPlayerIndex = 0;
+
+        const gameId = players[0]?.gameId;
+        if (gameId) {
+            try {
+                const rewards = await sbGetRewardsByGameId(gameId);
+                const rewardMap = Object.fromEntries(rewards.map(r => [r.nickname, r]));
+                players.forEach(p => {
+                    p.questReward   = Number(rewardMap[p.nickname]?.quest_reward   || 0);
+                    p.depositReward = Number(rewardMap[p.nickname]?.deposit_reward || 0);
+                });
+                recalculateAllRankings();
+            } catch(e) {
+                console.warn('[finishGame] rewards fetch failed', e);
+            }
+        }
+
         showReport(0);
+        saveToDrive(true).catch(e => console.error('[finishGame] saveToDrive 실패', e));
+    }
+    function _finishGameCancel() {
+        document.getElementById('finishConfirmModal').classList.remove('show');
     }
     function showReport(idx) {
         const p = players[idx];
@@ -79,9 +102,13 @@
         }
         document.getElementById('rptCashInput').value = p.manualCash;
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
-        if (rptDiligenceInput) {
-            rptDiligenceInput.value = p.diligenceReward || 0;
-        }
+        if (rptDiligenceInput) rptDiligenceInput.value = p.diligenceReward || 0;
+
+        const rptDepositInput = document.getElementById('rptDepositInput');
+        if (rptDepositInput) rptDepositInput.value = p.depositReward || 0;
+        const rptQuestInput = document.getElementById('rptQuestInput');
+        if (rptQuestInput) rptQuestInput.value = p.questReward || 0;
+
         for(let k in stockInfo) {
             document.getElementById(`rpt_cnt_input_${k}`).value = p.assets[k];
             document.getElementById(`rpt_val_${k}`).innerText = (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
@@ -238,10 +265,12 @@
         el.setAttribute('stroke-dashoffset', `0`);
     }
     function refreshDisplayOnly(p) {
-        const cash = Number(p.manualCash || 0);
-        const stock = Number(calcStock(p.assets) || 0);
+        const cash      = Number(p.manualCash      || 0);
+        const stock     = Number(calcStock(p.assets) || 0);
         const diligence = Number(p.diligenceReward || 0);
-        const total = cash + stock + diligence;
+        const deposit   = Number(p.depositReward   || 0);
+        const quest     = Number(p.questReward     || 0);
+        const total = cash + stock + diligence + deposit + quest;
 
         p.total = total;
 
@@ -251,6 +280,11 @@
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
         if (rptDiligenceInput) rptDiligenceInput.value = diligence;
 
+        const rptDepositInput = document.getElementById('rptDepositInput');
+        if (rptDepositInput) rptDepositInput.value = deposit;
+        const rptQuestInput = document.getElementById('rptQuestInput');
+        if (rptQuestInput) rptQuestInput.value = quest;
+
         for (let k in stockInfo) {
             document.getElementById(`rpt_val_${k}`).innerText =
                 (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
@@ -259,24 +293,36 @@
         const cashPct = total > 0 ? Math.round((cash / total) * 100) : 0;
         document.getElementById('rptCashPct').innerText = `${cashPct}%`;
 
-        const cashCircle = document.getElementById('rptArcCash');
-        const stockCircle = document.getElementById('rptArcStock');
+        const cashCircle      = document.getElementById('rptArcCash');
+        const stockCircle     = document.getElementById('rptArcStock');
         const diligenceCircle = document.getElementById('rptArcDiligence');
+        const depositCircle   = document.getElementById('rptArcDeposit');
+        const questCircle     = document.getElementById('rptArcQuest');
 
         if (total <= 0) {
             clearDonutSegment(cashCircle);
             clearDonutSegment(stockCircle);
             clearDonutSegment(diligenceCircle);
+            if (depositCircle) clearDonutSegment(depositCircle);
+            if (questCircle)   clearDonutSegment(questCircle);
             return;
         }
 
-        const cashPercent = (cash / total) * 100;
-        const stockPercent = (stock / total) * 100;
+        const cashPercent      = (cash      / total) * 100;
+        const stockPercent     = (stock     / total) * 100;
         const diligencePercent = (diligence / total) * 100;
+        const depositPercent   = (deposit   / total) * 100;
+        const questPercent     = (quest     / total) * 100;
 
-        setDonutSegment(cashCircle, cashPercent, 0);
-        setDonutSegment(stockCircle, stockPercent, cashPercent);
-        setDonutSegment(diligenceCircle, diligencePercent, cashPercent + stockPercent);
+        const _seg = (el, pct, off) => {
+            if (!el) return;
+            pct > 0 ? setDonutSegment(el, pct, off) : clearDonutSegment(el);
+        };
+        _seg(cashCircle,      cashPercent,      0);
+        _seg(stockCircle,     stockPercent,     cashPercent);
+        _seg(diligenceCircle, diligencePercent, cashPercent + stockPercent);
+        _seg(depositCircle,   depositPercent,   cashPercent + stockPercent + diligencePercent);
+        _seg(questCircle,     questPercent,     cashPercent + stockPercent + diligencePercent + depositPercent);
     }
     function prevPlayer() { if(viewingPlayerIndex>0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); } }
     function nextPlayer() { if(viewingPlayerIndex<players.length-1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); } }
@@ -517,11 +563,13 @@
         return await sbSaveTraits(gameId, players);
     }
 
-    async function saveToDrive() {
+    async function saveToDrive(_fromFinish = false) {
         if (isSavingDrive) return;
 
-        const btn = document.getElementById('btnSaveDrive');
-        const originalHtml = btn.innerHTML;
+        const rptBtn = document.getElementById('btnSaveDriveReport');
+        const cntBtn = document.getElementById('btnSaveDrive');
+        const btn = (rptBtn?.offsetParent !== null) ? rptBtn : cntBtn;
+        const originalHtml = btn ? btn.innerHTML : '';
 
         try {
             if (isSampleMode) {
@@ -530,13 +578,14 @@
                 return;
             }
 
-            const ok = confirm("현재 게임 결과를 [명예의 전당] 데이터베이스에 저장하시겠습니까?");
-            console.log("[saveToDrive] confirm =", ok);
-            if (!ok) return;
+            if (!_fromFinish) {
+                const ok = confirm("현재 게임 결과를 [명예의 전당] 데이터베이스에 저장하시겠습니까?");
+                console.log("[saveToDrive] confirm =", ok);
+                if (!ok) return;
+            }
 
             isSavingDrive = true;
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner"></span> 저장 중...`;
+            if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> 저장 중...`; }
 
             // 날짜 포맷 깔끔하게 (디버그에도 좋음)
             let dateStr;
@@ -559,6 +608,12 @@
             }
 
             await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+            await Promise.all(players.map(p => {
+                const saves = [];
+                if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.nickname, p.depositReward));
+                if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
+                return Promise.all(saves);
+            }));
             await saveTraits(gameId, players);
 
             const exportData = {
@@ -617,10 +672,9 @@
         } catch (err) {
             console.error("[saveToDrive] ERROR", err);
             alert("❌ fetch 예외 발생:\n" + (err?.message || String(err)));
-        }   finally {
+        } finally {
             isSavingDrive = false;
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
         }
     }
 
@@ -736,6 +790,8 @@
                     total: Number(p.total_asset) || 0,
                     manualCash: Number(p.cash) || 0,
                     diligenceReward: Number(p.diligence_reward) || 0,
+                    questReward:     Number(p.quest_reward)     || 0,
+                    depositReward:   Number(p.deposit_reward)   || 0,
                     rankIndiv: 0,
                     rankTeam: 0,
                     teamTotal: 0,
@@ -759,7 +815,7 @@
                 const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
                 if (stocks) {
                     Object.assign(p.assets, stocks);
-                    p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0);
+                    p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
                 } else {
                     console.warn(`  ❌ ${p.nickname}: 잔고 없음`);
                 }
@@ -779,8 +835,21 @@
                 }
             } catch(e) { console.warn("[loadTraits] 실패:", e); }
 
+            // 팀 이름 로드 (game_individual에는 team_id만 있고 team_name은 game_team에 있음)
+            const teamIds = [...new Set(players.map(p => p.teamId).filter(Boolean))];
+            if (teamIds.length > 0) {
+                try {
+                    const { data: teams } = await _sb.from('game_team')
+                        .select('team_id, team_name').in('team_id', teamIds);
+                    const teamNameMap = Object.fromEntries((teams || []).map(t => [t.team_id, t.team_name]));
+                    players.forEach(p => {
+                        if (p.teamId) p.team = teamNameMap[p.teamId] || '-';
+                    });
+                } catch(e) { console.warn('[loadPastGame] 팀 이름 로드 실패:', e); }
+            }
+
             loadedDate = gameDate;
-            currentMode = (players[0] && players[0].team !== '-') ? 'team' : 'individual';
+            currentMode = teamIds.length > 0 ? 'team' : 'individual';
             recalculateAllRankings();
             switchScreen('countingScreen');
             renderSidebar();
