@@ -686,7 +686,7 @@
                     total: p.total,
                     manualCash: p.manualCash,
                     diligence_reward: p.diligenceReward || 0,
-                    stockVal: calcStock(p.assets),
+                    stockVal: calcActiveAsset(p.assets),
                     team: p.team || '-',
                     team_id: p.teamId || '',
                     traits: p.traits || initTraitsState()
