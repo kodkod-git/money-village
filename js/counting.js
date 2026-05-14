@@ -41,6 +41,7 @@
     }
     function updateDash() {
         const p = players[activeCountingIndex];
+        if (!p) return;
         document.getElementById('displayPlayerName').innerText = p.realName || p.name;
         const cash = p.manualCash || 0;
         const assetVal = calcActiveAsset(p.assets);
