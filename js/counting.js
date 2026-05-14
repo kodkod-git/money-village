@@ -11,7 +11,11 @@
                 <span class="status-badge" id="badge_${i}">대기</span>
             </div>`;
         });
-        initStockGrid('stockGridSm', false, true);
+        const assetTitle = document.getElementById('cntAssetCardTitle');
+        if (assetTitle) assetTitle.textContent = currentGameVariant === 'advanced' ? '보유 부동산 (현재가)' : '보유 주식 (4R 현재가)';
+        const traitTitle = document.getElementById('cntTraitCardTitle');
+        if (traitTitle) traitTitle.textContent = currentGameVariant === 'advanced' ? '경제적 성공요소 (복수 선택 가능)' : '나의 플레이 스타일 (복수 선택 가능)';
+        initAssetGrid('stockGridSm', false, true);
     }
     function selectCountingPlayer(i) {
         // 1) 이전 active는 "무조건" 해제 (토글 꼬임 방지)
@@ -38,22 +42,28 @@
     function updateDash() {
         const p = players[activeCountingIndex];
         document.getElementById('displayPlayerName').innerText = p.realName || p.name;
-        let cash = p.manualCash || 0;
-        let stock = calcStock(p.assets);
-        let diligence = p.diligenceReward || 0;
+        const cash = p.manualCash || 0;
+        const assetVal = calcActiveAsset(p.assets);
+        const diligence = p.diligenceReward || 0;
+        const base = cash + assetVal + diligence;
 
-        p.total = cash + stock + diligence;
+        if (currentGameVariant === 'advanced') {
+            p.total = base * calcSuccessMultiplier(p.successFactors || {});
+        } else {
+            p.total = base;
+        }
 
         document.getElementById('displayTotalAsset').innerText = p.total.toLocaleString() + " 원";
         document.getElementById('cntCashInput').value = cash;
         document.getElementById('cntDiligenceInput').value = diligence;
-        document.getElementById('displayStock').innerText = stock.toLocaleString();
+        document.getElementById('displayStock').innerText = assetVal.toLocaleString();
 
-        for (let k in stockInfo) {
-            document.getElementById(`ui_val_${k}`).innerText =
-                (p.assets[k] * stockInfo[k].price).toLocaleString();
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
+            const valEl = document.getElementById(`ui_val_${k}`);
+            if (valEl) valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString();
             const input = document.getElementById(`ui_cnt_input_${k}`);
-            if (input) input.value = p.assets[k];
+            if (input) input.value = p.assets[k] || 0;
         }
 
         renderTraitGridCounting();
@@ -84,49 +94,63 @@
             alert('마지막 참가자까지 계수가 완료되었습니다.');
         }
     }
-    function initStockGrid(id, sm, isCountingScreen=false) {
+    function initAssetGrid(id, sm, isCountingScreen = false) {
         const grid = document.getElementById(id);
+        if (!grid) return;
         grid.innerHTML = '';
 
-        for(let k in stockInfo) {
-            const s = stockInfo[k];
-            const colorStyle = `background:${s.color} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color:${s.textColor||'#fff'} !important; border:${k==='CACAO'?'1px solid #ddd':'none'};`;
-            const prefix = isCountingScreen ? 'ui' : 'rpt';
-            const inputHandler = isCountingScreen ? 'updateManualOnCounting()' : 'manualUpdate()';
-            const priceDisplay = `<div style="font-size:11px; color:#999; margin-bottom:2px;">1주: ${s.price.toLocaleString()}원</div>`;
+        const activeInfo = getActiveAssetInfo();
+        const prefix = isCountingScreen ? 'ui' : 'rpt';
+        const inputHandler = isCountingScreen ? 'updateManualOnCounting()' : 'manualUpdate()';
 
-            grid.innerHTML += `<div class="${sm?'stock-item-sm':'stock-card'}">
+        for (let k in activeInfo) {
+            const s = activeInfo[k];
+            const colorStyle = `background:${s.color} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color:#fff !important;`;
+            const priceDisplay = `<div style="font-size:11px; color:#999; margin-bottom:2px;">1개: ${s.price.toLocaleString()}원</div>`;
+
+            grid.innerHTML += `<div class="${sm ? 'stock-item-sm' : 'stock-card'}">
                 <div class="stock-logo" style="${colorStyle}">${k[0]}</div>
-                <div style="font-weight:bold; color:#555;">${s.name}</div>
+                <div style="font-weight:bold; color:#555; font-size:11px;">${s.name}</div>
                 ${priceDisplay}
-                <div class="${sm?'':'stock-val'}" id="${prefix}_val_${k}">0원</div>
-                <div class="${sm?'':'stock-cnt'}" id="${prefix}_cnt_${k}">
-                    <input type="number" id="${prefix}_cnt_input_${k}" class="editable-input" style="width:40px;" min="0" oninput="${inputHandler}"> 주
+                <div class="${sm ? '' : 'stock-val'}" id="${prefix}_val_${k}">0원</div>
+                <div class="${sm ? '' : 'stock-cnt'}" id="${prefix}_cnt_${k}">
+                    <input type="number" id="${prefix}_cnt_input_${k}" class="editable-input" style="width:40px;" min="0" oninput="${inputHandler}"> 개
                 </div>
             </div>`;
         }
     }
 
-    function renderTraitGridCounting(){
+    function renderTraitGridCounting() {
         const grid = document.getElementById('traitGridSm');
-        if(!grid) return;
+        if (!grid) return;
         const p = players[activeCountingIndex];
-        if(!p) return;
-
-        // 안전: 예전 데이터면 traits 없을 수 있음
-        if(!p.traits) p.traits = initTraitsState();
+        if (!p) return;
 
         grid.innerHTML = '';
-        TRAITS.forEach(t => {
-            const isOn = !!p.traits[t.key];
-            grid.innerHTML += `
-                <button class="trait-btn ${isOn ? 'on' : ''}" type="button"
-                    onclick="toggleTrait('${t.key}')">
-                    <span class="emo">${t.emo}</span>
-                    <span>${t.king}</span>
-                </button>
-            `;
-        });
+
+        if (currentGameVariant === 'advanced') {
+            if (!p.successFactors) p.successFactors = initSuccessFactorsState();
+            SUCCESS_FACTORS.forEach(f => {
+                const isOn = !!p.successFactors[f.key];
+                grid.innerHTML += `
+                    <button class="trait-btn ${isOn ? 'on' : ''}" type="button"
+                        onclick="toggleSuccessFactor('${f.key}')">
+                        <span class="emo">${f.emo}</span>
+                        <span>${f.name}</span>
+                    </button>`;
+            });
+        } else {
+            if (!p.traits) p.traits = initTraitsState();
+            TRAITS.forEach(t => {
+                const isOn = !!p.traits[t.key];
+                grid.innerHTML += `
+                    <button class="trait-btn ${isOn ? 'on' : ''}" type="button"
+                        onclick="toggleTrait('${t.key}')">
+                        <span class="emo">${t.emo}</span>
+                        <span>${t.king}</span>
+                    </button>`;
+            });
+        }
     }
 
     function toggleTrait(key){
@@ -135,4 +159,12 @@
         if(!p.traits) p.traits = initTraitsState();
         p.traits[key] = !p.traits[key];
         renderTraitGridCounting(); // 즉시 반영
+    }
+
+    function toggleSuccessFactor(key) {
+        const p = players[activeCountingIndex];
+        if (!p) return;
+        if (!p.successFactors) p.successFactors = initSuccessFactorsState();
+        p.successFactors[key] = !p.successFactors[key];
+        updateDash();
     }
