@@ -660,14 +660,19 @@
                 players.forEach(p => p.gameId = gameId);
             }
 
-            await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+            if (currentGameVariant === 'advanced') {
+                await Promise.all(players.map(p => sbSaveEstateBalance(p.nickname, gameId, p.assets)));
+                await sbSaveSuccessFactors(gameId, players);
+            } else {
+                await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+                await saveTraits(gameId, players);
+            }
             await Promise.all(players.map(p => {
                 const saves = [];
                 if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.nickname, p.depositReward));
                 if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
                 return Promise.all(saves);
             }));
-            await saveTraits(gameId, players);
 
             const exportData = {
                 action: "saveGameResult",
@@ -810,7 +815,7 @@
                         <span>참여인원: ${g.player_count}명</span>
                         <span class="${typeTag}">${typeLabel}</span>
                     </div>`;
-                card.onclick = () => _loadPastGame(g.game_id, g.date);
+                card.onclick = () => _loadPastGame(g.game_id, g.date, g.game_variant || 'basic');
                 grid.appendChild(card);
             });
         } catch(e) {
@@ -819,8 +824,9 @@
         }
     }
 
-    async function _loadPastGame(gameId, gameDate) {
+    async function _loadPastGame(gameId, gameDate, gameVariant = 'basic') {
         closePastGameModal();
+        currentGameVariant = gameVariant;
         try {
             const data = await sbLoadAssetsByGameId(gameId);
             if (!data.success || !Array.isArray(data.history) || data.history.length === 0) {
@@ -861,32 +867,62 @@
                 if (citizen && citizen.default_EFTI) p.efti = citizen.default_EFTI;
             });
 
-            // 주식 보유 수량 로드
-            console.group(`[loadUserBalance] gameId=${gameId}`);
+            // 자산 보유 수량 로드 (기본: 주식, 심화: 부동산)
+            console.group(`[loadBalance] gameId=${gameId} variant=${gameVariant}`);
             await Promise.all(players.map(async p => {
-                if (!p.gameId) { console.warn(`  ⚠️ ${p.nickname}: gameId 없음`); return; }
-                const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
-                if (stocks) {
-                    Object.assign(p.assets, stocks);
-                    p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                if (!p.gameId) { console.warn(`  no gameId: ${p.nickname}`); return; }
+                if (gameVariant === 'advanced') {
+                    const estates = await sbLoadEstateBalance(p.nickname, p.gameId);
+                    if (estates) {
+                        Object.assign(p.assets, estates);
+                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                        p.total = base * calcSuccessMultiplier(p.successFactors || {});
+                    } else {
+                        console.warn(`  no estate balance: ${p.nickname}`);
+                    }
                 } else {
-                    console.warn(`  ❌ ${p.nickname}: 잔고 없음`);
+                    const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
+                    if (stocks) {
+                        Object.assign(p.assets, stocks);
+                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                    } else {
+                        console.warn(`  no stock balance: ${p.nickname}`);
+                    }
                 }
             }));
             console.groupEnd();
 
-            // Traits 로드
+            // 특성/성공요소 로드
             try {
-                const traitsData = await sbLoadTraitsByGameId(gameId);
-                if (traitsData.success && Array.isArray(traitsData.traits)) {
-                    const traitsMap = {};
-                    traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
-                    players.forEach(p => {
-                        const t = traitsMap[p.nickname];
-                        if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
-                    });
+                if (gameVariant === 'advanced') {
+                    const sfData = await sbLoadSuccessFactorsByGameId(gameId);
+                    if (sfData.success && Array.isArray(sfData.factors)) {
+                        const sfMap = {};
+                        sfData.factors.forEach(f => { sfMap[f.nickname] = f; });
+                        players.forEach(p => {
+                            const f = sfMap[p.nickname];
+                            if (f) p.successFactors = {
+                                financial_management: !!f.financial_management,
+                                communication:        !!f.communication,
+                                critical_thinking:    !!f.critical_thinking,
+                                global_economy:       !!f.global_economy,
+                                credit_trust:         !!f.credit_trust,
+                                entrepreneurship:     !!f.entrepreneurship,
+                            };
+                        });
+                    }
+                } else {
+                    const traitsData = await sbLoadTraitsByGameId(gameId);
+                    if (traitsData.success && Array.isArray(traitsData.traits)) {
+                        const traitsMap = {};
+                        traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                        players.forEach(p => {
+                            const t = traitsMap[p.nickname];
+                            if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
+                        });
+                    }
                 }
-            } catch(e) { console.warn("[loadTraits] 실패:", e); }
+            } catch(e) { console.warn("[loadTraitsOrFactors] 실패:", e); }
 
             // 팀 이름 로드 (game_individual에는 team_id만 있고 team_name은 game_team에 있음)
             const teamIds = [...new Set(players.map(p => p.teamId).filter(Boolean))];
