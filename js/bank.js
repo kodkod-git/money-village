@@ -11,6 +11,8 @@ const _bank = {
     currentPlayerIdx: null,
     indivCompleted: {},
     teamDeposits:   {},
+    teamRewards:    {},  // { nickname: amount } — 팀 예금 보상 누적
+    indivRewards:   {},  // { nickname: amount } — 개인 예금 보상 누적
     viewMode:  'team'
 };
 
@@ -205,6 +207,8 @@ async function bankStep1Complete() {
 
         _bank.indivCompleted = {};
         _bank.teamDeposits   = {};
+        _bank.teamRewards    = {};
+        _bank.indivRewards   = {};
         _bank.viewMode       = 'team';
         _bankRenderPlayerList();
         closeBankModal();
@@ -416,12 +420,19 @@ async function bankStep2Submit() {
     }
 }
 
+function _bankSaveReward(nickname, source, amount) {
+    if (source === 'team') _bank.teamRewards[nickname] = amount;
+    else                   _bank.indivRewards[nickname] = amount;
+    const total = (_bank.teamRewards[nickname] || 0) + (_bank.indivRewards[nickname] || 0);
+    sbSaveDepositReward(_bank.gameId, nickname, total).catch(console.error);
+}
+
 function _bankSubmitIndividual(p, type, amount) {
     const ratio    = _bank.settings[type];
     const maturity = Math.round(amount * ratio);
     const interest = maturity - amount;
 
-    sbSaveDepositReward(_bank.gameId, p.nickname, interest).catch(console.error);
+    _bankSaveReward(p.nickname, 'indiv', interest);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
 
     document.getElementById('bankTeamStatusSection').style.display = 'none';
@@ -459,7 +470,7 @@ function _bankSubmitTeam(p, type, amount) {
         const totalInterest = totalMatured - totalPrincipal;
         perMemberReward = Math.floor(totalInterest / teamSize);
         teamMembers.forEach(pl => {
-            sbSaveDepositReward(_bank.gameId, pl.nickname, perMemberReward).catch(console.error);
+            _bankSaveReward(pl.nickname, 'team', perMemberReward);
         });
     }
 
