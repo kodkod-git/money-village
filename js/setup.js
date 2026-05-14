@@ -251,7 +251,7 @@
             );
             sbInitGame(gameId, currentMode, players, [], currentGameVariant)
                 .then(() => sbSaveEstatePrice(gameId, estateValues))
-                .catch(e => console.error('[sbInitGame]', e));
+                .catch(e => console.error('[sbInitGame/sbSaveEstatePrice]', e));
         } else {
             const stockValues = Object.values(stockInfo).map(s => s.price);
             sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant)
