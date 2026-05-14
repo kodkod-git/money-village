@@ -1,14 +1,17 @@
 // [은행 예금] 머니빌리지 은행 예금 시뮬레이터
 
 const _bank = {
-    settings: { long: 2.0, mid: 1.5, short: 1.2 },
+    settings:     { long: 2.0, mid: 1.5, short: 1.2 },
+    teamSettings: { long: 2.5, mid: 2.0, short: 1.5 },
     gameId:   null,
     gameDate: null,
+    gameType: null,
     players:  [],
     deposit:  { type: null, amount: 1000 },
     currentPlayerIdx: null,
-    completed: {},  // { [playerIdx]: { type } }
-    viewMode:  'team' // 팀전 목록 보기: 'team' | 'individual'
+    indivCompleted: {},
+    teamDeposits:   {},
+    viewMode:  'team'
 };
 
 const _BANK_TYPE = {
@@ -21,14 +24,20 @@ const _BANK_TYPE = {
 function _bankLoad() {
     try {
         const s = JSON.parse(localStorage.getItem('mv_bank_settings') || '{}');
-        if (s.long  >= 1) _bank.settings.long  = s.long;
-        if (s.mid   >= 1) _bank.settings.mid   = s.mid;
-        if (s.short >= 1) _bank.settings.short = s.short;
+        if (s.long      >= 1) _bank.settings.long     = s.long;
+        if (s.mid       >= 1) _bank.settings.mid      = s.mid;
+        if (s.short     >= 1) _bank.settings.short    = s.short;
+        if (s.teamLong  >= 1) _bank.teamSettings.long  = s.teamLong;
+        if (s.teamMid   >= 1) _bank.teamSettings.mid   = s.teamMid;
+        if (s.teamShort >= 1) _bank.teamSettings.short = s.teamShort;
     } catch(e) {}
 }
 
 function _bankSave() {
-    localStorage.setItem('mv_bank_settings', JSON.stringify(_bank.settings));
+    localStorage.setItem('mv_bank_settings', JSON.stringify({
+        long: _bank.settings.long, mid: _bank.settings.mid, short: _bank.settings.short,
+        teamLong: _bank.teamSettings.long, teamMid: _bank.teamSettings.mid, teamShort: _bank.teamSettings.short
+    }));
 }
 
 // ── 뷰 전환 (bankScreen 내 View 2/3/4) ───────────────────────────
