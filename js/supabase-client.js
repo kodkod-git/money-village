@@ -462,6 +462,22 @@ async function sbLoadEstateBalance(nickname, gameId) {
     };
 }
 
+async function sbLoadEstatePrice(gameId) {
+    const { data } = await _sb
+        .from('estate_price').select('*')
+        .eq('game_id', String(gameId || '').trim())
+        .maybeSingle();
+    if (!data) return null;
+    return {
+        NOORIDAMBI: data.nooridambi,
+        DAMIGORANI: data.damigorani,
+        GIRUGI:     data.girugi,
+        MARUSURI:   data.marusuri,
+        CHORONGDAM: data.chorongdam,
+        HANIYUWOO:  data.haniyuwoo,
+    };
+}
+
 async function sbSaveSuccessFactors(gameId, players) {
     if (!gameId) return;
     const gid = String(gameId).trim();

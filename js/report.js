@@ -870,6 +870,16 @@
                 if (citizen && citizen.default_EFTI) p.efti = citizen.default_EFTI;
             });
 
+            // 심화 모드: estate 가격 복원 (저장 당시 가격으로 총자산 재계산)
+            if (gameVariant === 'advanced') {
+                const savedPrices = await sbLoadEstatePrice(gameId);
+                if (savedPrices) {
+                    for (const k in savedPrices) {
+                        if (estateInfo[k]) estateInfo[k].price = savedPrices[k];
+                    }
+                }
+            }
+
             // 자산 보유 수량 로드 (기본: 주식, 심화: 부동산)
             console.group(`[loadBalance] gameId=${gameId} variant=${gameVariant}`);
             await Promise.all(players.map(async p => {
