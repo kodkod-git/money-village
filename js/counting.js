@@ -59,6 +59,23 @@
         document.getElementById('cntDiligenceInput').value = diligence;
         document.getElementById('displayStock').innerText = assetVal.toLocaleString();
 
+        const assetTypeLabel = document.getElementById('cntAssetTypeLabel');
+        if (assetTypeLabel) assetTypeLabel.textContent = currentGameVariant === 'advanced' ? '부동산' : '주식';
+
+        const sfRow = document.getElementById('cntSuccessFactorsRow');
+        if (sfRow) {
+            if (currentGameVariant === 'advanced') {
+                sfRow.style.display = '';
+                const sfCount = Object.values(p.successFactors || {}).filter(Boolean).length;
+                const sfCountEl = document.getElementById('displaySuccessFactorCount');
+                const sfMultEl  = document.getElementById('displaySuccessMultiplier');
+                if (sfCountEl) sfCountEl.textContent = sfCount;
+                if (sfMultEl)  sfMultEl.textContent  = '×' + (sfCount * 0.25).toFixed(2);
+            } else {
+                sfRow.style.display = 'none';
+            }
+        }
+
         const activeInfo = getActiveAssetInfo();
         for (let k in activeInfo) {
             const valEl = document.getElementById(`ui_val_${k}`);
