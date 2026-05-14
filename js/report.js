@@ -678,6 +678,7 @@
                 action: "saveGameResult",
                 mode: currentMode,
                 date: dateStr,
+                game_variant: currentGameVariant,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     nickname: p.nickname || '',

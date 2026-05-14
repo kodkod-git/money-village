@@ -121,17 +121,19 @@ async function sbSaveStockValue(stockValues) {
 async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic') {
     const today = new Date().toISOString().slice(0, 10);
 
-    // stock_price
-    const { error: spErr } = await _sb.from('stock_price').insert({
-        game_id: gameId,
-        sasung:  Number(stockValues[0] ?? 1500),
-        lgi:     Number(stockValues[1] ?? 600),
-        skei:    Number(stockValues[2] ?? 1600),
-        cacao:   Number(stockValues[3] ?? 4000),
-        hyunde:  Number(stockValues[4] ?? 6000),
-        naber:   Number(stockValues[5] ?? 7000)
-    });
-    if (spErr) console.error('[sbInitGame] stock_price', spErr);
+    // stock_price (기본 모드에서만 저장)
+    if (gameVariant !== 'advanced') {
+        const { error: spErr } = await _sb.from('stock_price').insert({
+            game_id: gameId,
+            sasung:  Number(stockValues[0] ?? 1500),
+            lgi:     Number(stockValues[1] ?? 600),
+            skei:    Number(stockValues[2] ?? 1600),
+            cacao:   Number(stockValues[3] ?? 4000),
+            hyunde:  Number(stockValues[4] ?? 6000),
+            naber:   Number(stockValues[5] ?? 7000)
+        });
+        if (spErr) console.error('[sbInitGame] stock_price', spErr);
+    }
 
     // game_info (section_num 자동 계산)
     const { count } = await _sb.from('game_info').select('*', { count: 'exact', head: true }).eq('date', today);
@@ -248,7 +250,7 @@ async function sbSaveTraits(gameId, players) {
     if (error) console.error('[sbSaveTraits]', error);
 }
 
-async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
+async function sbSaveGameResult({ mode, date, game_variant = 'basic', individuals = [], teams = [] }) {
     const { data: existingUsers } = await _sb.from('users').select('nickname');
     const existingNicknames = new Set((existingUsers || []).map(u => u.nickname));
 
@@ -311,12 +313,14 @@ async function sbSaveGameResult({ mode, date, individuals = [], teams = [] }) {
                 date,
                 player_count: individuals.length,
                 game_type:    mode,
-                section_num:  (count || 0) + 1
+                section_num:  (count || 0) + 1,
+                game_variant
             });
         } else {
             await _sb.from('game_info').update({
                 player_count: individuals.length,
-                game_type:    mode
+                game_type:    mode,
+                game_variant
             }).eq('game_id', gameId);
         }
     }
