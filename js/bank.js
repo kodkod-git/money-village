@@ -286,7 +286,7 @@ function _bankRenderPlayerList() {
         const allDone      = completedCnt === teamSize;
 
         const groupEl = document.createElement('div');
-        groupEl.className = 'team-group' + (allDone ? ' team-done' : '');
+        groupEl.className = 'team-group';
 
         const header = document.createElement('div');
         header.className = 'team-group-header';
@@ -306,21 +306,22 @@ function bankSelectPlayer(idx) {
     const p = _bank.players[idx];
     const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
 
-    // 이미 신청 완료된 플레이어는 폼을 열지 않음
-    if (isTeamTab) {
-        const td = _bank.teamDeposits[p.team_name];
-        if (td && td.members && td.members[idx] !== undefined) return;
-    } else {
-        if (_bank.indivCompleted[idx]) return;
-    }
-
     _bank.currentPlayerIdx = idx;
     document.getElementById('bankDepositPlayerName').textContent =
         `${p.nickname}(${p.real_name})의 예금 신청`;
 
-    _bank.deposit = { type: null, amount: 1000 };
+    // 이전 금액 복원 (덮어쓰기 지원)
+    let prevAmount = 1000;
+    if (isTeamTab) {
+        const td = _bank.teamDeposits[p.team_name];
+        if (td && td.members && td.members[idx] !== undefined) prevAmount = td.members[idx];
+    } else {
+        if (_bank.indivCompleted[idx]) prevAmount = _bank.indivCompleted[idx].amount;
+    }
+
+    _bank.deposit = { type: null, amount: prevAmount };
     document.querySelectorAll('.bank-type-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById('bankAmountDisplay').textContent = '1,000원';
+    document.getElementById('bankAmountDisplay').textContent = prevAmount.toLocaleString() + '원';
     document.getElementById('bankPreviewBox').textContent = '종류를 선택하면 미리보기가 나와요!';
 
     // 팀/개인 배율을 예금 종류 카드에 표시
@@ -338,6 +339,11 @@ function bankSelectPlayer(idx) {
             document.getElementById('bankTc' + _bankCap(td.type)).classList.add('selected');
             _bankUpdatePreview();
         }
+    } else if (_bank.indivCompleted[idx]) {
+        const prevType = _bank.indivCompleted[idx].type;
+        _bank.deposit.type = prevType;
+        document.getElementById('bankTc' + _bankCap(prevType)).classList.add('selected');
+        _bankUpdatePreview();
     }
 
     _bankShowView(3);
@@ -384,8 +390,9 @@ function _bankUpdatePreview() {
 
     if (isTeamTab) {
         const td = _bank.teamDeposits[p.team_name];
+        const prevSelf   = td && td.members ? (td.members[_bank.currentPlayerIdx] || 0) : 0;
         const alreadySum = td && td.members
-            ? Object.values(td.members).reduce((a, b) => a + b, 0) : 0;
+            ? Object.values(td.members).reduce((a, b) => a + b, 0) - prevSelf : 0;
         const totalPrincipal = alreadySum + amount;
         const totalMatured   = Math.round(totalPrincipal * _bank.teamSettings[type]);
         box.textContent = `${totalPrincipal.toLocaleString()}원 → 💰 ${totalMatured.toLocaleString()}원`;
