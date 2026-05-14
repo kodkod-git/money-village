@@ -397,14 +397,26 @@ function _bankUpdatePreview() {
 
 async function bankStep2Submit() {
     if (!_bank.deposit.type) { alert('예금 종류를 선택해주세요'); return; }
-
     const { type, amount } = _bank.deposit;
+    const p = _bank.players[_bank.currentPlayerIdx];
+    const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
+    if (isTeamTab) {
+        _bankSubmitTeam(p, type, amount);
+    } else {
+        _bankSubmitIndividual(p, type, amount);
+    }
+}
+
+function _bankSubmitIndividual(p, type, amount) {
     const ratio    = _bank.settings[type];
     const maturity = Math.round(amount * ratio);
     const interest = maturity - amount;
-    const p        = _bank.players[_bank.currentPlayerIdx];
 
     sbSaveDepositReward(_bank.gameId, p.nickname, interest).catch(console.error);
+    _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
+
+    document.getElementById('bankTeamStatusSection').style.display = 'none';
+    document.getElementById('bankRTeamPendingMsg').style.display   = 'none';
 
     document.getElementById('bankResultRoundBadge').textContent = _BANK_TYPE[type].round;
     document.getElementById('bankRType').textContent      = _BANK_TYPE[type].label;
@@ -413,7 +425,53 @@ async function bankStep2Submit() {
     document.getElementById('bankRInterest').textContent  = interest.toLocaleString() + '원';
     document.getElementById('bankRTotal').textContent     = maturity.toLocaleString() + '원';
 
-    _bank.completed[_bank.currentPlayerIdx] = { type };
+    _bankShowView(4);
+}
+
+function _bankSubmitTeam(p, type, amount) {
+    const teamName = p.team_name;
+    if (!_bank.teamDeposits[teamName]) {
+        _bank.teamDeposits[teamName] = { type, members: {} };
+    }
+    _bank.teamDeposits[teamName].type = type;
+    _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
+
+    const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
+    const teamSize     = teamMembers.length;
+    const td           = _bank.teamDeposits[teamName];
+    const completedCnt = Object.keys(td.members).length;
+    const allDone      = completedCnt === teamSize;
+
+    const totalPrincipal = Object.values(td.members).reduce((a, b) => a + b, 0);
+    const totalMatured   = Math.round(totalPrincipal * _bank.teamSettings[type]);
+
+    let perMemberReward = null;
+    if (allDone) {
+        const totalInterest = totalMatured - totalPrincipal;
+        perMemberReward = Math.floor(totalInterest / teamSize);
+        teamMembers.forEach(pl => {
+            sbSaveDepositReward(_bank.gameId, pl.nickname, perMemberReward).catch(console.error);
+        });
+    }
+
+    document.getElementById('bankResultRoundBadge').textContent = _BANK_TYPE[type].round;
+    document.getElementById('bankRType').textContent      = _BANK_TYPE[type].label;
+    document.getElementById('bankRPlayer').textContent    = `${p.nickname} (${p.real_name})`;
+    document.getElementById('bankRPrincipal').textContent = amount.toLocaleString() + '원';
+
+    if (allDone) {
+        document.getElementById('bankRInterest').textContent = perMemberReward.toLocaleString() + '원 (팀 균등 분배)';
+        document.getElementById('bankRTotal').textContent    = (amount + perMemberReward).toLocaleString() + '원';
+    } else {
+        document.getElementById('bankRInterest').textContent = '팀 완료 후 확정';
+        document.getElementById('bankRTotal').textContent    = '팀 완료 후 확정';
+    }
+
+    document.getElementById('bankTeamStatusSection').style.display = 'block';
+    document.getElementById('bankRTeamBadge').textContent   = `[${completedCnt}/${teamSize}]`;
+    document.getElementById('bankRTeamPreview').textContent = `${totalPrincipal.toLocaleString()}원 → ${totalMatured.toLocaleString()}원`;
+    document.getElementById('bankRTeamPendingMsg').style.display = allDone ? 'none' : 'block';
+
     _bankShowView(4);
 }
 
