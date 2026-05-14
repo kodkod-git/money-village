@@ -11,6 +11,7 @@
     let nameInputsVisible = false;
     let citizenListData = [];
     let isSavingDrive = false;
+    let currentGameVariant = 'basic'; // 'basic' | 'advanced'
 
 
     const stockInfo = {
@@ -21,7 +22,6 @@
         "HYUNDE":{ name: "HYUNDE", price: 6000, color: "#002c5f" },
         "NABER":  { name: "NABER", price: 7000, color: "#03c75a" }
     };
-    let currentGameVariant = 'basic'; // 'basic' | 'advanced'
 
     const estateInfo = {
         "NOORIDAMBI": { name: "누리담비 단독주택", price: 100000, color: "#4e7c3f" },
