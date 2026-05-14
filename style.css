@@ -832,6 +832,8 @@
         }
         .past-game-card-meta .tag-team{ background: #fce8d3; color: #b24800; }
         .past-game-card-meta .tag-individual{ background: #d3eafc; color: #005a9e; }
+        .past-game-card-meta .tag-basic{ background: #e8f5e9; color: #2e7d32; }
+        .past-game-card-meta .tag-advanced{ background: #f3e5f5; color: #7b1fa2; }
 
         .btn[disabled]{
             opacity: 0.65;
