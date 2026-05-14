@@ -415,8 +415,10 @@ async function sbLoadTraitsByGameId(gameId) {
 // =========================================================
 
 async function sbSaveEstatePrice(gameId, prices) {
+    const gid = String(gameId || '').trim();
+    if (!gid) return;
     const { error } = await _sb.from('estate_price').upsert({
-        game_id:    String(gameId || '').trim(),
+        game_id:    gid,
         nooridambi: Number(prices['NOORIDAMBI'] ?? 100000),
         damigorani: Number(prices['DAMIGORANI'] ?? 100000),
         girugi:     Number(prices['GIRUGI']     ?? 100000),
@@ -462,10 +464,11 @@ async function sbLoadEstateBalance(nickname, gameId) {
 
 async function sbSaveSuccessFactors(gameId, players) {
     if (!gameId) return;
+    const gid = String(gameId).trim();
     const rows = players
         .map(p => ({
             nickname:             _nick(p.nickname || ''),
-            game_id:              String(gameId).trim(),
+            game_id:              gid,
             financial_management: !!(p.successFactors && p.successFactors.financial_management),
             communication:        !!(p.successFactors && p.successFactors.communication),
             critical_thinking:    !!(p.successFactors && p.successFactors.critical_thinking),
