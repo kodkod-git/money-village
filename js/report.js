@@ -313,7 +313,7 @@
     }
     function refreshDisplayOnly(p) {
         const cash      = Number(p.manualCash      || 0);
-        const assetVal  = Number(calcActiveAsset(p.assets) || 0);
+        const assetVal  = Number(calcActiveAsset(p.assets || {}) || 0);
         const diligence = Number(p.diligenceReward || 0);
         const deposit   = Number(p.depositReward   || 0);
         const quest     = Number(p.questReward     || 0);
@@ -343,7 +343,7 @@
             if (valEl) valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
 
-        const cashPct = total > 0 ? Math.round((cash / total) * 100) : 0;
+        const cashPct = base > 0 ? Math.round((cash / base) * 100) : 0;
         document.getElementById('rptCashPct').innerText = `${cashPct}%`;
 
         const cashCircle      = document.getElementById('rptArcCash');
@@ -361,11 +361,11 @@
             return;
         }
 
-        const cashPercent      = (cash      / total) * 100;
-        const assetPercent     = (assetVal  / total) * 100;
-        const diligencePercent = (diligence / total) * 100;
-        const depositPercent   = (deposit   / total) * 100;
-        const questPercent     = (quest     / total) * 100;
+        const cashPercent      = (cash      / base) * 100;
+        const assetPercent     = (assetVal  / base) * 100;
+        const diligencePercent = (diligence / base) * 100;
+        const depositPercent   = (deposit   / base) * 100;
+        const questPercent     = (quest     / base) * 100;
 
         const _seg = (el, pct, off) => {
             if (!el) return;
