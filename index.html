@@ -293,6 +293,11 @@
             <div class="controls-title" style="font-size:18px; font-weight:bold;">🏆 명예의 전당</div>
             <div class="controls-actions">
                 <button class="btn btn-primary" onclick="switchScreen('setupScreen')">🏠 처음으로</button>
+                <div class="fame-tabs">
+                    <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
+                    <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
+                    <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
+                </div>
                 <button class="btn btn-drive" onclick="fetchFameData()">🔄 데이터 새로고침</button>
                 <button class="btn btn-danger" id="btnUploadFamePdf" onclick="uploadFamePdfToDrive()">📄 PDF 저장</button>                <button class="btn btn-success" onclick="printFame()">🖨️ 출력</button>
             </div>
@@ -313,15 +318,9 @@
                 </div>
                 <div class="header-right">
                     <img id="fameLogoImg" src="" alt="로고" class="logo-img" style="display:none;">
-                    <div id="fameLogoText" class="logo-text" style="font-size:22px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;">코드코드영재학원</div>
+                    <div id="fameLogoText" class="logo-text" style="font-size:22px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;"></div>
                     <div class="last-update">Last Update: <span id="todayDate">-</span></div>
                 </div>
-            </div>
-
-            <div class="fame-tabs">
-                <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
-                <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
-                <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
             </div>
 
             <div class="fame-only section-title" style="margin-top:5px;">👤 개인전 역대 Top 10 (Individual)</div>
