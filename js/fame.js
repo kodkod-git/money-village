@@ -131,7 +131,13 @@
     }
 
     function setSpecialAwards(data) {
-        if(data.length === 0) return;
+        if (data.length === 0) {
+            document.getElementById('awardCashName').innerText = '데이터 없음';
+            document.getElementById('awardCashVal').innerText = '-';
+            document.getElementById('awardStockName').innerText = '데이터 없음';
+            document.getElementById('awardStockVal').innerText = '-';
+            return;
+        }
         let cashKing = [...data].sort((a,b) => b.cash - a.cash)[0];
         let stockKing = [...data].sort((a,b) => b.stock - a.stock)[0];
 
