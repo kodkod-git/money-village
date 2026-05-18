@@ -1,3 +1,5 @@
+    let currentFameVariant = 'basic';
+
     function showFameScreen() {
         switchScreen('fameScreen');
         if (customLogoData) {
@@ -9,7 +11,19 @@
             document.getElementById('fameLogoText').style.display = 'block';
         }
 
+        currentFameVariant = 'basic';
+        document.querySelectorAll('.fame-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.variant === 'basic');
+        });
         fetchFameData();
+    }
+
+    function switchFameTab(variant) {
+        currentFameVariant = variant;
+        document.querySelectorAll('.fame-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.variant === variant);
+        });
+        renderFame();
     }
 
     async function fetchFameData() {
@@ -54,12 +68,16 @@
 
 
     function renderFame() {
-        fameIndivData.sort((a,b) => b.total - a.total);
-        fameTeamData.sort((a,b) => b.total - a.total);
+        const indiv = fameIndivData
+            .filter(d => d.game_variant === currentFameVariant)
+            .sort((a, b) => b.total - a.total);
+        const team = fameTeamData
+            .filter(d => d.game_variant === currentFameVariant)
+            .sort((a, b) => b.total - a.total);
 
-        renderRankingTable(fameIndivData.slice(0, 10), 'indivTableBody', false);
-        renderRankingTable(fameTeamData.slice(0, 5), 'teamTableBody', true);
-        setSpecialAwards(fameIndivData);
+        renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
+        renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
+        setSpecialAwards(indiv);
     }
 
     function renderRankingTable(data, tableId, isTeam) {
