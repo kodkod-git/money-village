@@ -2,7 +2,7 @@
         const badgeWrap = document.getElementById('rptTraitBadges');
         const grid = document.getElementById('rptPlayStyleGrid');
 
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             if (!p.successFactors) p.successFactors = initSuccessFactorsState();
             const onList = SUCCESS_FACTORS.filter(f => p.successFactors[f.key]);
 
@@ -22,10 +22,13 @@
             SUCCESS_FACTORS.forEach(f => {
                 const isOn = !!(p.successFactors && p.successFactors[f.key]);
                 grid.innerHTML += `
-                    <div class="booth-item ${isOn ? 'selected' : ''}">
-                        <div class="booth-icon" style="font-size:22px;">${f.emo}</div>
+                    <div class="booth-item booth-item--sf ${isOn ? 'selected' : ''}" onclick="rptToggleSuccessFactor('${f.key}')">
+                        <div class="booth-icon">
+                            <img src="${f.img}" alt="${f.name}" style="width:44px;height:44px;object-fit:contain;">
+                        </div>
                         <div class="booth-text">
-                            <h4 style="font-size:15px; margin:0;">${f.name}</h4>
+                            <h4 style="font-size:13px; margin:0;">${f.name}</h4>
+                            <p>${f.desc}</p>
                         </div>
                     </div>`;
             });
@@ -50,7 +53,7 @@
                 const isOn = !!(p.traits && p.traits[t.key]);
                 const title = isOn ? `${t.base} → ${t.king}` : t.base;
                 grid.innerHTML += `
-                    <div class="booth-item ${isOn ? 'selected' : ''}">
+                    <div class="booth-item ${isOn ? 'selected' : ''}" onclick="rptToggleTrait('${t.key}')">
                         <div class="booth-icon">${t.emo}</div>
                         <div class="booth-text">
                             <h4>${title}</h4>
@@ -59,6 +62,25 @@
                     </div>`;
             });
         }
+    }
+
+    function rptToggleSuccessFactor(key) {
+        const p = players[viewingPlayerIndex];
+        if (!p) return;
+        if (!p.successFactors) p.successFactors = initSuccessFactorsState();
+        p.successFactors[key] = !p.successFactors[key];
+        recalculateAllRankings();
+        updateRankUI(p);
+        refreshDisplayOnly(p);
+        renderPlayStyleReport(p);
+    }
+
+    function rptToggleTrait(key) {
+        const p = players[viewingPlayerIndex];
+        if (!p) return;
+        if (!p.traits) p.traits = initTraitsState();
+        p.traits[key] = !p.traits[key];
+        renderPlayStyleReport(p);
     }
     function finishGame() {
         document.getElementById('finishConfirmModal').classList.add('show');
@@ -128,21 +150,21 @@
         // 심화/기본 UI 라벨 업데이트
         const assetLabelEl = document.getElementById('rptAssetLabel');
         if (assetLabelEl) {
-            assetLabelEl.textContent = currentGameVariant === 'advanced'
-                ? '총 자산 (현금 + 부동산 + 성실활동금 + 예금 + 퀘스트) x (성공요소 개수 x 0.25)'
+            assetLabelEl.textContent = currentGameVariant !== 'basic'
+                ? '총 자산 (현금 + 부동산 + 성실활동금 + 예금 + 퀘스트) x (경제적 성공요소 개수 x 0.25)'
                 : '총 자산 (현금 + 주식 + 성실활동금 + 예금 + 퀘스트)';
         }
         const portfolioHeader = document.getElementById('rptPortfolioHeader');
         if (portfolioHeader) {
-            portfolioHeader.textContent = currentGameVariant === 'advanced' ? '나의 부동산 포트폴리오' : '나의 주식 포트폴리오';
+            portfolioHeader.textContent = currentGameVariant !== 'basic' ? '나의 부동산 포트폴리오' : '나의 주식 포트폴리오';
         }
         const styleHeader = document.getElementById('rptStyleHeader');
         if (styleHeader) {
-            styleHeader.textContent = currentGameVariant === 'advanced' ? '나의 경제적 성공요소' : '나의 플레이 스타일';
+            styleHeader.textContent = currentGameVariant !== 'basic' ? '나의 경제적 성공요소' : '나의 플레이 스타일';
         }
         const assetTypeLabel = document.getElementById('rptAssetTypeLabel');
         if (assetTypeLabel) {
-            assetTypeLabel.textContent = currentGameVariant === 'advanced' ? '부동산' : '주식';
+            assetTypeLabel.textContent = currentGameVariant !== 'basic' ? '부동산' : '주식';
         }
         document.getElementById('rptCashInput').value = p.manualCash;
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
@@ -161,6 +183,10 @@
             if (valEl)   valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
         document.getElementById('rptEftiInput').value = p.efti || '-';
+        ['rptDateInput','rptNicknameInput','rptRealNameInput','rptTeamInput','rptEftiInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) autoResizeInput(el);
+        });
         updateRankUI(p);
         refreshDisplayOnly(p);
         renderPlayStyleReport(p);
@@ -320,7 +346,7 @@
         const base = cash + assetVal + diligence + deposit + quest;
 
         let total;
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             total = base * calcSuccessMultiplier(p.successFactors || {});
         } else {
             total = base;
@@ -660,7 +686,7 @@
                 players.forEach(p => p.gameId = gameId);
             }
 
-            if (currentGameVariant === 'advanced') {
+            if (currentGameVariant !== 'basic') {
                 await Promise.all(players.map(p => sbSaveEstateBalance(p.nickname, gameId, p.assets)));
                 await sbSaveSuccessFactors(gameId, players);
             } else {
@@ -673,6 +699,8 @@
                 if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
                 return Promise.all(saves);
             }));
+
+            recalculateAllRankings();
 
             const exportData = {
                 action: "saveGameResult",
@@ -687,6 +715,8 @@
                     total: p.total,
                     manualCash: p.manualCash,
                     diligence_reward: p.diligenceReward || 0,
+                    questReward: p.questReward || 0,
+                    depositReward: p.depositReward || 0,
                     stockVal: calcActiveAsset(p.assets),
                     team: p.team || '-',
                     team_id: p.teamId || '',
@@ -708,6 +738,7 @@
 
                     exportData.teams.push({
                         team_id: sortedMembers[0]?.teamId || '',
+                        game_id: sortedMembers[0]?.gameId || '',
                         name: tName,
                         total: teamMap[tName].total,
                         members: sortedMembers
@@ -807,8 +838,9 @@
                 const typeLabel = g.game_type === 'team' ? '팀전' : '개인전';
                 const typeTag = g.game_type === 'team' ? 'tag-team' : 'tag-individual';
                 const names = (g.preview_names || []).join(', ') + (g.player_count > 6 ? ' 등' : '');
-                const variantLabel = (g.game_variant || 'basic') === 'advanced' ? '심화' : '기본';
-                const variantTag   = (g.game_variant || 'basic') === 'advanced' ? 'tag-advanced' : 'tag-basic';
+                const _rv = g.game_variant || 'basic';
+                const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
+                const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
                 const card = document.createElement('div');
                 card.className = 'past-game-card';
                 card.innerHTML = `
@@ -872,7 +904,7 @@
             });
 
             // 심화 모드: estate 가격 복원 (저장 당시 가격으로 총자산 재계산)
-            if (gameVariant === 'advanced') {
+            if (gameVariant !== 'basic') {
                 const savedPrices = await sbLoadEstatePrice(gameId);
                 if (savedPrices) {
                     for (const k in savedPrices) {
@@ -885,7 +917,7 @@
             console.group(`[loadBalance] gameId=${gameId} variant=${gameVariant}`);
             await Promise.all(players.map(async p => {
                 if (!p.gameId) { console.warn(`  no gameId: ${p.nickname}`); return; }
-                if (gameVariant === 'advanced') {
+                if (gameVariant !== 'basic') {
                     const estates = await sbLoadEstateBalance(p.nickname, p.gameId);
                     if (estates) {
                         Object.assign(p.assets, estates);
@@ -908,7 +940,7 @@
 
             // 특성/성공요소 로드
             try {
-                if (gameVariant === 'advanced') {
+                if (gameVariant !== 'basic') {
                     const sfData = await sbLoadSuccessFactorsByGameId(gameId);
                     if (sfData.success && Array.isArray(sfData.factors)) {
                         const sfMap = {};

@@ -22,7 +22,7 @@ SELECT
     WHEN MAX(NULLIF(TRIM(team_id), '')) IS NOT NULL THEN 'team'
     ELSE 'individual'
   END                                                                         AS game_type,
-  ROW_NUMBER() OVER (PARTITION BY date ORDER BY MIN(id))                     AS section_num
+  ROW_NUMBER() OVER (PARTITION BY date ORDER BY MIN(game_id))                AS section_num
 FROM game_individual
 GROUP BY game_id, date
 ON CONFLICT (game_id) DO NOTHING;

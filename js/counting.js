@@ -1,7 +1,16 @@
     function renderSidebar() {
         const list = document.getElementById('sidebarList');
         list.innerHTML = '';
-        players.forEach((p, i) => {
+        const sorted = players
+            .map((p, i) => ({ p, i }))
+            .sort((a, b) => {
+                if (currentMode === 'team') {
+                    const teamCmp = (a.p.team || '').localeCompare(b.p.team || '', 'ko');
+                    if (teamCmp !== 0) return teamCmp;
+                }
+                return (a.p.realName || a.p.name || '').localeCompare(b.p.realName || b.p.name || '', 'ko');
+            });
+        sorted.forEach(({ p, i }) => {
             list.innerHTML += `
             <div class="player-list-item" id="pItem_${i}" onclick="selectCountingPlayer(${i})">
                 <div>
@@ -12,9 +21,9 @@
             </div>`;
         });
         const assetTitle = document.getElementById('cntAssetCardTitle');
-        if (assetTitle) assetTitle.textContent = currentGameVariant === 'advanced' ? '보유 부동산 (현재가)' : '보유 주식 (4R 현재가)';
+        if (assetTitle) assetTitle.textContent = currentGameVariant !== 'basic' ? '보유 부동산 (현재가)' : '보유 주식 (4R 현재가)';
         const traitTitle = document.getElementById('cntTraitCardTitle');
-        if (traitTitle) traitTitle.textContent = currentGameVariant === 'advanced' ? '경제적 성공요소 (복수 선택 가능)' : '나의 플레이 스타일 (복수 선택 가능)';
+        if (traitTitle) traitTitle.textContent = currentGameVariant !== 'basic' ? '경제적 성공요소 (복수 선택 가능)' : '나의 플레이 스타일 (복수 선택 가능)';
         initAssetGrid('stockGridSm', false, true);
     }
     function selectCountingPlayer(i) {
@@ -48,7 +57,7 @@
         const diligence = p.diligenceReward || 0;
         const base = cash + assetVal + diligence;
 
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             p.total = base * calcSuccessMultiplier(p.successFactors || {});
         } else {
             p.total = base;
@@ -60,11 +69,11 @@
         document.getElementById('displayStock').innerText = assetVal.toLocaleString();
 
         const assetTypeLabel = document.getElementById('cntAssetTypeLabel');
-        if (assetTypeLabel) assetTypeLabel.textContent = currentGameVariant === 'advanced' ? '부동산' : '주식';
+        if (assetTypeLabel) assetTypeLabel.textContent = currentGameVariant !== 'basic' ? '부동산' : '주식';
 
         const sfRow = document.getElementById('cntSuccessFactorsRow');
         if (sfRow) {
-            if (currentGameVariant === 'advanced') {
+            if (currentGameVariant !== 'basic') {
                 sfRow.style.display = '';
                 const sfCount = Object.values(p.successFactors || {}).filter(Boolean).length;
                 const sfCountEl = document.getElementById('displaySuccessFactorCount');
@@ -146,7 +155,7 @@
 
         grid.innerHTML = '';
 
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             if (!p.successFactors) p.successFactors = initSuccessFactorsState();
             SUCCESS_FACTORS.forEach(f => {
                 const isOn = !!p.successFactors[f.key];

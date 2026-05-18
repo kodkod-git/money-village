@@ -20,18 +20,19 @@
 
     function selectGameVariant(v) {
         currentGameVariant = v;
-        document.getElementById('btnBasic').className    = v === 'basic'    ? 'mode-btn selected' : 'mode-btn';
-        document.getElementById('btnAdvanced').className = v === 'advanced' ? 'mode-btn selected' : 'mode-btn';
+        document.getElementById('btnBasic').className       = v === 'basic'       ? 'gs-card selected' : 'gs-card';
+        document.getElementById('btnAdvanced').className    = v === 'advanced'    ? 'gs-card selected' : 'gs-card';
+        document.getElementById('btnRichVessel').className  = v === 'rich_vessel' ? 'gs-card selected' : 'gs-card';
 
         const step2Label = document.getElementById('gsStep2Label');
-        if (step2Label) step2Label.textContent = v === 'advanced' ? '부동산 가격' : '주식 가격';
+        if (step2Label) step2Label.textContent = v !== 'basic' ? '부동산 가격' : '주식 가격';
     }
 
     function selectMode(m) {
         if (currentMode !== m) resetNameInputsUI();
         currentMode = m;
-        document.getElementById('btnIndiv').className = m === 'individual' ? 'mode-btn selected' : 'mode-btn';
-        document.getElementById('btnTeam').className  = m === 'team' ? 'mode-btn selected' : 'mode-btn';
+        document.getElementById('btnIndiv').className = m === 'individual' ? 'gs-card selected' : 'gs-card';
+        document.getElementById('btnTeam').className  = m === 'team'       ? 'gs-card selected' : 'gs-card';
         document.getElementById('individualConfig').style.display = m === 'individual' ? 'block' : 'none';
         document.getElementById('teamConfig').style.display       = m === 'team' ? 'block' : 'none';
         nameInputsVisible = false;
@@ -162,11 +163,24 @@
         row.dataset.efti = nextEfti;
     }
     function startGame() {
+        // 닉네임 중복 검사 (실제 사용 값 기준 — 닉네임 미입력 시 실명 폴백)
+        const allNicknames = Array.from(
+            document.querySelectorAll('#nameInputArea .citizen-row')
+        ).map((row, i) => {
+            const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자 ${i + 1}`;
+            return row.querySelector('.nickname-input')?.value?.trim() || realName;
+        });
+        const duplicates = allNicknames.filter((n, i) => allNicknames.indexOf(n) !== i);
+        if (duplicates.length > 0) {
+            alert(`중복된 닉네임이 있습니다: ${[...new Set(duplicates)].join(', ')}\n닉네임을 다시 설정해주세요.`);
+            return;
+        }
+
         isSampleMode = false;
         document.getElementById('gameStartModal')?.classList.remove('show');
         document.getElementById('btnEditPrev').style.display = 'inline-flex';
 
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             for (let k in estateInfo) {
                 const v = document.getElementById(`conf_${k}`)?.value;
                 if (v) estateInfo[k].price = parseInt(v);
@@ -245,7 +259,7 @@
         if (players.length === 0) return alert("명단을 입력하세요.");
 
         // 게임 초기 데이터 DB 삽입 (백그라운드)
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             const estateValues = Object.fromEntries(
                 Object.entries(estateInfo).map(([k, v]) => [k, v.price])
             );
@@ -382,7 +396,8 @@
         document.getElementById('gameStartModal').classList.add('show');
     }
 
-    function closeGameStartModal() {
+    function closeGameStartModal(force = false) {
+        if (!force && !confirm('현재 작성중인 내용이 사라집니다\n종료하시겠습니까?')) return;
         document.getElementById('gameStartModal').classList.remove('show');
     }
 
@@ -395,7 +410,7 @@
 
         if (step === 2) {
             const titleEl = document.getElementById('stockConfigTitle');
-            if (currentGameVariant === 'advanced') {
+            if (currentGameVariant !== 'basic') {
                 initEstateConfig();
                 if (titleEl) titleEl.textContent = '부동산 가격 설정 (4R)';
             } else {
@@ -576,7 +591,8 @@
             const json = await sbRegisterCitizen({
                 nickname,
                 real_name: realName,
-                default_EFTI: defaultEFTI
+                default_EFTI: defaultEFTI,
+                user_type: currentGameVariant === 'rich_vessel' ? 'adult' : 'child'
             });
 
             if (!json.success) {
@@ -635,7 +651,8 @@
             const json = await sbRegisterCitizen({
                 nickname,
                 real_name: realName,
-                default_EFTI: defaultEFTI
+                default_EFTI: defaultEFTI,
+                user_type: currentGameVariant === 'rich_vessel' ? 'adult' : 'child'
             });
 
             if (!json.success) {
@@ -687,15 +704,14 @@
         if (checkAll) checkAll.checked = false;
 
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="padding:16px; text-align:center; color:#999;">등록된 시민권자가 없습니다.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="padding:16px; text-align:center; color:#999;">등록된 시민권자가 없습니다.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = rows.map(row => `
             <tr data-original-nickname="${row.nickname || ''}"
                 data-original-realname="${row.real_name || ''}"
-                data-original-efti="${row.default_EFTI || '-'}"
-                data-original-status="${row.status || 'active'}">
+                data-original-efti="${row.default_EFTI || '-'}">
                 <td class="citizen-check-cell" style="padding:10px; border-bottom:1px solid #eee; text-align:center;">
                     <input type="checkbox" class="citizen-row-check" data-nickname="${row.nickname || ''}">
                 </td>
@@ -703,7 +719,6 @@
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.real_name || '-'}</td>
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.default_EFTI || '-'}</td>
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.join_date || '-'}</td>
-                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.status || '-'}</td>
             </tr>
         `).join('');
     }
@@ -815,10 +830,6 @@
                 `<option value="${v}"${v === efti ? ' selected' : ''}>${v}</option>`
             ).join('');
 
-            const statusOptions = ['active', 'inactive'].map(v =>
-                `<option value="${v}"${v === status ? ' selected' : ''}>${v}</option>`
-            ).join('');
-
             tr.innerHTML = `
                 <td class="citizen-check-cell" style="padding:10px; border-bottom:1px solid #eee; text-align:center;">
                     <input type="checkbox" class="citizen-row-check" data-nickname="${nickname}" checked disabled>
@@ -832,10 +843,7 @@
                 <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
                     <select class="citizen-edit-efti" style="${selectStyle}">${eftiOptions}</select>
                 </td>
-                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:#888;">${joinDate}</td>
-                <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                    <select class="citizen-edit-status" style="${selectStyle}">${statusOptions}</select>
-                </td>`;
+                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:#888;">${joinDate}</td>`;
         });
     }
 
@@ -857,27 +865,23 @@
             const nicknameInput  = tr.querySelector('.citizen-edit-nickname');
             const realnameInput  = tr.querySelector('.citizen-edit-realname');
             const eftiSelect     = tr.querySelector('.citizen-edit-efti');
-            const statusSelect   = tr.querySelector('.citizen-edit-status');
             if (!nicknameInput) return;
 
             const originalNickname = tr.dataset.originalNickname || '';
             const originalRealname = tr.dataset.originalRealname || '';
             const originalEfti     = tr.dataset.originalEfti     || '-';
-            const originalStatus   = tr.dataset.originalStatus   || 'active';
 
             const newNickname = nicknameInput.value.trim();
             const newRealname = realnameInput.value.trim();
             const newEfti     = eftiSelect.value;
-            const newStatus   = statusSelect.value;
 
             if (newNickname !== originalNickname || newRealname !== originalRealname ||
-                newEfti !== originalEfti         || newStatus  !== originalStatus) {
+                newEfti !== originalEfti) {
                 updates.push({
                     original_nickname: originalNickname,
                     nickname:          newNickname,
                     real_name:         newRealname,
-                    default_EFTI:      newEfti,
-                    status:            newStatus
+                    default_EFTI:      newEfti
                 });
             }
         });

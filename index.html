@@ -167,11 +167,6 @@
                         <h1>자산 리포트</h1>
                         <p>Money Village Asset Report</p>
                     </div>
-                </div>
-                <div class="header-right">
-                    <img id="rptLogoImg" src="" alt="로고" class="logo-img" style="display:none;">
-                    <div id="rptLogoText" style="font-size:20px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;"></div>
-                    
                     <div class="info-row">
                         <span id="rptTeamWrapper" class="info-pair" style="display:none;">
                             <span class="info-label">팀명:</span>
@@ -195,8 +190,13 @@
 
                         <span class="info-pair">
                             <span class="info-label">EFTI:</span>
-                            <input type="text" id="rptEftiInput" class="editable-text" style="width:70px;" oninput="updatePlayerEfti(); autoResizeInput(this)">                        </span>
+                            <input type="text" id="rptEftiInput" class="editable-text" style="width:70px;" oninput="updatePlayerEfti(); autoResizeInput(this)">
+                        </span>
                     </div>
+                </div>
+                <div class="header-right">
+                    <img id="rptLogoImg" src="" alt="로고" class="logo-img" style="display:none;">
+                    <div id="rptLogoText" style="font-size:20px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;"></div>
                 </div>
             </div>
 
@@ -344,13 +344,15 @@
             <div class="fame-only section-title" style="margin-top:5px;">👤 개인전 역대 Top 10 (Individual)</div>
             <table class="ranking-table">
                 <colgroup>
-                    <col style="width: 8%">
-                    <col style="width: 18%">
-                    <col style="width: 17%">
-                    <col style="width: 14%">
-                    <col style="width: 14%">
-                    <col style="width: 14%">
-                    <col style="width: 15%">
+                    <col style="width: 6%">
+                    <col style="width: 13%">
+                    <col style="width: 13%">
+                    <col style="width: 11%">
+                    <col style="width: 11%">
+                    <col style="width: 11%">
+                    <col style="width: 11%">
+                    <col style="width: 11%">
+                    <col style="width: 13%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -360,6 +362,8 @@
                         <th>현금</th>
                         <th id="indivStockHeader">주식</th>
                         <th>성실활동금</th>
+                        <th>퀘스트</th>
+                        <th>예금보상</th>
                         <th>달성 날짜</th>
                     </tr>
                 </thead>

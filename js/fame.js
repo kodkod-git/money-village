@@ -41,7 +41,9 @@
                     total: Number(d.total_asset ?? 0),
                     cash: Number(d.cash ?? 0),
                     stock: Number(d.stock ?? 0),
-                    diligence_reward: Number(d.diligence_reward ?? 0)
+                    diligence_reward: Number(d.diligence_reward ?? 0),
+                    quest_reward:     Number(d.quest_reward ?? 0),
+                    deposit_reward:   Number(d.deposit_reward ?? 0)
                 }));
             } else {
                 fameIndivData = [];
@@ -125,7 +127,9 @@
             } else {
                 row += `<td class="sub-asset-col">${item.cash ? Number(item.cash).toLocaleString() : 0}</td>
                         <td class="sub-asset-col stock">${item.stock ? Number(item.stock).toLocaleString() : 0}</td>
-                        <td class="sub-asset-col">${item.diligence_reward ? Number(item.diligence_reward).toLocaleString() : 0}</td>`;
+                        <td class="sub-asset-col">${item.diligence_reward ? Number(item.diligence_reward).toLocaleString() : 0}</td>
+                        <td class="sub-asset-col">${item.quest_reward ? Number(item.quest_reward).toLocaleString() : 0}</td>
+                        <td class="sub-asset-col">${item.deposit_reward ? Number(item.deposit_reward).toLocaleString() : 0}</td>`;
             }
 
             row += `<td class="date-col">${item.date || '-'}</td></tr>`;
