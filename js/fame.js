@@ -1,3 +1,5 @@
+    let currentFameVariant = 'basic';
+
     function showFameScreen() {
         switchScreen('fameScreen');
         if (customLogoData) {
@@ -9,7 +11,22 @@
             document.getElementById('fameLogoText').style.display = 'block';
         }
 
+        currentFameVariant = 'basic';
+        document.querySelectorAll('.fame-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.variant === 'basic');
+        });
+        document.getElementById('indivStockHeader').innerText = '주식';
         fetchFameData();
+    }
+
+    function switchFameTab(variant) {
+        currentFameVariant = variant;
+        document.querySelectorAll('.fame-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.variant === variant);
+        });
+        const isEstate = variant === 'advanced' || variant === 'rich_vessel';
+        document.getElementById('indivStockHeader').innerText = isEstate ? '부동산' : '주식';
+        renderFame();
     }
 
     async function fetchFameData() {
@@ -54,12 +71,16 @@
 
 
     function renderFame() {
-        fameIndivData.sort((a,b) => b.total - a.total);
-        fameTeamData.sort((a,b) => b.total - a.total);
+        const indiv = fameIndivData
+            .filter(d => d.game_variant === currentFameVariant)
+            .sort((a, b) => b.total - a.total);
+        const team = fameTeamData
+            .filter(d => d.game_variant === currentFameVariant)
+            .sort((a, b) => b.total - a.total);
 
-        renderRankingTable(fameIndivData.slice(0, 10), 'indivTableBody', false);
-        renderRankingTable(fameTeamData.slice(0, 5), 'teamTableBody', true);
-        setSpecialAwards(fameIndivData);
+        renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
+        renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
+        setSpecialAwards(indiv);
     }
 
     function renderRankingTable(data, tableId, isTeam) {
@@ -113,16 +134,27 @@
     }
 
     function setSpecialAwards(data) {
-        if(data.length === 0) return;
-        let cashKing = [...data].sort((a,b) => b.cash - a.cash)[0];
-        let stockKing = [...data].sort((a,b) => b.stock - a.stock)[0];
+        const isEstateVariant = currentFameVariant === 'advanced' || currentFameVariant === 'rich_vessel';
+        document.getElementById('awardStockIcon').innerText  = isEstateVariant ? '🏠' : '📈';
+        document.getElementById('awardStockTitle').innerText = isEstateVariant ? 'Personal Estate King' : 'Personal Stock King';
+        document.getElementById('awardStockLabel').innerText = isEstateVariant ? '부동산 평가액' : '주식 평가액';
 
-        if(cashKing) {
-            document.getElementById('awardCashName').innerText = cashKing.nickname || cashKing.name || '-';
-            document.getElementById('awardCashVal').innerText = cashKing.cash.toLocaleString();
+        if (data.length === 0) {
+            document.getElementById('awardCashName').innerText = '데이터 없음';
+            document.getElementById('awardCashVal').innerText = '-';
+            document.getElementById('awardStockName').innerText = '데이터 없음';
+            document.getElementById('awardStockVal').innerText = '-';
+            return;
         }
-        if(stockKing) {
+        const cashKing  = [...data].sort((a, b) => b.cash  - a.cash)[0];
+        const stockKing = [...data].sort((a, b) => b.stock - a.stock)[0];
+
+        if (cashKing) {
+            document.getElementById('awardCashName').innerText = cashKing.nickname || cashKing.name || '-';
+            document.getElementById('awardCashVal').innerText  = cashKing.cash.toLocaleString();
+        }
+        if (stockKing) {
             document.getElementById('awardStockName').innerText = stockKing.nickname || stockKing.name || '-';
-            document.getElementById('awardStockVal').innerText = stockKing.stock.toLocaleString();
+            document.getElementById('awardStockVal').innerText  = stockKing.stock.toLocaleString();
         }
     }

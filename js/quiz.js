@@ -118,6 +118,8 @@ async function onQuizDateChange() {
             const typeTag      = g.game_type === 'team' ? 'tag-team' : 'tag-individual';
             const typeLabel    = g.game_type === 'team' ? '팀전' : '개인전';
             const names        = (g.preview_names || []).join(', ') + (g.player_count > 6 ? ' 등' : '');
+            const variantLabel = (g.game_variant || 'basic') === 'advanced' ? '심화' : '기본';
+            const variantTag   = (g.game_variant || 'basic') === 'advanced' ? 'tag-advanced' : 'tag-basic';
             const card = document.createElement('div');
             card.className = 'past-game-card';
             card.innerHTML = `
@@ -126,6 +128,7 @@ async function onQuizDateChange() {
                     <span>${names || '참가자 정보 없음'}</span>
                     <span>참여인원: ${g.player_count}명</span>
                     <span class="${typeTag}">${typeLabel}</span>
+                    <span class="${variantTag}">${variantLabel}</span>
                 </div>`;
             card.onclick = () => _quizSelectGame(g.game_id, date, g.section_num, g.game_type, card);
             grid.appendChild(card);

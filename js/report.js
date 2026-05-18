@@ -1,39 +1,64 @@
-    function renderPlayStyleReport(p){
-        // 1) 배지 영역
+    function renderPlayStyleReport(p) {
         const badgeWrap = document.getElementById('rptTraitBadges');
-        if(badgeWrap){
-            badgeWrap.innerHTML = '';
-            if(!p.traits) p.traits = initTraitsState();
-
-            const onList = TRAITS.filter(t => p.traits[t.key]);
-            if(onList.length === 0){
-                badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
-            } else {
-                onList.forEach(t => {
-                    badgeWrap.innerHTML += `<span class="rpt-badge on">${t.emo} ${t.king}</span>`;
-                });
-            }
-        }
-
-        // 2) 우측 하단(기존 경제활동 가이드 자리) 출력용 그리드
         const grid = document.getElementById('rptPlayStyleGrid');
-        if(!grid) return;
-        grid.innerHTML = '';
 
-        TRAITS.forEach(t => {
-            const isOn = !!(p.traits && p.traits[t.key]);
-            const title = isOn ? `${t.base} → ${t.king}` : t.base;
+        if (currentGameVariant === 'advanced') {
+            if (!p.successFactors) p.successFactors = initSuccessFactorsState();
+            const onList = SUCCESS_FACTORS.filter(f => p.successFactors[f.key]);
 
-            grid.innerHTML += `
-                <div class="booth-item ${isOn ? 'selected' : ''}">
-                    <div class="booth-icon">${t.emo}</div>
-                    <div class="booth-text">
-                        <h4>${title}</h4>
-                        <p>${t.desc}</p>
-                    </div>
-                </div>
-            `;
-        });
+            if (badgeWrap) {
+                badgeWrap.innerHTML = '';
+                if (onList.length === 0) {
+                    badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
+                } else {
+                    onList.forEach(f => {
+                        badgeWrap.innerHTML += `<span class="rpt-badge on">${f.emo} ${f.name}</span>`;
+                    });
+                }
+            }
+
+            if (!grid) return;
+            grid.innerHTML = '';
+            SUCCESS_FACTORS.forEach(f => {
+                const isOn = !!(p.successFactors && p.successFactors[f.key]);
+                grid.innerHTML += `
+                    <div class="booth-item ${isOn ? 'selected' : ''}">
+                        <div class="booth-icon" style="font-size:22px;">${f.emo}</div>
+                        <div class="booth-text">
+                            <h4 style="font-size:15px; margin:0;">${f.name}</h4>
+                        </div>
+                    </div>`;
+            });
+
+        } else {
+            if (badgeWrap) {
+                badgeWrap.innerHTML = '';
+                if (!p.traits) p.traits = initTraitsState();
+                const onList = TRAITS.filter(t => p.traits[t.key]);
+                if (onList.length === 0) {
+                    badgeWrap.innerHTML = `<span class="rpt-badge">선택 없음</span>`;
+                } else {
+                    onList.forEach(t => {
+                        badgeWrap.innerHTML += `<span class="rpt-badge on">${t.emo} ${t.king}</span>`;
+                    });
+                }
+            }
+
+            if (!grid) return;
+            grid.innerHTML = '';
+            TRAITS.forEach(t => {
+                const isOn = !!(p.traits && p.traits[t.key]);
+                const title = isOn ? `${t.base} → ${t.king}` : t.base;
+                grid.innerHTML += `
+                    <div class="booth-item ${isOn ? 'selected' : ''}">
+                        <div class="booth-icon">${t.emo}</div>
+                        <div class="booth-text">
+                            <h4>${title}</h4>
+                            <p>${t.desc}</p>
+                        </div>
+                    </div>`;
+            });
+        }
     }
     function finishGame() {
         document.getElementById('finishConfirmModal').classList.add('show');
@@ -42,7 +67,7 @@
         document.getElementById('finishConfirmModal').classList.remove('show');
         recalculateAllRankings();
         switchScreen('reportScreen');
-        initStockGrid('rptStockGrid', false, false);
+        initAssetGrid('rptStockGrid', false, false);
         viewingPlayerIndex = 0;
 
         const gameId = players[0]?.gameId;
@@ -100,6 +125,25 @@
             document.getElementById('rptTeamWrapper').style.display = 'none';
             reportArea.classList.remove('team-mode');
         }
+        // 심화/기본 UI 라벨 업데이트
+        const assetLabelEl = document.getElementById('rptAssetLabel');
+        if (assetLabelEl) {
+            assetLabelEl.textContent = currentGameVariant === 'advanced'
+                ? '총 자산 (현금 + 부동산 + 성실활동금 + 예금 + 퀘스트) x (성공요소 개수 x 0.25)'
+                : '총 자산 (현금 + 주식 + 성실활동금 + 예금 + 퀘스트)';
+        }
+        const portfolioHeader = document.getElementById('rptPortfolioHeader');
+        if (portfolioHeader) {
+            portfolioHeader.textContent = currentGameVariant === 'advanced' ? '나의 부동산 포트폴리오' : '나의 주식 포트폴리오';
+        }
+        const styleHeader = document.getElementById('rptStyleHeader');
+        if (styleHeader) {
+            styleHeader.textContent = currentGameVariant === 'advanced' ? '나의 경제적 성공요소' : '나의 플레이 스타일';
+        }
+        const assetTypeLabel = document.getElementById('rptAssetTypeLabel');
+        if (assetTypeLabel) {
+            assetTypeLabel.textContent = currentGameVariant === 'advanced' ? '부동산' : '주식';
+        }
         document.getElementById('rptCashInput').value = p.manualCash;
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
         if (rptDiligenceInput) rptDiligenceInput.value = p.diligenceReward || 0;
@@ -109,9 +153,12 @@
         const rptQuestInput = document.getElementById('rptQuestInput');
         if (rptQuestInput) rptQuestInput.value = p.questReward || 0;
 
-        for(let k in stockInfo) {
-            document.getElementById(`rpt_cnt_input_${k}`).value = p.assets[k];
-            document.getElementById(`rpt_val_${k}`).innerText = (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
+            const inputEl = document.getElementById(`rpt_cnt_input_${k}`);
+            const valEl   = document.getElementById(`rpt_val_${k}`);
+            if (inputEl) inputEl.value = p.assets[k] || 0;
+            if (valEl)   valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
         document.getElementById('rptEftiInput').value = p.efti || '-';
         updateRankUI(p);
@@ -266,31 +313,37 @@
     }
     function refreshDisplayOnly(p) {
         const cash      = Number(p.manualCash      || 0);
-        const stock     = Number(calcStock(p.assets) || 0);
+        const assetVal  = Number(calcActiveAsset(p.assets || {}) || 0);
         const diligence = Number(p.diligenceReward || 0);
         const deposit   = Number(p.depositReward   || 0);
         const quest     = Number(p.questReward     || 0);
-        const total = cash + stock + diligence + deposit + quest;
+        const base = cash + assetVal + diligence + deposit + quest;
 
+        let total;
+        if (currentGameVariant === 'advanced') {
+            total = base * calcSuccessMultiplier(p.successFactors || {});
+        } else {
+            total = base;
+        }
         p.total = total;
 
         document.getElementById('rptTotalAsset').innerText = total.toLocaleString() + " 원";
-        document.getElementById('rptStock').innerText = stock.toLocaleString();
+        document.getElementById('rptStock').innerText = assetVal.toLocaleString();
 
         const rptDiligenceInput = document.getElementById('rptDiligenceInput');
         if (rptDiligenceInput) rptDiligenceInput.value = diligence;
-
         const rptDepositInput = document.getElementById('rptDepositInput');
         if (rptDepositInput) rptDepositInput.value = deposit;
         const rptQuestInput = document.getElementById('rptQuestInput');
         if (rptQuestInput) rptQuestInput.value = quest;
 
-        for (let k in stockInfo) {
-            document.getElementById(`rpt_val_${k}`).innerText =
-                (p.assets[k] * stockInfo[k].price).toLocaleString() + "원";
+        const activeInfo = getActiveAssetInfo();
+        for (let k in activeInfo) {
+            const valEl = document.getElementById(`rpt_val_${k}`);
+            if (valEl) valEl.innerText = ((p.assets[k] || 0) * activeInfo[k].price).toLocaleString() + "원";
         }
 
-        const cashPct = total > 0 ? Math.round((cash / total) * 100) : 0;
+        const cashPct = base > 0 ? Math.round((cash / base) * 100) : 0;
         document.getElementById('rptCashPct').innerText = `${cashPct}%`;
 
         const cashCircle      = document.getElementById('rptArcCash');
@@ -308,21 +361,21 @@
             return;
         }
 
-        const cashPercent      = (cash      / total) * 100;
-        const stockPercent     = (stock     / total) * 100;
-        const diligencePercent = (diligence / total) * 100;
-        const depositPercent   = (deposit   / total) * 100;
-        const questPercent     = (quest     / total) * 100;
+        const cashPercent      = (cash      / base) * 100;
+        const assetPercent     = (assetVal  / base) * 100;
+        const diligencePercent = (diligence / base) * 100;
+        const depositPercent   = (deposit   / base) * 100;
+        const questPercent     = (quest     / base) * 100;
 
         const _seg = (el, pct, off) => {
             if (!el) return;
             pct > 0 ? setDonutSegment(el, pct, off) : clearDonutSegment(el);
         };
         _seg(cashCircle,      cashPercent,      0);
-        _seg(stockCircle,     stockPercent,     cashPercent);
-        _seg(diligenceCircle, diligencePercent, cashPercent + stockPercent);
-        _seg(depositCircle,   depositPercent,   cashPercent + stockPercent + diligencePercent);
-        _seg(questCircle,     questPercent,     cashPercent + stockPercent + diligencePercent + depositPercent);
+        _seg(stockCircle,     assetPercent,     cashPercent);
+        _seg(diligenceCircle, diligencePercent, cashPercent + assetPercent);
+        _seg(depositCircle,   depositPercent,   cashPercent + assetPercent + diligencePercent);
+        _seg(questCircle,     questPercent,     cashPercent + assetPercent + diligencePercent + depositPercent);
     }
     function prevPlayer() { if(viewingPlayerIndex>0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); } }
     function nextPlayer() { if(viewingPlayerIndex<players.length-1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); } }
@@ -607,19 +660,25 @@
                 players.forEach(p => p.gameId = gameId);
             }
 
-            await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+            if (currentGameVariant === 'advanced') {
+                await Promise.all(players.map(p => sbSaveEstateBalance(p.nickname, gameId, p.assets)));
+                await sbSaveSuccessFactors(gameId, players);
+            } else {
+                await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+                await saveTraits(gameId, players);
+            }
             await Promise.all(players.map(p => {
                 const saves = [];
                 if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.nickname, p.depositReward));
                 if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
                 return Promise.all(saves);
             }));
-            await saveTraits(gameId, players);
 
             const exportData = {
                 action: "saveGameResult",
                 mode: currentMode,
                 date: dateStr,
+                game_variant: currentGameVariant,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     nickname: p.nickname || '',
@@ -628,7 +687,7 @@
                     total: p.total,
                     manualCash: p.manualCash,
                     diligence_reward: p.diligenceReward || 0,
-                    stockVal: calcStock(p.assets),
+                    stockVal: calcActiveAsset(p.assets),
                     team: p.team || '-',
                     team_id: p.teamId || '',
                     traits: p.traits || initTraitsState()
@@ -748,6 +807,8 @@
                 const typeLabel = g.game_type === 'team' ? '팀전' : '개인전';
                 const typeTag = g.game_type === 'team' ? 'tag-team' : 'tag-individual';
                 const names = (g.preview_names || []).join(', ') + (g.player_count > 6 ? ' 등' : '');
+                const variantLabel = (g.game_variant || 'basic') === 'advanced' ? '심화' : '기본';
+                const variantTag   = (g.game_variant || 'basic') === 'advanced' ? 'tag-advanced' : 'tag-basic';
                 const card = document.createElement('div');
                 card.className = 'past-game-card';
                 card.innerHTML = `
@@ -756,8 +817,9 @@
                         <span>${names || '참가자 정보 없음'}</span>
                         <span>참여인원: ${g.player_count}명</span>
                         <span class="${typeTag}">${typeLabel}</span>
+                        <span class="${variantTag}">${variantLabel}</span>
                     </div>`;
-                card.onclick = () => _loadPastGame(g.game_id, g.date);
+                card.onclick = () => _loadPastGame(g.game_id, g.date, g.game_variant || 'basic');
                 grid.appendChild(card);
             });
         } catch(e) {
@@ -766,8 +828,9 @@
         }
     }
 
-    async function _loadPastGame(gameId, gameDate) {
+    async function _loadPastGame(gameId, gameDate, gameVariant = 'basic') {
         closePastGameModal();
+        currentGameVariant = gameVariant;
         try {
             const data = await sbLoadAssetsByGameId(gameId);
             if (!data.success || !Array.isArray(data.history) || data.history.length === 0) {
@@ -808,32 +871,72 @@
                 if (citizen && citizen.default_EFTI) p.efti = citizen.default_EFTI;
             });
 
-            // 주식 보유 수량 로드
-            console.group(`[loadUserBalance] gameId=${gameId}`);
+            // 심화 모드: estate 가격 복원 (저장 당시 가격으로 총자산 재계산)
+            if (gameVariant === 'advanced') {
+                const savedPrices = await sbLoadEstatePrice(gameId);
+                if (savedPrices) {
+                    for (const k in savedPrices) {
+                        if (estateInfo[k]) estateInfo[k].price = savedPrices[k];
+                    }
+                }
+            }
+
+            // 자산 보유 수량 로드 (기본: 주식, 심화: 부동산)
+            console.group(`[loadBalance] gameId=${gameId} variant=${gameVariant}`);
             await Promise.all(players.map(async p => {
-                if (!p.gameId) { console.warn(`  ⚠️ ${p.nickname}: gameId 없음`); return; }
-                const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
-                if (stocks) {
-                    Object.assign(p.assets, stocks);
-                    p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                if (!p.gameId) { console.warn(`  no gameId: ${p.nickname}`); return; }
+                if (gameVariant === 'advanced') {
+                    const estates = await sbLoadEstateBalance(p.nickname, p.gameId);
+                    if (estates) {
+                        Object.assign(p.assets, estates);
+                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                        p.total = base * calcSuccessMultiplier(p.successFactors || {});
+                    } else {
+                        console.warn(`  no estate balance: ${p.nickname}`);
+                    }
                 } else {
-                    console.warn(`  ❌ ${p.nickname}: 잔고 없음`);
+                    const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
+                    if (stocks) {
+                        Object.assign(p.assets, stocks);
+                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                    } else {
+                        console.warn(`  no stock balance: ${p.nickname}`);
+                    }
                 }
             }));
             console.groupEnd();
 
-            // Traits 로드
+            // 특성/성공요소 로드
             try {
-                const traitsData = await sbLoadTraitsByGameId(gameId);
-                if (traitsData.success && Array.isArray(traitsData.traits)) {
-                    const traitsMap = {};
-                    traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
-                    players.forEach(p => {
-                        const t = traitsMap[p.nickname];
-                        if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
-                    });
+                if (gameVariant === 'advanced') {
+                    const sfData = await sbLoadSuccessFactorsByGameId(gameId);
+                    if (sfData.success && Array.isArray(sfData.factors)) {
+                        const sfMap = {};
+                        sfData.factors.forEach(f => { sfMap[f.nickname] = f; });
+                        players.forEach(p => {
+                            const f = sfMap[p.nickname];
+                            if (f) p.successFactors = {
+                                financial_management: !!f.financial_management,
+                                communication:        !!f.communication,
+                                critical_thinking:    !!f.critical_thinking,
+                                global_economy:       !!f.global_economy,
+                                credit_trust:         !!f.credit_trust,
+                                entrepreneurship:     !!f.entrepreneurship,
+                            };
+                        });
+                    }
+                } else {
+                    const traitsData = await sbLoadTraitsByGameId(gameId);
+                    if (traitsData.success && Array.isArray(traitsData.traits)) {
+                        const traitsMap = {};
+                        traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                        players.forEach(p => {
+                            const t = traitsMap[p.nickname];
+                            if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
+                        });
+                    }
                 }
-            } catch(e) { console.warn("[loadTraits] 실패:", e); }
+            } catch(e) { console.warn("[loadTraitsOrFactors] 실패:", e); }
 
             // 팀 이름 로드 (game_individual에는 team_id만 있고 team_name은 game_team에 있음)
             const teamIds = [...new Set(players.map(p => p.teamId).filter(Boolean))];
