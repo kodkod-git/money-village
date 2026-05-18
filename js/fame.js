@@ -15,6 +15,7 @@
         document.querySelectorAll('.fame-tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.variant === 'basic');
         });
+        document.getElementById('indivStockHeader').innerText = '주식';
         fetchFameData();
     }
 
@@ -23,6 +24,8 @@
         document.querySelectorAll('.fame-tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.variant === variant);
         });
+        const isEstate = variant === 'advanced' || variant === 'rich_vessel';
+        document.getElementById('indivStockHeader').innerText = isEstate ? '부동산' : '주식';
         renderFame();
     }
 
