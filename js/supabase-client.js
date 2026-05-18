@@ -35,7 +35,7 @@ async function sbListCitizens() {
     return { users: (data || []).map(u => ({ ...u, default_EFTI: u.default_efti })) };
 }
 
-async function sbRegisterCitizen({ nickname, real_name, default_EFTI = 'FAEN' }) {
+async function sbRegisterCitizen({ nickname, real_name, default_EFTI = 'FAEN', user_type = 'child' }) {
     const nick = _nick(nickname);
     const name = _text(real_name);
     if (!nick) return { success: false, code: 'EMPTY_NICKNAME' };
@@ -50,7 +50,8 @@ async function sbRegisterCitizen({ nickname, real_name, default_EFTI = 'FAEN' })
         join_date:    new Date().toISOString().slice(0, 10),
         is_citizen:   true,
         default_efti: String(default_EFTI || 'FAEN').trim(),
-        status:       'active'
+        status:       'active',
+        user_type:    user_type === 'adult' ? 'adult' : 'child'
     });
     if (error) return { success: false, code: 'DB_ERROR', message: error.message };
     return { success: true, nickname: nick, real_name: name };
@@ -60,17 +61,28 @@ async function sbDeleteCitizen(nickname) {
     const nick = _nick(nickname);
     if (!nick) return { success: false, code: 'EMPTY_NICKNAME' };
 
-    const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
+    const { data: user } = await _sb.from('users').select('nickname, user_type').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    const { error: e1 } = await _sb.from('stock_balance').delete().eq('nickname', nick);
+    const isAdult = (user.user_type || 'child') === 'adult';
+
+    const { error: e1 } = await _sb.from('cash_balance').delete().eq('nickname', nick);
     if (e1) return { success: false, code: 'DELETE_FAILED', message: e1.message };
-    const { error: e2 } = await _sb.from('cash_balance').delete().eq('nickname', nick);
+    const { error: e2 } = await _sb.from('game_individual').delete().eq('nickname', nick);
     if (e2) return { success: false, code: 'DELETE_FAILED', message: e2.message };
-    const { error: e3 } = await _sb.from('traits').delete().eq('nickname', nick);
-    if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
-    const { error: e4 } = await _sb.from('game_individual').delete().eq('nickname', nick);
-    if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+
+    if (isAdult) {
+        const { error: e3 } = await _sb.from('estate_balance').delete().eq('nickname', nick);
+        if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
+        const { error: e4 } = await _sb.from('success_factors').delete().eq('nickname', nick);
+        if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+    } else {
+        const { error: e3 } = await _sb.from('stock_balance').delete().eq('nickname', nick);
+        if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
+        const { error: e4 } = await _sb.from('traits').delete().eq('nickname', nick);
+        if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+    }
+
     const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
     if (e5) return { success: false, code: 'DELETE_FAILED', message: e5.message };
 
@@ -120,9 +132,10 @@ async function sbSaveStockValue(stockValues) {
 // 게임 시작 시 초기 레코드 삽입 (자산 = 0)
 async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic') {
     const today = new Date().toISOString().slice(0, 10);
+    const isAdvancedLike = gameVariant !== 'basic';
 
-    // stock_price (기본 모드에서만 저장)
-    if (gameVariant !== 'advanced') {
+    // stock_price (기본 모드에서만)
+    if (!isAdvancedLike) {
         const { error: spErr } = await _sb.from('stock_price').insert({
             game_id: gameId,
             sasung:  Number(stockValues[0] ?? 1500),
@@ -147,21 +160,101 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
     });
     if (giErr) console.error('[sbInitGame] game_info', giErr);
 
-    // game_individual (자산 0)
-    const indivRows = players
-        .map(p => ({
-            date:             today,
-            nickname:         _nick(p.nickname || p.name || ''),
-            real_name:        _text(p.realName || p.name || ''),
-            total_asset:      0,
-            cash:             0,
-            stock:            0,
-            diligence_reward: 0,
-            game_id:          gameId,
-            team_id:          p.teamId || null
-        }))
-        .filter(r => r.nickname);
+    const nicks = players.map(p => ({
+        nick: _nick(p.nickname || p.name || ''),
+        name: _text(p.realName || p.name || ''),
+        efti: String(p.efti || 'FAEN').trim(),
+        p
+    })).filter(r => r.nick);
 
+    // users (upsert — 없으면 생성, 있으면 기본정보 갱신)
+    // rich_vessel이면 user_type='adult' 명시, 나머지는 컬럼 포함 안 해서 기존값 보존
+    const userRows = nicks.map(({ nick, name, efti }) => {
+        const row = {
+            nickname:     nick,
+            real_name:    name,
+            join_date:    today,
+            is_citizen:   false,
+            default_efti: efti,
+            status:       'active'
+        };
+        if (gameVariant === 'rich_vessel') row.user_type = 'adult';
+        return row;
+    });
+    if (userRows.length > 0) {
+        const { error } = await _sb.from('users').upsert(userRows, { onConflict: 'nickname' });
+        if (error) console.error('[sbInitGame] users', error);
+    }
+
+    // cash_balance (전체 0 init)
+    const cashRows = nicks.map(({ nick }) => ({
+        game_id: gameId, nickname: nick,
+        bill_100: 0, bill_500: 0, bill_1000: 0,
+        bill_5000: 0, bill_10000: 0, bill_50000: 0
+    }));
+    if (cashRows.length > 0) {
+        const { error } = await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,nickname' });
+        if (error) console.error('[sbInitGame] cash_balance', error);
+    }
+
+    if (isAdvancedLike) {
+        // estate_balance (심화/부자의그릇 — 0 init)
+        const estateRows = nicks.map(({ nick }) => ({
+            game_id: gameId, nickname: nick,
+            gaongaemi: 0, nurigoyangi: 0, damiwonsungi: 0,
+            marusuri: 0, chorongbungi: 0, haniyuwoo: 0
+        }));
+        if (estateRows.length > 0) {
+            const { error } = await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,nickname' });
+            if (error) console.error('[sbInitGame] estate_balance', error);
+        }
+
+        // success_factors (심화/부자의그릇 — false init)
+        const sfRows = nicks.map(({ nick }) => ({
+            game_id: gameId, nickname: nick,
+            financial_management: false, communication: false,
+            critical_thinking: false, global_economy: false,
+            credit_trust: false, entrepreneurship: false
+        }));
+        if (sfRows.length > 0) {
+            const { error } = await _sb.from('success_factors').upsert(sfRows, { onConflict: 'game_id,nickname' });
+            if (error) console.error('[sbInitGame] success_factors', error);
+        }
+    } else {
+        // stock_balance (기본 — 0 init)
+        const stockRows = nicks.map(({ nick }) => ({
+            game_id: gameId, nickname: nick,
+            sasung: 0, lgi: 0, skei: 0, cacao: 0, hyunde: 0, naber: 0
+        }));
+        if (stockRows.length > 0) {
+            const { error } = await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,nickname' });
+            if (error) console.error('[sbInitGame] stock_balance', error);
+        }
+
+        // traits (기본 — false init)
+        const traitRows = nicks.map(({ nick }) => ({
+            game_id: gameId, nickname: nick,
+            diligent: false, saving: false, invest: false,
+            career: false, luck: false, adventure: false
+        }));
+        if (traitRows.length > 0) {
+            const { error } = await _sb.from('traits').upsert(traitRows, { onConflict: 'game_id,nickname' });
+            if (error) console.error('[sbInitGame] traits', error);
+        }
+    }
+
+    // game_individual (자산 0)
+    const indivRows = nicks.map(({ nick, name, p }) => ({
+        date:             today,
+        nickname:         nick,
+        real_name:        name,
+        total_asset:      0,
+        cash:             0,
+        stock:            0,
+        diligence_reward: 0,
+        game_id:          gameId,
+        team_id:          p.teamId || null
+    }));
     if (indivRows.length > 0) {
         const { error } = await _sb.from('game_individual').insert(indivRows);
         if (error) console.error('[sbInitGame] game_individual', error);
@@ -423,12 +516,12 @@ async function sbSaveEstatePrice(gameId, prices) {
     if (!gid) return;
     const { error } = await _sb.from('estate_price').upsert({
         game_id:    gid,
-        nooridambi: Number(prices['NOORIDAMBI'] ?? 100000),
-        damigorani: Number(prices['DAMIGORANI'] ?? 100000),
-        girugi:     Number(prices['GIRUGI']     ?? 100000),
-        marusuri:   Number(prices['MARUSURI']   ?? 100000),
-        chorongdam: Number(prices['CHORONGDAM'] ?? 100000),
-        haniyuwoo:  Number(prices['HANIYUWOO']  ?? 100000),
+        gaongaemi:    Number(prices['GAONGAEMI']    ?? 100000),
+        nurigoyangi:  Number(prices['NURIGOYANGI']  ?? 100000),
+        damiwonsungi: Number(prices['DAMIWONSUNGI'] ?? 100000),
+        marusuri:     Number(prices['MARUSURI']     ?? 100000),
+        chorongbungi: Number(prices['CHORONGBUNGI'] ?? 100000),
+        haniyuwoo:    Number(prices['HANIYUWOO']    ?? 100000),
     }, { onConflict: 'game_id' });
     if (error) console.error('[sbSaveEstatePrice]', error);
 }
@@ -440,12 +533,12 @@ async function sbSaveEstateBalance(nickname, gameId, assets) {
     const { error } = await _sb.from('estate_balance').upsert({
         nickname:   nick,
         game_id:    gid,
-        nooridambi: Number(assets['NOORIDAMBI'] || 0),
-        damigorani: Number(assets['DAMIGORANI'] || 0),
-        girugi:     Number(assets['GIRUGI']     || 0),
-        marusuri:   Number(assets['MARUSURI']   || 0),
-        chorongdam: Number(assets['CHORONGDAM'] || 0),
-        haniyuwoo:  Number(assets['HANIYUWOO']  || 0),
+        gaongaemi:    Number(assets['GAONGAEMI']    || 0),
+        nurigoyangi:  Number(assets['NURIGOYANGI']  || 0),
+        damiwonsungi: Number(assets['DAMIWONSUNGI'] || 0),
+        marusuri:     Number(assets['MARUSURI']     || 0),
+        chorongbungi: Number(assets['CHORONGBUNGI'] || 0),
+        haniyuwoo:    Number(assets['HANIYUWOO']    || 0),
     }, { onConflict: 'game_id,nickname' });
     if (error) console.error('[sbSaveEstateBalance]', error);
 }
@@ -457,12 +550,12 @@ async function sbLoadEstateBalance(nickname, gameId) {
         .maybeSingle();
     if (!data) return null;
     return {
-        NOORIDAMBI: data.nooridambi,
-        DAMIGORANI: data.damigorani,
-        GIRUGI:     data.girugi,
-        MARUSURI:   data.marusuri,
-        CHORONGDAM: data.chorongdam,
-        HANIYUWOO:  data.haniyuwoo,
+        GAONGAEMI:    data.gaongaemi,
+        NURIGOYANGI:  data.nurigoyangi,
+        DAMIWONSUNGI: data.damiwonsungi,
+        MARUSURI:     data.marusuri,
+        CHORONGBUNGI: data.chorongbungi,
+        HANIYUWOO:    data.haniyuwoo,
     };
 }
 
@@ -473,12 +566,12 @@ async function sbLoadEstatePrice(gameId) {
         .maybeSingle();
     if (!data) return null;
     return {
-        NOORIDAMBI: data.nooridambi,
-        DAMIGORANI: data.damigorani,
-        GIRUGI:     data.girugi,
-        MARUSURI:   data.marusuri,
-        CHORONGDAM: data.chorongdam,
-        HANIYUWOO:  data.haniyuwoo,
+        GAONGAEMI:    data.gaongaemi,
+        NURIGOYANGI:  data.nurigoyangi,
+        DAMIWONSUNGI: data.damiwonsungi,
+        MARUSURI:     data.marusuri,
+        CHORONGBUNGI: data.chorongbungi,
+        HANIYUWOO:    data.haniyuwoo,
     };
 }
 
@@ -512,11 +605,17 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 // =========================================================
 
 async function sbLoadHallOfFame() {
-    const [{ data: indiv }, { data: team }] = await Promise.all([
+    const [{ data: gameInfoList }, { data: indiv }, { data: team }] = await Promise.all([
+        _sb.from('game_info').select('game_id, game_variant'),
         _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
         _sb.from('game_team').select('*').order('team_total_asset', { ascending: false }).limit(200)
     ]);
-    return { indiv: indiv || [], team: team || [] };
+    const variantMap = Object.fromEntries(
+        (gameInfoList || []).map(r => [r.game_id, r.game_variant || 'basic'])
+    );
+    const indivWithVariant = (indiv || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
+    const teamWithVariant  = (team  || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
+    return { indiv: indivWithVariant, team: teamWithVariant };
 }
 
 // =========================================================
