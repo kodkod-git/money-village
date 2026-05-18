@@ -47,6 +47,16 @@
         .mode-select { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
         .mode-btn { width: 120px; padding: 15px; display:flex; align-items:center; justify-content:center; line-height: 1; gap: 8px; border: 2px solid #ddd; line-height: 1; border-radius: 12px; cursor: pointer; background: #fff; font-weight: bold; color: #888; font-size: 16px; }
         .mode-btn.selected { border-color: var(--mv-blue-deep); background: #eef6ff; color: var(--mv-blue-deep); }
+
+        .gs-section-label { font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+        .gs-card-row { display: flex; gap: 10px; justify-content: center; }
+        .gs-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border: 2px solid #e5e7eb; border-radius: 14px; cursor: pointer; background: #fff; flex: 1; transition: border-color 0.15s, background 0.15s; }
+        .gs-card-ico { font-size: 22px; line-height: 1; }
+        .gs-card-title { font-size: 13px; font-weight: 700; color: #666; }
+        .gs-card-desc { font-size: 11px; color: #bbb; text-align: center; }
+        .gs-card.selected { border-color: var(--mv-blue-deep); background: #eef6ff; }
+        .gs-card.selected .gs-card-title { color: var(--mv-blue-deep); }
+        .gs-card.selected .gs-card-desc { color: #7aaddd; }
         .input-row { margin: 20px 0; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; }
         .input-num { width: 80px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 5px; font-size: 18px; }
         .player-list-input { text-align: center; max-height: 250px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
@@ -106,7 +116,7 @@
         .editable-input { border: none; border-bottom: 1px dashed #ccc; font-weight: bold; color: inherit; font-size: inherit; text-align: right; width: 80px; background: transparent; padding: 0 2px; }
         .editable-input:focus { outline: none; border-bottom: 2px solid var(--mv-orange); background: #fffbe6; }
         .editable-date { border: none; font-size: 16px; font-weight: bold; color: #333; font-family: inherit; text-align: left; width: 120px; background: transparent; border-bottom: 1px dashed #ccc; margin-left: 0; }
-        .editable-text { border: none; font-size: 18px; font-weight: bold; color: #333; font-family: inherit; text-align: left; width: 120px; background: transparent; border-bottom: 1px dashed #ccc; margin-left: 0; }
+        .editable-text { border: none; font-size: 18px; font-weight: bold; color: #333; font-family: inherit; text-align: right; width: 120px; background: transparent; border-bottom: 1px dashed #ccc; margin-left: 0; }
 
         .report-header { display: flex; justify-content: center; flex-direction: column; align-items: center; text-align: center; margin-bottom: 4px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         .header-title h1 { margin: 0; font-size: 32px; color: var(--mv-blue-deep); font-weight: 900; line-height: 1.05; letter-spacing: -0.6px; white-space: nowrap; word-break: keep-all}
@@ -122,7 +132,7 @@
         #pdfAreaFame .last-update{position:absolute;top:0;right:0;font-size:12px;color:#888;font-weight:700;line-height:1;white-space:nowrap;}
         #pdfAreaReport .header-left{text-align:left;justify-self:start;min-width:0;}
         #pdfAreaReport .header-info{font-size:16px;color:#555;margin-top:6px;}
-        #pdfAreaReport .info-row{display:flex;justify-content:flex-end;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:8px;}
+        #pdfAreaReport .info-row{display:flex;justify-content:flex-end;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:32px;}
         #pdfAreaReport .info-label { width:auto; margin-right:0; }
         .pdf-input{ display:inline-block; line-height:1; vertical-align:middle; }
 
@@ -161,10 +171,11 @@
         .stock-val { font-size: 16px; font-weight: 800; color: var(--mv-blue-deep); }
         .stock-cnt { font-size: 13px; color: #888; }
         .booth-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-grow: 1;}
-        .booth-item { border: 1px solid #eee; border-radius: 8px; padding: 5px 8px; display: flex; align-items: center; gap: 10px; background: #fbfbfb; }
+        .booth-item { border: 1px solid #eee; border-radius: 8px; padding: 5px 8px; display: flex; align-items: center; gap: 10px; background: #fbfbfb; cursor: pointer; transition: transform .08s, box-shadow .12s, border-color .12s, background .12s; }
+        .booth-item:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
         .booth-icon { font-size: 40px; min-width: 44px; text-align: center; } 
         .booth-text h4 { margin: 0; font-size: 20px; color: var(--mv-blue-deep); font-weight: 900; }
-        .booth-text p { margin: 2px 0 5px; font-size: 14px; color: #555; line-height: 1.1; } 
+        .booth-text p { margin: 2px 0 5px; font-size: 14px; color: #555; line-height: 1.1; white-space: pre-line; }
 
         /* [팀전 동적 추가 UI] */
         .team-section { border-top: 1px solid #eee; padding-top: 12px; margin-top: 12px; }
@@ -195,6 +206,7 @@
             font-weight:900;
             color:#555;
             font-size:14px;
+            white-space:pre-line;
             transition:transform .08s, box-shadow .12s, border-color .12s, background .12s;
         }
         .trait-btn:hover{ transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.06); }
@@ -233,6 +245,7 @@
             background:#fffbe6 !important;
             position:relative;
         }
+        .booth-item--sf.selected::after{ content: none !important; }
         .booth-item.selected::after{
             content:"🏆";
             position:absolute;
@@ -330,10 +343,22 @@
             padding-top: 15px; border-top: 2px dashed #eee;
             text-align: center; color: #666; font-size: 13px; font-weight: bold;
         }
-        .fame-footer div:first-child { 
-            font-size: 18px; color: var(--mv-blue-deep); font-weight: 900; margin-bottom: 5px; 
+        .fame-footer div:first-child {
+            font-size: 18px; color: var(--mv-blue-deep); font-weight: 900; margin-bottom: 5px;
         }
-        
+
+        /* [화면 4] 명예의 전당 — variant 탭 */
+        .fame-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .fame-tab-btn {
+            padding: 6px 18px; border-radius: 20px; border: 2px solid #ddd;
+            background: #f5f5f5; font-weight: 700; cursor: pointer; font-size: 14px;
+            transition: all 0.15s;
+        }
+        .fame-tab-btn:hover { border-color: #bbb; background: #ebebeb; }
+        .fame-tab-btn.active[data-variant="basic"]       { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
+        .fame-tab-btn.active[data-variant="advanced"]    { background: #f3e5f5; border-color: #9c27b0; color: #6a1b9a; }
+        .fame-tab-btn.active[data-variant="rich_vessel"] { background: #fff8e1; border-color: #ff9800; color: #e65100; }
+
         #loadingOverlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:none; justify-content:center; align-items:center; z-index:99; flex-direction:column; }
 
         /* [수정] 인쇄 시 백지 오류 해결 (높이 및 오버플로우 강제 설정) */
@@ -843,6 +868,7 @@
         .past-game-card-meta .tag-individual{ background: #d3eafc; color: #005a9e; }
         .past-game-card-meta .tag-basic{ background: #e8f5e9; color: #2e7d32; }
         .past-game-card-meta .tag-advanced{ background: #f3e5f5; color: #7b1fa2; }
+        .past-game-card-meta .tag-rich{ background: #fff3e0; color: #e65100; }
 
         .btn[disabled]{
             opacity: 0.65;
