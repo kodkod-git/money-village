@@ -5,6 +5,7 @@ const _quiz = {
     gameDate:         null,
     sectionNum:       null,
     gameType:         'individual', // 'individual' | 'team'
+    gameVariant:      'basic',      // 'basic' | 'advanced' | 'rich_vessel'
     players:          [],
     reward:           1000,  // 개인탭 보상
     teamReward:       1000,  // 팀탭 보상 (팀전 전용)
@@ -22,19 +23,45 @@ const _quiz = {
     selections:       [],
 };
 
-// 개인전: 문제 2개
-const _QUIZ_INDIV_IMAGES  = ['image/quiz/quiz1.png', 'image/quiz/quiz4.png'];
-const _QUIZ_INDIV_ANSWERS = [
-    ['X', 'O', 'O', 'X'],  // 문제 1
-    ['X', 'O', 'O', 'X'],  // 문제 2
-];
-
-// 팀전: 문제 2개
-const _QUIZ_IMAGES  = ['image/quiz/quiz2.png', 'image/quiz/quiz3.png'];
-const _QUIZ_ANSWERS = {
-    'image/quiz/quiz2.png': ['O', 'X', 'O', 'X'],
-    'image/quiz/quiz3.png': ['O', 'X', 'O', 'X'],
+// variant × type별 퀴즈 설정 (images: 문제 순서, answers: 정답 배열)
+const _QUIZ_CONFIG = {
+    basic: {
+        indiv: {
+            images:  ['image/quiz/basic/quiz1.png',           'image/quiz/basic/quiz2.png'],
+            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+        },
+        team: {
+            images:  ['image/quiz/basic/team_quiz1.png',      'image/quiz/basic/team_quiz2.png'],
+            answers: [['O','X','O','X'],                      ['O','X','O','X']]
+        }
+    },
+    advanced: {
+        indiv: {
+            images:  ['image/quiz/advanced/quiz1.png',        'image/quiz/advanced/quiz2.png'],
+            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+        },
+        team: {
+            images:  ['image/quiz/advanced/team_quiz1.png',   'image/quiz/advanced/team_quiz2.png'],
+            answers: [['O','X','O','X'],                      ['O','X','O','X']]
+        }
+    },
+    rich_vessel: {
+        indiv: {
+            images:  ['image/quiz/rich_vessel/quiz1.png',     'image/quiz/rich_vessel/quiz2.png'],
+            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+        },
+        team: {
+            images:  ['image/quiz/rich_vessel/team_quiz1.png','image/quiz/rich_vessel/team_quiz2.png'],
+            answers: [['O','X','O','X'],                      ['O','X','O','X']]
+        }
+    }
 };
+
+function _quizGetConfig() {
+    const variant = _quiz.gameVariant || 'basic';
+    const type    = (_quiz.gameType === 'team' && _quiz.viewMode === 'team') ? 'team' : 'indiv';
+    return (_QUIZ_CONFIG[variant] || _QUIZ_CONFIG.basic)[type];
+}
 const _QUIZ_ROWS = [
     { top: 42.9, height: 12.9 },
     { top: 55.9, height: 12.9 },
@@ -135,7 +162,7 @@ async function onQuizDateChange() {
                     <span class="${typeTag}">${typeLabel}</span>
                     <span class="${variantTag}">${variantLabel}</span>
                 </div>`;
-            card.onclick = () => _quizSelectGame(g.game_id, date, g.section_num, g.game_type, card);
+            card.onclick = () => _quizSelectGame(g.game_id, date, g.section_num, g.game_type, g.game_variant || 'basic', card);
             grid.appendChild(card);
         });
     } catch(e) {
@@ -144,14 +171,15 @@ async function onQuizDateChange() {
     }
 }
 
-function _quizSelectGame(gameId, date, sectionNum, gameType, cardEl) {
+function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, cardEl) {
     document.querySelectorAll('#quizGameCardsGrid .past-game-card')
         .forEach(c => c.classList.remove('bank-selected'));
     cardEl.classList.add('bank-selected');
-    _quiz.gameId     = gameId;
-    _quiz.gameDate   = date;
-    _quiz.sectionNum = sectionNum;
-    _quiz.gameType   = gameType || 'individual';
+    _quiz.gameId      = gameId;
+    _quiz.gameDate    = date;
+    _quiz.sectionNum  = sectionNum;
+    _quiz.gameType    = gameType || 'individual';
+    _quiz.gameVariant = gameVariant || 'basic';
     const isTeam = _quiz.gameType === 'team';
     document.getElementById('quizRewardSection').style.display = 'block';
     document.getElementById('quizTeamRewardCard').style.display = isTeam ? 'block' : 'none';
@@ -437,9 +465,7 @@ function _quizSelectPlayer(idx) {
 
 // ── 퀴즈 게임 ────────────────────────────────────────────────────────
 function _quizStartGame() {
-    const imgSrc = (_quiz.gameType === 'team' && _quiz.viewMode === 'team')
-        ? _QUIZ_IMAGES[_quiz.currentQuizNum]
-        : _QUIZ_INDIV_IMAGES[_quiz.currentQuizNum];
+    const imgSrc = _quizGetConfig().images[_quiz.currentQuizNum];
     const p = _quiz.players[_quiz.currentPlayerIdx];
 
     _quiz.selections = new Array(4).fill(null);
@@ -505,8 +531,8 @@ function quizConfirmNo() {
 
 function _quizShowResult() {
     const isTeamMode = _quiz.gameType === 'team' && _quiz.viewMode === 'team';
-    const imgSrc     = isTeamMode ? _QUIZ_IMAGES[_quiz.currentQuizNum] : _QUIZ_INDIV_IMAGES[_quiz.currentQuizNum];
-    const answers    = isTeamMode ? _QUIZ_ANSWERS[imgSrc] : _QUIZ_INDIV_ANSWERS[_quiz.currentQuizNum];
+    const cfg        = _quizGetConfig();
+    const answers    = cfg.answers[_quiz.currentQuizNum];
     const allCorrect = answers.every((ans, i) => _quiz.selections[i] === ans);
 
     const msg          = document.getElementById('quizResultMsg');
