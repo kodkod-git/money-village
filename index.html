@@ -36,6 +36,7 @@
 
     <div id="setupScreen" class="screen active-screen">
         <div class="setup-card">
+            <button class="admin-entry-btn" onclick="openAdminModal()" title="관리자 모드">⚙️</button>
             <h1 style="color:var(--mv-blue-deep);">머니빌리지 게임</h1>
             <button class="btn btn-fame" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content: center; font-weight:900;" onclick="showFameScreen()">🏆 머니빌리지 명예의 전당</button>
             <button class="btn btn-game-start" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openGameStartModal()">
@@ -53,6 +54,23 @@
             <button class="btn btn-citizen" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openCitizenMgmtModal()">
                 👥 머니빌리지 시민권자 관리
             </button>
+        </div>
+    </div>
+
+    <!-- 관리자 비밀번호 모달 -->
+    <div id="adminPasswordModal" class="admin-pw-overlay" style="display:none;">
+        <div class="admin-pw-modal">
+            <div class="admin-pw-title">🔐 관리자 모드</div>
+            <input type="password" id="adminPwInput" class="admin-pw-input"
+                   placeholder="비밀번호를 입력하세요"
+                   onkeydown="if(event.key==='Enter') submitAdminPassword()">
+            <div id="adminPwError" class="admin-pw-error" style="display:none;">
+                비밀번호가 올바르지 않습니다
+            </div>
+            <div class="admin-pw-actions">
+                <button class="admin-pw-btn cancel" onclick="closeAdminModal()">취소</button>
+                <button class="admin-pw-btn confirm" onclick="submitAdminPassword()">확인</button>
+            </div>
         </div>
     </div>
 
@@ -901,5 +919,6 @@
 <script src="js/arduino.js"></script>
 <script src="js/bank.js"></script>
 <script src="js/quiz.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>
