@@ -131,6 +131,11 @@
     }
 
     function setSpecialAwards(data) {
+        const isEstateVariant = currentFameVariant === 'advanced' || currentFameVariant === 'rich_vessel';
+        document.getElementById('awardStockIcon').innerText  = isEstateVariant ? '🏠' : '📈';
+        document.getElementById('awardStockTitle').innerText = isEstateVariant ? 'Personal Estate King' : 'Personal Stock King';
+        document.getElementById('awardStockLabel').innerText = isEstateVariant ? '부동산 평가액' : '주식 평가액';
+
         if (data.length === 0) {
             document.getElementById('awardCashName').innerText = '데이터 없음';
             document.getElementById('awardCashVal').innerText = '-';
@@ -138,15 +143,15 @@
             document.getElementById('awardStockVal').innerText = '-';
             return;
         }
-        let cashKing = [...data].sort((a,b) => b.cash - a.cash)[0];
-        let stockKing = [...data].sort((a,b) => b.stock - a.stock)[0];
+        const cashKing  = [...data].sort((a, b) => b.cash  - a.cash)[0];
+        const stockKing = [...data].sort((a, b) => b.stock - a.stock)[0];
 
-        if(cashKing) {
+        if (cashKing) {
             document.getElementById('awardCashName').innerText = cashKing.nickname || cashKing.name || '-';
-            document.getElementById('awardCashVal').innerText = cashKing.cash.toLocaleString();
+            document.getElementById('awardCashVal').innerText  = cashKing.cash.toLocaleString();
         }
-        if(stockKing) {
+        if (stockKing) {
             document.getElementById('awardStockName').innerText = stockKing.nickname || stockKing.name || '-';
-            document.getElementById('awardStockVal').innerText = stockKing.stock.toLocaleString();
+            document.getElementById('awardStockVal').innerText  = stockKing.stock.toLocaleString();
         }
     }
