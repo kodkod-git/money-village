@@ -398,6 +398,42 @@
             </div>
         </div>
     </div>
+
+    <!-- 관리자 화면 -->
+    <div id="adminScreen" class="screen">
+        <!-- 컨트롤 바 -->
+        <div class="admin-control-bar">
+            <div class="admin-bar-title">🔐 관리자 모드</div>
+            <button class="admin-back-btn" onclick="exitAdminMode()">🏠 처음으로</button>
+        </div>
+
+        <!-- 기능 네비 바 -->
+        <div class="admin-nav-bar">
+            <button class="admin-nav-btn active" data-menu="quiz-answers"
+                    onclick="switchAdminMenu('quiz-answers')">📋 퀴즈 답안</button>
+        </div>
+
+        <!-- 콘텐츠 영역 -->
+        <div class="admin-content">
+            <div id="adminQuizAnswers" class="admin-panel">
+
+                <!-- variant 탭 -->
+                <div class="admin-variant-tabs">
+                    <button class="admin-variant-btn active" data-variant="basic"
+                            onclick="switchAdminVariant('basic')">기본</button>
+                    <button class="admin-variant-btn" data-variant="advanced"
+                            onclick="switchAdminVariant('advanced')">심화</button>
+                    <button class="admin-variant-btn" data-variant="rich_vessel"
+                            onclick="switchAdminVariant('rich_vessel')">부자의그릇</button>
+                </div>
+
+                <!-- 답안 카드 렌더링 영역 -->
+                <div id="adminAnswerCards"></div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- 머니빌리지 은행 예금 화면 -->
     <div id="bankScreen" class="screen">
         <div class="bank-screen-wrap">
