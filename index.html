@@ -90,7 +90,7 @@
                             <b id="displayStock">0</b> 원
                         </div>
                         <div id="cntSuccessFactorsRow" style="display:none;">
-                            <span style="color:#a855f7">●</span> 성공요소:
+                            <span style="color:#a855f7">●</span> 경제적 성공요소:
                             <b id="displaySuccessFactorCount">0</b>개 (<b id="displaySuccessMultiplier">×0.00</b>배)
                         </div>
 
@@ -157,27 +157,27 @@
                     <div class="info-row">
                         <span id="rptTeamWrapper" class="info-pair" style="display:none;">
                             <span class="info-label">팀명:</span>
-                            <input type="text" id="rptTeamInput" class="editable-text" style="width:110px;" onchange="updateTeamName()">
+                            <input type="text" id="rptTeamInput" class="editable-text" style="width:110px;" onchange="updateTeamName()" oninput="autoResizeInput(this)">
                         </span>
 
                         <span class="info-pair">
                             <span class="info-label">닉네임:</span>
-                            <input type="text" id="rptNicknameInput" class="editable-text" style="width:82px;" onchange="updatePlayerNickname()">
+                            <input type="text" id="rptNicknameInput" class="editable-text" style="width:82px;" onchange="updatePlayerNickname()" oninput="autoResizeInput(this)">
                         </span>
 
                         <span class="info-pair">
                             <span class="info-label">이름:</span>
-                            <input type="text" id="rptRealNameInput" class="editable-text" style="width:82px;" onchange="updatePlayerRealName()">
+                            <input type="text" id="rptRealNameInput" class="editable-text" style="width:82px;" onchange="updatePlayerRealName()" oninput="autoResizeInput(this)">
                         </span>
 
                         <span class="info-pair">
                             <span class="info-label">날짜:</span>
-                            <input type="text" id="rptDateInput" class="editable-date" style="width:100px;">
+                            <input type="text" id="rptDateInput" class="editable-date" style="width:100px;" oninput="autoResizeInput(this)">
                         </span>
 
                         <span class="info-pair">
                             <span class="info-label">EFTI:</span>
-                            <input type="text" id="rptEftiInput" class="editable-text" style="width:70px;" oninput="updatePlayerEfti()">                        </span>
+                            <input type="text" id="rptEftiInput" class="editable-text" style="width:70px;" oninput="updatePlayerEfti(); autoResizeInput(this)">                        </span>
                     </div>
                 </div>
             </div>
@@ -316,6 +316,12 @@
                     <div id="fameLogoText" class="logo-text" style="font-size:22px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;">코드코드영재학원</div>
                     <div class="last-update">Last Update: <span id="todayDate">-</span></div>
                 </div>
+            </div>
+
+            <div class="fame-tabs">
+                <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
+                <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
+                <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
             </div>
 
             <div class="fame-only section-title" style="margin-top:5px;">👤 개인전 역대 Top 10 (Individual)</div>
@@ -734,11 +740,10 @@
                                     <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">실명</th>
                                     <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">EFTI</th>
                                     <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">가입일</th>
-                                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">상태</th>
                                 </tr>
                             </thead>
                             <tbody id="citizenTableBody">
-                                <tr><td colspan="6" style="padding:16px; text-align:center; color:#999;">데이터를 불러오세요.</td></tr>
+                                <tr><td colspan="5" style="padding:16px; text-align:center; color:#999;">데이터를 불러오세요.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -781,25 +786,32 @@
             <div class="modal-body">
                 <!-- Step 1: 게임 종류 -->
                 <div id="gameStep1">
-                    <!-- 게임 버전 선택 (기본/심화) -->
-                    <div style="margin-bottom:12px;">
-                        <div style="font-size:12px; color:#888; margin-bottom:6px; font-weight:600;">게임 버전</div>
-                        <div class="mode-select">
-                            <div class="mode-btn selected" onclick="selectGameVariant('basic')" id="btnBasic">
-                                <span class="mode-ico">🎮</span><span class="mode-txt">기본</span>
-                            </div>
-                            <div class="mode-btn" onclick="selectGameVariant('advanced')" id="btnAdvanced">
-                                <span class="mode-ico">🏆</span><span class="mode-txt">심화</span>
-                            </div>
+                    <!-- 게임 버전 -->
+                    <div class="gs-section-label">게임 버전</div>
+                    <div class="gs-card-row">
+                        <div class="gs-card selected" onclick="selectGameVariant('basic')" id="btnBasic">
+                            <span class="gs-card-ico">🎮</span>
+                            <span class="gs-card-title">기본</span>
+                        </div>
+                        <div class="gs-card" onclick="selectGameVariant('advanced')" id="btnAdvanced">
+                            <span class="gs-card-ico">🏆</span>
+                            <span class="gs-card-title">심화</span>
+                        </div>
+                        <div class="gs-card" onclick="selectGameVariant('rich_vessel')" id="btnRichVessel">
+                            <span class="gs-card-ico">💰</span>
+                            <span class="gs-card-title">부자의 그릇</span>
                         </div>
                     </div>
-                    <div style="font-size:12px; color:#888; margin-bottom:6px; font-weight:600;">게임 종류</div>
-                    <div class="mode-select">
-                        <div class="mode-btn selected" onclick="selectMode('individual')" id="btnIndiv">
-                            <span class="mode-ico">👤</span><span class="mode-txt">개인전</span>
+                    <!-- 게임 종류 -->
+                    <div class="gs-section-label" style="margin-top:16px;">게임 종류</div>
+                    <div class="gs-card-row">
+                        <div class="gs-card selected" onclick="selectMode('individual')" id="btnIndiv">
+                            <span class="gs-card-ico">👤</span>
+                            <span class="gs-card-title">개인전</span>
                         </div>
-                        <div class="mode-btn" onclick="selectMode('team')" id="btnTeam">
-                            <span class="mode-ico">👥</span><span class="mode-txt">팀전</span>
+                        <div class="gs-card" onclick="selectMode('team')" id="btnTeam">
+                            <span class="gs-card-ico">👥</span>
+                            <span class="gs-card-title">팀전</span>
                         </div>
                     </div>
                     <div id="individualConfig" style="margin-top:4px;">
