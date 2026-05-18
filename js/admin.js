@@ -2,16 +2,16 @@ const ADMIN_HASH = 'f1e8d7d4dbad359476ea3786d3bcb02ba1909934fcfe059f3580edaeacea
 
 const ADMIN_ANSWERS = {
     basic: {
-        team:  ['images/answers/answer1.png', 'images/answers/answer2.png'],
-        indiv: ['images/answers/answer3.png', 'images/answers/answer4.png']
+        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
+        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
     },
     advanced: {
-        team:  ['images/answers/answer1.png', 'images/answers/answer2.png'],
-        indiv: ['images/answers/answer3.png', 'images/answers/answer4.png']
+        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
+        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
     },
     rich_vessel: {
-        team:  ['images/answers/answer1.png', 'images/answers/answer2.png'],
-        indiv: ['images/answers/answer3.png', 'images/answers/answer4.png']
+        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
+        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
     }
 };
 
