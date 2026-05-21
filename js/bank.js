@@ -227,6 +227,7 @@ async function bankStep1Complete() {
         _bank.playerTypeTags  = {};
         _bank.teamTypeTags    = {};
         _bank.currentRound    = 1;
+        _bank.currentPlayerIdx = null;   // ← 추가
         _bank.viewMode        = 'team';
         _bankRenderPlayerList();
         closeBankModal(true);
@@ -538,8 +539,8 @@ function _bankSubmitTeam(p, type, amount) {
 // ── 라운드 전환 ────────────────────────────────────────────────────
 function bankAdvanceRound() {
     const isLast = _bank.currentRound >= 3;
-    const label  = isLast ? '예금 신청 종료' : '다음 라운드';
-    if (!confirm(`${label}으로 넘어갑니다.\n미완료 팀 신청은 무효 처리됩니다.\n계속하시겠습니까?`)) return;
+    const label  = isLast ? '예금 신청을 종료합니다' : '다음 라운드로 넘어갑니다';
+    if (!confirm(`${label}.\n미완료 팀 신청은 무효 처리됩니다.\n계속하시겠습니까?`)) return;
 
     // 현재 라운드 보상을 prevRoundsTotal에 스냅샷
     const allNicks = new Set([
