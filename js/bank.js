@@ -454,6 +454,12 @@ function _bankSubmitIndividual(p, type, amount) {
     _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
 
+    // 누적 타입 태그
+    if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
+    if (!_bank.playerTypeTags[p.nickname].includes(type)) {
+        _bank.playerTypeTags[p.nickname].push(type);
+    }
+
     document.getElementById('bankTeamStatusSection').style.display = 'none';
     document.getElementById('bankRTeamPendingMsg').style.display   = 'none';
 
@@ -492,6 +498,19 @@ function _bankSubmitTeam(p, type, amount) {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
             _bankSaveReward(pl.nickname, 'team', memberPrincipal + perMemberReward);
+        });
+
+        // 누적 타입 태그 — 팀 헤더
+        if (!_bank.teamTypeTags[teamName]) _bank.teamTypeTags[teamName] = [];
+        if (!_bank.teamTypeTags[teamName].includes(type)) {
+            _bank.teamTypeTags[teamName].push(type);
+        }
+        // 누적 타입 태그 — 팀원 개인
+        teamMembers.forEach(pl => {
+            if (!_bank.playerTypeTags[pl.nickname]) _bank.playerTypeTags[pl.nickname] = [];
+            if (!_bank.playerTypeTags[pl.nickname].includes(type)) {
+                _bank.playerTypeTags[pl.nickname].push(type);
+            }
         });
     }
 
