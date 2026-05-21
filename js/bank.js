@@ -289,20 +289,30 @@ function _bankRenderPlayerList() {
         const done     = _getPlayerDone(p, idx);
         const card     = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
-        // 팀 탭에서는 예금 종류를 팀 헤더에 표시하므로 개별 카드에서 제외
-        const typeTag   = (!isTeamTab && done) ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
+
+        // 개인 탭 / 개인전: 누적 타입 태그 표시 (팀 탭 플레이어 카드에는 표시 안 함)
+        const typeTags = !isTeamTab
+            ? (_bank.playerTypeTags[p.nickname] || [])
+                .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+                .join('')
+            : '';
+
         const statusTag = done
             ? `<span class="bank-status-done">신청 완료</span>`
             : `<span class="bank-status-pending">신청 전</span>`;
+
         card.innerHTML = `
             <div class="bank-player-nickname">${p.nickname}</div>
             <div class="bank-player-realname">${p.real_name}</div>
             <div class="bank-player-status">
-                <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                ${typeTag}
+                ${typeTags}
                 ${statusTag}
             </div>`;
-        card.onclick = () => bankSelectPlayer(idx);
+
+        card.onclick = () => {
+            if (_bank.currentRound >= 4) return;
+            bankSelectPlayer(idx);
+        };
         return card;
     }
 
@@ -340,8 +350,10 @@ function _bankRenderPlayerList() {
 
         const header = document.createElement('div');
         header.className = 'team-group-header';
-        const typeLabel = td && td.type ? `<span class="bank-status-type">${_BANK_TYPE[td.type].label}</span>` : '';
-        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${typeLabel}`;
+        const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
+            .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+            .join('');
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}`;
         groupEl.appendChild(header);
 
         const playersEl = document.createElement('div');
