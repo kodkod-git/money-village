@@ -7,12 +7,16 @@ const _bank = {
     gameDate: null,
     gameType: null,
     players:  [],
-    deposit:  { type: null, amount: 1000 },
+    deposit:  { amount: 1000 },
     currentPlayerIdx: null,
-    indivCompleted: {},
-    teamDeposits:   {},
-    teamRewards:    {},  // { nickname: amount } — 팀 예금 보상 누적
-    indivRewards:   {},  // { nickname: amount } — 개인 예금 보상 누적
+    currentRound:    1,
+    indivCompleted:  {},
+    teamDeposits:    {},
+    teamRewards:     {},  // { nickname: amount } — 팀 예금 보상 누적
+    indivRewards:    {},  // { nickname: amount } — 개인 예금 보상 누적
+    prevRoundsTotal: {},
+    playerTypeTags:  {},
+    teamTypeTags:    {},
     viewMode:  'team'
 };
 
@@ -20,6 +24,14 @@ const _BANK_TYPE = {
     long:  { label: '장기 🏦', round: '1라운드' },
     mid:   { label: '중기 ⏳', round: '2라운드' },
     short: { label: '단기 ⚡', round: '3라운드' }
+};
+
+const _ROUND_TYPE = { 1: 'long', 2: 'mid', 3: 'short' };
+
+const _ROUND_TITLE = {
+    1: '1라운드 장기 예금 신청',
+    2: '2라운드 중기 예금 신청',
+    3: '3라운드 단기 예금 신청'
 };
 
 // ── 설정 영속화 ────────────────────────────────────────────────────
