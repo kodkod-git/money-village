@@ -382,32 +382,9 @@ function bankSelectPlayer(idx) {
         if (_bank.indivCompleted[idx]) prevAmount = _bank.indivCompleted[idx].amount;
     }
 
-    _bank.deposit = { type: null, amount: prevAmount };
-    document.querySelectorAll('.bank-type-card').forEach(c => c.classList.remove('selected'));
+    _bank.deposit = { amount: prevAmount };
     document.getElementById('bankAmountDisplay').textContent = prevAmount.toLocaleString() + '원';
-    document.getElementById('bankPreviewBox').textContent = '종류를 선택하면 미리보기가 나와요!';
-
-    // 팀/개인 배율을 예금 종류 카드에 표시
-    const ratioStore = isTeamTab ? _bank.teamSettings : _bank.settings;
-    ['long', 'mid', 'short'].forEach(t => {
-        const el = document.getElementById('bankTcInfo' + _bankCap(t));
-        if (el) el.textContent = ratioStore[t].toFixed(1) + '배';
-    });
-
-    // 팀 탭: 팀이 이미 선택한 종류 미리 선택
-    if (isTeamTab) {
-        const td = _bank.teamDeposits[p.team_name];
-        if (td && td.type) {
-            _bank.deposit.type = td.type;
-            document.getElementById('bankTc' + _bankCap(td.type)).classList.add('selected');
-            _bankUpdatePreview();
-        }
-    } else if (_bank.indivCompleted[idx]) {
-        const prevType = _bank.indivCompleted[idx].type;
-        _bank.deposit.type = prevType;
-        document.getElementById('bankTc' + _bankCap(prevType)).classList.add('selected');
-        _bankUpdatePreview();
-    }
+    _bankUpdatePreview();
 
     _bankShowView(3);
 }
@@ -417,24 +394,6 @@ function bankBackToList() {
 }
 
 // ── View 3: 예금 신청 ──────────────────────────────────────────────
-function bankPickType(t) {
-    _bank.deposit.type = t;
-    document.querySelectorAll('.bank-type-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById('bankTc' + _bankCap(t)).classList.add('selected');
-
-    // 팀 탭: 팀 공유 타입 업데이트
-    const p = _bank.players[_bank.currentPlayerIdx];
-    if (_bank.viewMode === 'team' && p && p.team_name) {
-        if (!_bank.teamDeposits[p.team_name]) {
-            _bank.teamDeposits[p.team_name] = { type: t, members: {} };
-        } else {
-            _bank.teamDeposits[p.team_name].type = t;
-        }
-    }
-
-    _bankUpdatePreview();
-}
-
 function bankAdjustAmount(delta) {
     const next = _bank.deposit.amount + delta;
     if (next < 1000) return;
@@ -444,9 +403,9 @@ function bankAdjustAmount(delta) {
 }
 
 function _bankUpdatePreview() {
-    const { type, amount } = _bank.deposit;
-    const box = document.getElementById('bankPreviewBox');
-    if (!type) { box.textContent = '종류를 먼저 선택해주세요'; return; }
+    const type   = _ROUND_TYPE[_bank.currentRound];
+    const amount = _bank.deposit.amount;
+    const box    = document.getElementById('bankPreviewBox');
 
     const p = _bank.players[_bank.currentPlayerIdx];
     if (!p) return;
@@ -467,8 +426,8 @@ function _bankUpdatePreview() {
 }
 
 async function bankStep2Submit() {
-    if (!_bank.deposit.type) { alert('예금 종류를 선택해주세요'); return; }
-    const { type, amount } = _bank.deposit;
+    const type   = _ROUND_TYPE[_bank.currentRound];
+    const amount = _bank.deposit.amount;
     const p = _bank.players[_bank.currentPlayerIdx];
     const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
     if (isTeamTab) {
