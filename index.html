@@ -121,7 +121,10 @@
                     </div>
                 </div>
                 <div class="count-card">
-                    <h4 id="cntAssetCardTitle">보유 주식 (4R 현재가)</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <h4 id="cntAssetCardTitle" style="margin:0;">보유 주식 (4R 현재가)</h4>
+                        <button onclick="openStockPriceEditModal()" style="background:none; border:none; cursor:pointer; font-size:18px; padding:2px 4px;" title="가격 수정">⚙️</button>
+                    </div>
                     <div class="portfolio-grid-sm" id="stockGridSm"></div>
                 </div>
                 <div class="count-card">
@@ -922,6 +925,22 @@
             <div style="display:flex; gap:12px; justify-content:center;">
                 <button class="btn btn-success" style="min-width:80px;" onclick="_finishGameConfirmed()">예</button>
                 <button class="btn btn-dark" style="min-width:80px;" onclick="_finishGameCancel()">아니오</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 주식/부동산 가격 수정 모달 -->
+    <div id="stockPriceEditModal" class="modal-backdrop" onclick="handleStockPriceEditBackdrop(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="stockPriceEditTitle">📈 주식 가격 수정</h3>
+            </div>
+            <div class="modal-body">
+                <div class="stock-inputs-grid" id="stockPriceEditInputs"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeStockPriceEditModal()">닫기</button>
+                <button class="btn btn-success" onclick="saveStockPriceEdit()">💾 저장</button>
             </div>
         </div>
     </div>
