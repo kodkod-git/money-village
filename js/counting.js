@@ -224,10 +224,12 @@
     async function saveStockPriceEdit() {
         const info = getActiveAssetInfo();
         const prices = [];
+        const pricesObj = {};
         for (let k in info) {
             const val = parseInt(document.getElementById(`cnt_price_${k}`)?.value) || info[k].price;
             info[k].price = val;
             prices.push(val);
+            pricesObj[k] = val;
         }
 
         initAssetGrid('stockGridSm', false, true);
@@ -241,7 +243,11 @@
 
         const gameId = players[0]?.gameId;
         if (gameId && !isSampleMode) {
-            await sbUpdateStockPrice(gameId, prices);
+            if (currentGameVariant === 'basic') {
+                await sbUpdateStockPrice(gameId, prices);
+            } else {
+                await sbSaveEstatePrice(gameId, pricesObj);
+            }
         }
 
         closeStockPriceEditModal();
