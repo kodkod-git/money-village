@@ -162,7 +162,7 @@
                 grid.innerHTML += `
                     <button class="trait-btn ${isOn ? 'on' : ''}" type="button"
                         onclick="toggleSuccessFactor('${f.key}')">
-                        <span class="emo">${f.emo}</span>
+                        <img src="${f.img}" alt="${f.name}" style="width:32px;height:32px;object-fit:contain;">
                         <span>${f.name}</span>
                     </button>`;
             });
@@ -194,4 +194,55 @@
         if (!p.successFactors) p.successFactors = initSuccessFactorsState();
         p.successFactors[key] = !p.successFactors[key];
         updateDash();
+    }
+
+    function openStockPriceEditModal() {
+        const isBasic = currentGameVariant === 'basic';
+        const title = document.getElementById('stockPriceEditTitle');
+        if (title) title.textContent = isBasic ? '📈 주식 가격 수정' : '🏠 부동산 가격 수정';
+
+        const grid = document.getElementById('stockPriceEditInputs');
+        grid.innerHTML = '';
+        const info = getActiveAssetInfo();
+        for (let k in info) {
+            grid.innerHTML += `<div class="stock-input-item">
+                <label>${info[k].name}</label>
+                <input type="number" id="cnt_price_${k}" value="${info[k].price}" min="0">
+            </div>`;
+        }
+        document.getElementById('stockPriceEditModal').classList.add('show');
+    }
+
+    function closeStockPriceEditModal() {
+        document.getElementById('stockPriceEditModal').classList.remove('show');
+    }
+
+    function handleStockPriceEditBackdrop(e) {
+        if (e.target === document.getElementById('stockPriceEditModal')) closeStockPriceEditModal();
+    }
+
+    async function saveStockPriceEdit() {
+        const info = getActiveAssetInfo();
+        const prices = [];
+        for (let k in info) {
+            const val = parseInt(document.getElementById(`cnt_price_${k}`)?.value) || info[k].price;
+            info[k].price = val;
+            prices.push(val);
+        }
+
+        initAssetGrid('stockGridSm', false, true);
+
+        players.forEach(p => {
+            p.total = (p.manualCash || 0) + calcActiveAsset(p.assets)
+                    + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
+        });
+        recalculateAllRankings();
+        updateDash();
+
+        const gameId = players[0]?.gameId;
+        if (gameId && !isSampleMode) {
+            await sbUpdateStockPrice(gameId, prices);
+        }
+
+        closeStockPriceEditModal();
     }
