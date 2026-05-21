@@ -219,11 +219,15 @@ async function bankStep1Complete() {
         const infoEl = document.getElementById('bankGameInfo');
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
-        _bank.indivCompleted = {};
-        _bank.teamDeposits   = {};
-        _bank.teamRewards    = {};
-        _bank.indivRewards   = {};
-        _bank.viewMode       = 'team';
+        _bank.indivCompleted  = {};
+        _bank.teamDeposits    = {};
+        _bank.teamRewards     = {};
+        _bank.indivRewards    = {};
+        _bank.prevRoundsTotal = {};
+        _bank.playerTypeTags  = {};
+        _bank.teamTypeTags    = {};
+        _bank.currentRound    = 1;
+        _bank.viewMode        = 'team';
         _bankRenderPlayerList();
         closeBankModal(true);
         switchScreen('bankScreen');
