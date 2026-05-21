@@ -529,6 +529,34 @@ function _bankSubmitTeam(p, type, amount) {
     _bankShowView(4);
 }
 
+// ── 라운드 전환 ────────────────────────────────────────────────────
+function bankAdvanceRound() {
+    const isLast = _bank.currentRound >= 3;
+    const label  = isLast ? '예금 신청 종료' : '다음 라운드';
+    if (!confirm(`${label}으로 넘어갑니다.\n미완료 팀 신청은 무효 처리됩니다.\n계속하시겠습니까?`)) return;
+
+    // 현재 라운드 보상을 prevRoundsTotal에 스냅샷
+    const allNicks = new Set([
+        ...Object.keys(_bank.teamRewards),
+        ...Object.keys(_bank.indivRewards)
+    ]);
+    allNicks.forEach(nick => {
+        _bank.prevRoundsTotal[nick] = (_bank.prevRoundsTotal[nick] || 0)
+            + (_bank.teamRewards[nick]  || 0)
+            + (_bank.indivRewards[nick] || 0);
+    });
+
+    // 라운드 레벨 상태 리셋 (미완료 팀은 무효 처리)
+    _bank.teamRewards    = {};
+    _bank.indivRewards   = {};
+    _bank.indivCompleted = {};
+    _bank.teamDeposits   = {};
+    _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
+
+    _bankRenderPlayerList();
+    _bankShowView(2);
+}
+
 // ── View 4: 결과 ───────────────────────────────────────────────────
 function bankNextStudent() {
     _bankRenderPlayerList();
