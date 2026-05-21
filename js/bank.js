@@ -453,7 +453,9 @@ async function bankStep2Submit() {
 function _bankSaveReward(nickname, source, amount) {
     if (source === 'team') _bank.teamRewards[nickname] = amount;
     else                   _bank.indivRewards[nickname] = amount;
-    const total = (_bank.teamRewards[nickname] || 0) + (_bank.indivRewards[nickname] || 0);
+    const total = (_bank.prevRoundsTotal[nickname] || 0)
+                + (_bank.teamRewards[nickname]   || 0)
+                + (_bank.indivRewards[nickname]  || 0);
     sbSaveDepositReward(_bank.gameId, nickname, total).catch(console.error);
 }
 
