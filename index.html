@@ -344,15 +344,12 @@
             <div class="fame-only section-title" style="margin-top:5px;">👤 개인전 역대 Top 10 (Individual)</div>
             <table class="ranking-table">
                 <colgroup>
-                    <col style="width: 6%">
-                    <col style="width: 13%">
-                    <col style="width: 13%">
-                    <col style="width: 11%">
-                    <col style="width: 11%">
-                    <col style="width: 11%">
-                    <col style="width: 11%">
-                    <col style="width: 11%">
-                    <col style="width: 13%">
+                    <col style="width: 7%">
+                    <col style="width: 18%">
+                    <col style="width: 18%">
+                    <col style="width: 14%">
+                    <col style="width: 14%">
+                    <col style="width: 14%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -361,10 +358,7 @@
                         <th>총 자산</th>
                         <th>현금</th>
                         <th id="indivStockHeader">주식</th>
-                        <th>성실활동금</th>
-                        <th>퀘스트</th>
-                        <th>예금보상</th>
-                        <th>달성 날짜</th>
+                        <th>기타</th>
                     </tr>
                 </thead>
                 <tbody id="indivTableBody"></tbody>
@@ -391,8 +385,8 @@
 
             <div class="fame-only section-title">👥 팀전 역대 Top 5 (Team)</div>
             <table class="ranking-table">
-                <colgroup><col style="width: 8%"><col style="width: 22%"><col style="width: 22%"><col style="width: 33%"><col style="width: 15%"></colgroup>
-                <thead><tr><th>순위</th><th>팀명</th><th>팀 총 자산</th><th>팀원 (Top 4 기여)</th><th>달성 날짜</th></tr></thead>
+                <colgroup><col style="width: 8%"><col style="width: 25%"><col style="width: 25%"><col style="width: 42%"></colgroup>
+                <thead><tr><th>순위</th><th>팀명</th><th>팀 총 자산</th><th>팀원 (Top 4 기여)</th></tr></thead>
                 <tbody id="teamTableBody"></tbody>
             </table>
 
@@ -447,7 +441,7 @@
                 <div class="bank-screen-header">
                     <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
                     <div>
-                        <div class="bank-screen-title">👥 예금 신청자 선택</div>
+                        <div class="bank-screen-title" id="bankRoundTitle">1라운드 장기 예금 신청</div>
                         <div id="bankGameInfo" class="bank-screen-subtitle"></div>
                     </div>
                 </div>
@@ -461,6 +455,11 @@
                     <button id="bankTabIndiv" class="player-tab"        onclick="bankSetViewMode('individual')">개인</button>
                 </div>
                 <div id="bankPlayerGrid" class="bank-player-grid"></div>
+                <div style="padding: 16px 0 8px;">
+                    <button id="bankAdvanceRoundBtn" class="btn btn-purple"
+                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
+                        onclick="bankAdvanceRound()">다음 라운드 →</button>
+                </div>
             </div>
 
             <!-- View 3: 예금 신청서 -->
@@ -827,7 +826,7 @@
             <div class="gs-step-indicator">
                 <div class="gs-step">
                     <div class="gs-dot active" id="gsDot1"></div>
-                    <div class="gs-label">게임 종류</div>
+                    <div class="gs-label">게임 설정</div>
                 </div>
                 <div class="gs-line"></div>
                 <div class="gs-step">
@@ -843,6 +842,11 @@
             <div class="modal-body">
                 <!-- Step 1: 게임 종류 -->
                 <div id="gameStep1">
+                    <!-- 게임 날짜 -->
+                    <div class="gs-section-label">게임 날짜</div>
+                    <div style="margin-bottom:16px;">
+                        <input type="date" id="gameDate" style="width:100%; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; font-weight:600; color:#1e293b; cursor:pointer; box-sizing:border-box; font-family:inherit;">
+                    </div>
                     <!-- 게임 버전 -->
                     <div class="gs-section-label">게임 버전</div>
                     <div class="gs-card-row">
