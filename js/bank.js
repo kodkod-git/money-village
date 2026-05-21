@@ -246,6 +246,22 @@ function bankSetViewMode(mode) {
 }
 
 function _bankRenderPlayerList() {
+    // 라운드 제목 업데이트
+    const titleEl = document.getElementById('bankRoundTitle');
+    if (titleEl) {
+        titleEl.textContent = _ROUND_TITLE[_bank.currentRound] || '예금 신청 종료';
+    }
+
+    // 다음 라운드 버튼 상태 업데이트
+    const advBtn = document.getElementById('bankAdvanceRoundBtn');
+    if (advBtn) {
+        const isEnded = _bank.currentRound >= 4;
+        advBtn.disabled    = isEnded;
+        advBtn.textContent = _bank.currentRound === 3 ? '예금 신청 종료 →'
+                           : isEnded               ? '종료됨'
+                           :                          '다음 라운드 →';
+    }
+
     const grid   = document.getElementById('bankPlayerGrid');
     const isTeam = _bank.players.some(p => p.team_name);
     grid.innerHTML = '';
