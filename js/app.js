@@ -33,12 +33,12 @@
     };
 
     const SUCCESS_FACTORS = [
-        { key: "financial_management", emo: "\u{1FA99}", name: "재정관리능력",           img: "image/money.png",         desc: "용돈을 어떻게 쓰고 얼마나 남길지 스스로 결정하고\n관리하는 능력" },
-        { key: "communication",        emo: "\u{1F4AC}", name: "의사소통 및 협상능력",   img: "image/communication.png", desc: "자신의 생각을 논리적으로 전달하고 타인과 조화롭게\n의견을 조율하는 능력" },
-        { key: "critical_thinking",    emo: "\u{1F914}", name: "비판적 사고와\n문제 해결 능력", img: "image/thinking.png",   desc: "어려운 상황에 직면했을 때 다양한 대안을 고민하여\n최적의 선택을 내리는 능력" },
-        { key: "global_economy",       emo: "\u{1F4A1}", name: "글로벌경제이해력",       img: "image/global.png",        desc: "국내외 경제 변화에 관심을 갖고 복잡한 경제 흐름을\n파악하는 태도" },
-        { key: "credit_trust",         emo: "\u{1F91D}", name: "신용과 신뢰",           img: "image/trust.png",         desc: "맡은 일을 끝까지 책임감 있게 완수하여 타인에게 신뢰를\n주는 태도" },
-        { key: "entrepreneurship",     emo: "\u{1F3E2}", name: "기업가정신",             img: "image/idea.png",          desc: "세상에 도움이 되는 새로운 가치를 상상하고 이를\n실천에 옮기는 창의적인 힘" },
+        { key: "financial_management", emo: "\u{1FA99}", name: "재정관리능력",           img: "image/icon/money.png",         desc: "용돈을 어떻게 쓰고 얼마나 남길지 스스로 결정하고\n관리하는 능력" },
+        { key: "communication",        emo: "\u{1F4AC}", name: "의사소통 및 협상능력",   img: "image/icon/communication.png", desc: "자신의 생각을 논리적으로 전달하고 타인과 조화롭게\n의견을 조율하는 능력" },
+        { key: "critical_thinking",    emo: "\u{1F914}", name: "비판적 사고와\n문제 해결 능력", img: "image/icon/thinking.png",   desc: "어려운 상황에 직면했을 때 다양한 대안을 고민하여\n최적의 선택을 내리는 능력" },
+        { key: "global_economy",       emo: "\u{1F4A1}", name: "글로벌경제이해력",       img: "image/icon/global.png",        desc: "국내외 경제 변화에 관심을 갖고 복잡한 경제 흐름을\n파악하는 태도" },
+        { key: "credit_trust",         emo: "\u{1F91D}", name: "신용과 신뢰",           img: "image/icon/trust.png",         desc: "맡은 일을 끝까지 책임감 있게 완수하여 타인에게 신뢰를\n주는 태도" },
+        { key: "entrepreneurship",     emo: "\u{1F3E2}", name: "기업가정신",             img: "image/icon/idea.png",          desc: "세상에 도움이 되는 새로운 가치를 상상하고 이를\n실천에 옮기는 창의적인 힘" },
     ];
 
     const TRAITS = [

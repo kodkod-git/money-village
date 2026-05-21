@@ -259,16 +259,17 @@
         if (players.length === 0) return alert("명단을 입력하세요.");
 
         // 게임 초기 데이터 DB 삽입 (백그라운드)
+        const selectedDate = document.getElementById('gameDate').value || new Date().toISOString().slice(0, 10);
         if (currentGameVariant !== 'basic') {
             const estateValues = Object.fromEntries(
                 Object.entries(estateInfo).map(([k, v]) => [k, v.price])
             );
-            sbInitGame(gameId, currentMode, players, [], currentGameVariant)
+            sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate)
                 .then(() => sbSaveEstatePrice(gameId, estateValues))
                 .catch(e => console.error('[sbInitGame/sbSaveEstatePrice]', e));
         } else {
             const stockValues = Object.values(stockInfo).map(s => s.price);
-            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant)
+            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate)
                 .catch(e => console.error('[sbInitGame]', e));
         }
 
@@ -393,6 +394,7 @@
     function openGameStartModal() {
         currentGameStep = 1;
         gsGoToStep(1);
+        document.getElementById('gameDate').value = new Date().toISOString().slice(0, 10);
         document.getElementById('gameStartModal').classList.add('show');
     }
 

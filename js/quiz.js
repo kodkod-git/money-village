@@ -28,7 +28,7 @@ const _QUIZ_CONFIG = {
     basic: {
         indiv: {
             images:  ['image/quiz/basic/quiz1.png',           'image/quiz/basic/quiz2.png'],
-            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+            answers: [['X','O','O','X'],                      ['O','O','X','O']]
         },
         team: {
             images:  ['image/quiz/basic/team_quiz1.png',      'image/quiz/basic/team_quiz2.png'],
@@ -38,21 +38,21 @@ const _QUIZ_CONFIG = {
     advanced: {
         indiv: {
             images:  ['image/quiz/advanced/quiz1.png',        'image/quiz/advanced/quiz2.png'],
-            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+            answers: [['O','X','O','O'],                      ['O','X','O','X']]
         },
         team: {
             images:  ['image/quiz/advanced/team_quiz1.png',   'image/quiz/advanced/team_quiz2.png'],
-            answers: [['O','X','O','X'],                      ['O','X','O','X']]
+            answers: [['O','O','O','X'],                      ['O','X','O','X']]
         }
     },
     rich_vessel: {
         indiv: {
             images:  ['image/quiz/rich_vessel/quiz1.png',     'image/quiz/rich_vessel/quiz2.png'],
-            answers: [['X','O','O','X'],                      ['X','O','O','X']]
+            answers: [['O','O','X','X'],                      ['O','X','X','O']]
         },
         team: {
             images:  ['image/quiz/rich_vessel/team_quiz1.png','image/quiz/rich_vessel/team_quiz2.png'],
-            answers: [['O','X','O','X'],                      ['O','X','O','X']]
+            answers: [['X','X','O','O'],                      ['X','O','O','X']]
         }
     }
 };

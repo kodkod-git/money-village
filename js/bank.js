@@ -506,13 +506,6 @@ function _bankSubmitTeam(p, type, amount) {
         if (!_bank.teamTypeTags[teamName].includes(type)) {
             _bank.teamTypeTags[teamName].push(type);
         }
-        // 누적 타입 태그 — 팀원 개인
-        teamMembers.forEach(pl => {
-            if (!_bank.playerTypeTags[pl.nickname]) _bank.playerTypeTags[pl.nickname] = [];
-            if (!_bank.playerTypeTags[pl.nickname].includes(type)) {
-                _bank.playerTypeTags[pl.nickname].push(type);
-            }
-        });
     }
 
     document.getElementById('bankResultRoundBadge').textContent = _BANK_TYPE[type].round;
