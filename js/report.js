@@ -424,7 +424,7 @@
             margin: 0,
             filename: type === 'report'
                 ? buildReportPdfFileName(players[viewingPlayerIndex], viewingPlayerIndex)
-                : `머니빌리지_명예의전당.pdf`,
+                : `${formatFolderDate(new Date()).replace(/-/g, '')}_명예의전당.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
                 scale: 2,
@@ -613,42 +613,54 @@
         }
     }
     async function uploadFamePdfToDrive() {
-        const btn = document.getElementById('btnUploadFamePdf');
+        const btn = document.getElementById('btnSaveFameDrive');
         if (!btn) return;
 
-        const originalHtml = btn.innerHTML;
+        const originalHtml    = btn.innerHTML;
+        const originalVariant = currentFameVariant;
         btn.disabled = true;
-        btn.innerHTML = '📄 PDF 저장 중...';
+
+        const variants = [
+            { key: 'basic',       label: '기본' },
+            { key: 'advanced',    label: '심화' },
+            { key: 'rich_vessel', label: '부자의그릇' }
+        ];
 
         try {
-            await waitForRenderFrame();
+            const gameDate    = formatFolderDate(new Date());
+            const dateCompact = gameDate.replace(/-/g, '');
 
-            const rawDateText = (document.getElementById('rptDateInput')?.value || '').trim();
-            const gameDate = rawDateText || formatFolderDate(new Date());
-            const fileName = `${gameDate.replace(/-/g, '')}_HallOfFame.pdf`;
-            const pdfBase64 = await getPdfBase64FromElement('pdfAreaFame', fileName);
+            for (let i = 0; i < variants.length; i++) {
+                const { key, label } = variants[i];
+                btn.innerHTML = `☁️ 저장 중... (${i + 1}/${variants.length})`;
 
+                switchFameTab(key);
+                await waitForRenderFrame();
 
-            const payload = {
-                action: "uploadPDF",
-                pdfBase64,
-                fileName,
-                category: "hall_of_fame",
-                gameDate,
-                nickname: "hall_of_fame",
-                real_name: ""
-            };
+                const fileName  = `${dateCompact}_${label}_명예의전당.pdf`;
+                const pdfBase64 = await getPdfBase64FromElement('pdfAreaFame', fileName);
 
-            const json = await sbUploadPDF(payload);
-            if (!json.success) {
-                throw new Error(json?.message || "명예의 전당 PDF 저장에 실패했습니다.");
+                const res  = await fetch(SCRIPT_URL, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body:    JSON.stringify({
+                        action: "uploadPDF", pdfBase64, fileName,
+                        category: "hall_of_fame", gameDate,
+                        nickname: "hall_of_fame", real_name: ""
+                    })
+                });
+                const json = await res.json();
+                if (!json.success) {
+                    throw new Error(`${label} 저장 실패: ${json?.message || ''}`);
+                }
             }
 
-            alert(`✅ 명예의 전당 PDF가 저장됐습니다.\n경로: ${json.path}`);
+            alert(`✅ 명예의 전당 PDF 3개가 드라이브에 저장됐습니다.\n(기본 / 심화 / 부자의그릇)`);
         } catch (err) {
             console.error("[uploadFamePdfToDrive] ERROR", err);
             alert("❌ 명예의 전당 PDF 저장 실패:\n" + (err?.message || String(err)));
         } finally {
+            switchFameTab(originalVariant);
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }

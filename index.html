@@ -315,15 +315,19 @@
     <div id="fameScreen" class="screen">
         <div class="report-controls">
             <div class="controls-title" style="font-size:18px; font-weight:bold;">🏆 명예의 전당</div>
-            <div class="controls-actions">
+            <div class="controls-actions" style="gap:8px;">
                 <button class="btn btn-primary" onclick="switchScreen('setupScreen')">🏠 처음으로</button>
-                <div class="fame-tabs">
-                    <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
-                    <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
-                    <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
-                </div>
-                <button class="btn btn-drive" onclick="fetchFameData()">🔄 데이터 새로고침</button>
-                <button class="btn btn-danger" id="btnUploadFamePdf" onclick="uploadFamePdfToDrive()">📄 PDF 저장</button>                <button class="btn btn-success" onclick="printFame()">🖨️ 출력</button>
+                <button class="btn btn-drive" id="btnSaveFameDrive" onclick="uploadFamePdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-danger" id="btnUploadFamePdf" onclick="downloadPDF('fame')">📄 PDF 저장</button>
+                <button class="btn btn-success" onclick="printFame()">🖨️ 출력</button>
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:center; padding:2px 0 14px;">
+            <div class="fame-tabs">
+                <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
+                <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
+                <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
             </div>
         </div>
 
