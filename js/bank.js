@@ -533,7 +533,19 @@ function _bankSubmitTeam(p, type, amount) {
 function bankAdvanceRound() {
     const isLast = _bank.currentRound >= 3;
     const label  = isLast ? '예금 신청을 종료합니다' : '다음 라운드로 넘어갑니다';
-    if (!confirm(`${label}.\n미완료 팀 신청은 무효 처리됩니다.\n계속하시겠습니까?`)) return;
+    if (!confirm(`${label}.\n미완료 팀 신청은 원금만 반환됩니다.\n계속하시겠습니까?`)) return;
+
+    // 미완료 팀: 일부만 신청한 경우 신청 멤버에게 원금 반환
+    for (const [teamName, td] of Object.entries(_bank.teamDeposits)) {
+        const teamMembers = _bank.players.filter(pl => pl.team_name === teamName);
+        const completedCnt = td.members ? Object.keys(td.members).length : 0;
+        if (completedCnt > 0 && completedCnt < teamMembers.length) {
+            for (const [memberIdxStr, amount] of Object.entries(td.members)) {
+                const pl = _bank.players[parseInt(memberIdxStr)];
+                if (pl) _bankSaveReward(pl.nickname, 'team', amount);
+            }
+        }
+    }
 
     // 현재 라운드 보상을 prevRoundsTotal에 스냅샷
     const allNicks = new Set([

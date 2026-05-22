@@ -86,12 +86,24 @@ function _syncAdminVariantTabs() {
     });
 }
 
+function _adminShowAnswerPopup(src) {
+    const modal = document.getElementById('adminAnswerPopup');
+    const img   = document.getElementById('adminAnswerPopupImg');
+    img.src = src;
+    modal.style.display = 'flex';
+}
+
+function _adminCloseAnswerPopup() {
+    document.getElementById('adminAnswerPopup').style.display = 'none';
+    document.getElementById('adminAnswerPopupImg').src = '';
+}
+
 function renderAdminQuizAnswers() {
     const answers   = ADMIN_ANSWERS[currentAdminVariant];
     const container = document.getElementById('adminAnswerCards');
 
     const makeCards = (list, label) => list.map((src, i) => `
-        <div class="admin-answer-card" ondblclick="window.open('${src}', '_blank')" title="더블클릭하면 원본 이미지를 새 탭에서 열 수 있어요">
+        <div class="admin-answer-card" onclick="_adminShowAnswerPopup('${src}')" title="클릭하면 이미지를 확대해서 볼 수 있어요" style="cursor:pointer;">
             <img src="${src}" alt="${label} ${i + 1}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="admin-answer-card-fallback" style="display:none;">이미지 없음</div>
             <div class="admin-answer-card-label">${label} ${i + 1}</div>

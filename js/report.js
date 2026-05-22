@@ -422,7 +422,9 @@
 
         const opt = {
             margin: 0,
-            filename: `머니빌리지_${type}.pdf`,
+            filename: type === 'report'
+                ? buildReportPdfFileName(players[viewingPlayerIndex], viewingPlayerIndex)
+                : `머니빌리지_명예의전당.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
                 scale: 2,
@@ -505,6 +507,20 @@
 
                         inp.replaceWith(span);
                     });
+
+                    // file:// 이미지 제거 — HTTP 서버 환경에서는 불필요, file:// 직접 실행 시 canvas taint 방지
+                    cloned.querySelectorAll('img').forEach(img => {
+                        const src = img.getAttribute('src') || '';
+                        if (src && !src.startsWith('data:') && !src.startsWith('http')) {
+                            img.removeAttribute('src');
+                        }
+                    });
+                    cloned.querySelectorAll('*').forEach(el => {
+                        const bg = el.style.backgroundImage;
+                        if (bg && bg.includes('url(') && !bg.includes('data:') && !bg.includes('http')) {
+                            el.style.backgroundImage = 'none';
+                        }
+                    });
                 }
             },
             jsPDF: {
@@ -525,7 +541,7 @@
     }
 
     async function uploadPdfToDrive() {
-        const btn = document.getElementById('btnUploadPdf');
+        const btn = document.getElementById('btnSaveDriveReport');
 
         if (!players || players.length === 0) {
             alert("저장할 참가자가 없습니다.");
@@ -572,7 +588,12 @@
                     real_name: realName
                 };
 
-                const json = await sbUploadPDF(payload);
+                const res  = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
                 if (!json.success) {
                     throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || ''}`);
                 }
@@ -645,10 +666,8 @@
     async function saveToDrive(_fromFinish = false) {
         if (isSavingDrive) return;
 
-        const rptBtn = document.getElementById('btnSaveDriveReport');
-        const cntBtn = document.getElementById('btnSaveDrive');
-        const btn = (rptBtn?.offsetParent !== null) ? rptBtn : cntBtn;
-        const originalHtml = btn ? btn.innerHTML : '';
+        const btn = null;
+        const originalHtml = '';
 
         try {
             if (isSampleMode) {
@@ -770,10 +789,10 @@
 
     function buildReportPdfFileName(p, index) {
         const date = loadedDate ? loadedDate.trim() : formatFolderDate(new Date());
-        const teamPrefix = (currentMode === 'team' && p.team && p.team !== '-') ? `[${p.team}]_` : '';
+        const teamPrefix = (currentMode === 'team' && p.team && p.team !== '-') ? `${p.team}_` : '';
         const displayName = (p.nickname || p.realName || p.name || `참가자${index + 1}`).trim();
         const dateCompact = date.replace(/-/g, '');
-        return `${dateCompact}_${teamPrefix}${displayName}_AssetReport.pdf`;
+        return `${dateCompact}_${teamPrefix}${displayName}_자산리포트.pdf`;
     }
     // ── 과거 게임 모달 ──────────────────────────────────────────
     async function promptAndLoadPastAssets() {

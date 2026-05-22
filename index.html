@@ -79,13 +79,15 @@
             <div style="display:flex; gap:10px;">
                 <button class="btn btn-primary" onclick="confirmResetSession()">🔄 처음으로</button>
                 <button id="connectBtn" class="btn btn-dark">🔌 계수기 연결 <span id="connStatus" style="color:#ffcc80"></span></button>
-                <button class="btn btn-drive" id="btnSaveDrive" onclick="saveToDrive()">☁️ 드라이브 저장</button>
             </div>
             <button class="btn btn-success" onclick="finishGame()">🏆 결과 발표 (계수 종료)</button>
         </div>
         <div class="dashboard-layout">
             <div class="sidebar">
-                <h3 style="margin-top:0; color:var(--mv-blue-deep);">참가자 목록</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h3 style="margin:0; color:var(--mv-blue-deep);">참가자 목록</h3>
+                    <button onclick="openPlayerEditModal()" style="background:none; border:none; cursor:pointer; font-size:18px; padding:2px 6px;" title="참가자 추가/삭제">⚙️</button>
+                </div>
                 <div id="sidebarList"></div>
             </div>
             <div class="dashboard-main">
@@ -149,19 +151,20 @@
     <div id="reportScreen" class="screen">
         <div class="report-controls">
             <div style="font-size:18px; font-weight:bold; white-space:nowrap; margin-right:10px;">🎓 자산 성적표</div>
-            <div style="display:flex; align-items:center;">
-                <button class="btn btn-dark" style="background:#607d8b; margin-right:10px;" id="btnEditPrev" onclick="switchScreen('countingScreen')">✏️ 수정(이전으로)</button>
-                <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
-                <span id="pageIndicator" style="margin:0 8px; font-size:14px; white-space:nowrap;"></span>
-                <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
-                <button class="btn btn-drive" id="btnSaveDriveReport" onclick="saveToDrive()">☁️ 드라이브 저장</button>
-                <button class="btn btn-danger" id="btnUploadPdf" onclick="uploadPdfToDrive()">📄 PDF 저장</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn btn-dark" style="background:#607d8b;" id="btnEditPrev" onclick="switchScreen('countingScreen')">✏️ 수정(이전으로)</button>
+                <button class="btn btn-drive" id="btnSaveDriveReport" onclick="uploadPdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-danger" id="btnUploadPdf" onclick="downloadPDF('report')">📄 PDF 저장</button>
                 <button class="btn btn-success" onclick="printReport()">🖨️ 출력</button>
                 <button class="btn btn-primary" onclick="confirmResetSession()">🔄 처음으로</button>
             </div>
         </div>
 
-        
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0;">
+            <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
+            <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
+            <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
+        </div>
 
         <div class="report-paper" id="pdfAreaReport">
             <div class="report-header">
@@ -929,6 +932,39 @@
         </div>
     </div>
 
+    <!-- 참가자 명단 수정 모달 -->
+    <div id="playerEditModal" class="modal-backdrop" onclick="handlePlayerEditBackdrop(event)">
+        <div class="modal-card game-start-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>👥 참가자 명단 수정</h3>
+            </div>
+            <div class="modal-body">
+                <div id="indivEditBar" style="display:flex; gap:8px; margin-bottom:12px;">
+                    <button class="btn btn-primary btn-mini" onclick="addEditIndividualPlayer()">➕ 참가자 추가</button>
+                    <button class="btn btn-dark btn-mini" onclick="removeEditIndividualPlayer()">➖ 참가자 삭제</button>
+                </div>
+                <div id="playerEditArea" class="player-list-input" style="max-height:360px; overflow-y:auto;"></div>
+                <div id="teamEditAddBar" style="display:none; justify-content:center; margin-top:10px;">
+                    <button class="btn btn-primary btn-mini" onclick="addEditTeam()">➕ 팀 추가</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closePlayerEditModal()">닫기</button>
+                <button class="btn btn-success" onclick="applyPlayerEdits()">💾 적용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 답안 이미지 팝업 -->
+    <div id="adminAnswerPopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;" onclick="_adminCloseAnswerPopup()">
+        <div style="position:relative; max-width:95vw; max-height:95vh;" onclick="event.stopPropagation()">
+            <img id="adminAnswerPopupImg" src="" alt="답안 이미지"
+                style="max-width:95vw; max-height:90vh; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5); display:block;">
+            <button onclick="_adminCloseAnswerPopup()"
+                style="position:absolute; top:-14px; right:-14px; width:32px; height:32px; border-radius:50%; border:none; background:#fff; color:#333; font-size:18px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+    </div>
+
     <!-- 주식/부동산 가격 수정 모달 -->
     <div id="stockPriceEditModal" class="modal-backdrop" onclick="handleStockPriceEditBackdrop(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
@@ -951,6 +987,7 @@
 <script>
     const SUPABASE_URL      = 'https://tsegahxwrpldpwldwwfh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzZWdhaHh3cnBsZHB3bGR3d2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MzkzMDgsImV4cCI6MjA5MjQxNTMwOH0.ajvRPEjCyGVAdhMMWg_i1kygpcnV6LLHLu09yuyes_s';
+    const SCRIPT_URL        = 'https://script.google.com/macros/s/AKfycbxvp0z-iR5DHH8xpHarAo74VmPwJR9MisQ0pJRhkjNZg8AAupmaHkuiaALzxJHcATLK/exec';
 </script>
 <script src="js/supabase-client.js"></script>
 <script src="js/app.js"></script>
