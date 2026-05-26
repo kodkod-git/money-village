@@ -303,8 +303,7 @@ function _bankRenderPlayerList() {
             : `<span class="bank-status-pending">신청 전</span>`;
 
         card.innerHTML = `
-            <div class="bank-player-nickname">${p.nickname}</div>
-            <div class="bank-player-realname">${p.real_name}</div>
+            <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
             <div class="bank-player-status">
                 ${typeTags}
                 ${statusTag}

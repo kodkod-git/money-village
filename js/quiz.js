@@ -310,8 +310,7 @@ function _quizRenderPlayerList() {
             card.className = 'bank-player-card' + (done ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
             card.innerHTML = `
-                <div class="bank-player-nickname">${p.nickname}</div>
-                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
                 <div class="bank-player-status">
                     <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
                     <span class="quiz-progress-badge${badgeClass}">[${count}/2]</span>
@@ -354,8 +353,7 @@ function _quizRenderPlayerList() {
             card.className = 'bank-player-card' + (done ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
             card.innerHTML = `
-                <div class="bank-player-nickname">${p.nickname}</div>
-                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
                 <div class="bank-player-status">
                     <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
                     <span class="quiz-progress-badge${badgeClass}">[${count}/2]</span>
@@ -412,8 +410,7 @@ function _quizRenderPlayerList() {
             card.className = 'bank-player-card' + (playerAlreadyDone ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
             card.innerHTML = `
-                <div class="bank-player-nickname">${p.nickname}</div>
-                <div class="bank-player-realname">${p.real_name}</div>
+                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
                 <div class="bank-player-status">
                     <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
                     ${playerAlreadyDone ? '<span class="bank-status-done">정답</span>' : ''}
