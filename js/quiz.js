@@ -7,8 +7,8 @@ const _quiz = {
     gameType:         'individual', // 'individual' | 'team'
     gameVariant:      'basic',      // 'basic' | 'advanced' | 'rich_vessel'
     players:          [],
-    reward:           1000,  // 개인탭 보상
-    teamReward:       1000,  // 팀탭 보상 (팀전 전용)
+    reward:           0,  // 개인탭 보상
+    teamReward:       0,  // 팀탭 보상 (팀전 전용)
     earnedRewards:    {},    // { nickname: 누적보상합계 } — 덮어쓰기 방지용
     progress:         {},   // individual: { [playerIdx]: 0|1 }
     teamProgress:     {},   // team: { [team_name]: 0|1|2 }

@@ -374,7 +374,7 @@ function bankSelectPlayer(idx) {
         `${p.nickname}(${p.real_name})의 예금 신청`;
 
     // 이전 금액 복원 (덮어쓰기 지원)
-    let prevAmount = 1000;
+    let prevAmount = 0;
     if (isTeamTab) {
         const td = _bank.teamDeposits[p.team_name];
         if (td && td.members && td.members[idx] !== undefined) prevAmount = td.members[idx];
@@ -396,7 +396,7 @@ function bankBackToList() {
 // ── View 3: 예금 신청 ──────────────────────────────────────────────
 function bankAdjustAmount(delta) {
     const next = _bank.deposit.amount + delta;
-    if (next < 1000) return;
+    if (next < 0) return;
     _bank.deposit.amount = next;
     document.getElementById('bankAmountDisplay').textContent = next.toLocaleString() + '원';
     _bankUpdatePreview();

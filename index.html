@@ -488,9 +488,11 @@
                 <div class="bank-screen-card">
                     <div class="bank-screen-card-title">예금 금액</div>
                     <div class="bank-stepper">
-                        <button class="bank-stepper-btn" onclick="bankAdjustAmount(-1000)">▼</button>
-                        <div class="bank-stepper-val" id="bankAmountDisplay">1,000원</div>
-                        <button class="bank-stepper-btn" onclick="bankAdjustAmount(1000)">▲</button>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>bankAdjustAmount(-10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>bankAdjustAmount(-10000));event.preventDefault()" ontouchend="stopHold()">-만</button>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>bankAdjustAmount(-1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>bankAdjustAmount(-1000));event.preventDefault()" ontouchend="stopHold()">-천</button>
+                        <div class="bank-stepper-val" id="bankAmountDisplay">0원</div>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>bankAdjustAmount(1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>bankAdjustAmount(1000));event.preventDefault()" ontouchend="stopHold()">+천</button>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>bankAdjustAmount(10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>bankAdjustAmount(10000));event.preventDefault()" ontouchend="stopHold()">+만</button>
                     </div>
                 </div>
 
@@ -711,17 +713,21 @@
                     <div id="quizTeamRewardCard" class="bank-ratio-card" style="display:none;">
                         <div class="bank-ratio-title">팀 보상금액</div>
                         <div class="bank-stepper">
-                            <button class="bank-stepper-btn" onclick="quizAdjustTeamReward(-1000)">▼</button>
-                            <div class="bank-stepper-val" id="quizTeamRewardDisplay">1,000원</div>
-                            <button class="bank-stepper-btn" onclick="quizAdjustTeamReward(1000)">▲</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustTeamReward(-10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustTeamReward(-10000));event.preventDefault()" ontouchend="stopHold()">-만</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustTeamReward(-1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustTeamReward(-1000));event.preventDefault()" ontouchend="stopHold()">-천</button>
+                            <div class="bank-stepper-val" id="quizTeamRewardDisplay">0원</div>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustTeamReward(1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustTeamReward(1000));event.preventDefault()" ontouchend="stopHold()">+천</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustTeamReward(10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustTeamReward(10000));event.preventDefault()" ontouchend="stopHold()">+만</button>
                         </div>
                     </div>
                     <div class="bank-ratio-card">
                         <div class="bank-ratio-title" id="quizIndivRewardLabel">퀴즈 보상금액</div>
                         <div class="bank-stepper">
-                            <button class="bank-stepper-btn" onclick="quizAdjustReward(-1000)">▼</button>
-                            <div class="bank-stepper-val" id="quizRewardDisplay">1,000원</div>
-                            <button class="bank-stepper-btn" onclick="quizAdjustReward(1000)">▲</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustReward(-10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustReward(-10000));event.preventDefault()" ontouchend="stopHold()">-만</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustReward(-1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustReward(-1000));event.preventDefault()" ontouchend="stopHold()">-천</button>
+                            <div class="bank-stepper-val" id="quizRewardDisplay">0원</div>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustReward(1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustReward(1000));event.preventDefault()" ontouchend="stopHold()">+천</button>
+                            <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>quizAdjustReward(10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>quizAdjustReward(10000));event.preventDefault()" ontouchend="stopHold()">+만</button>
                         </div>
                     </div>
                 </div>

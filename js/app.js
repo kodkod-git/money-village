@@ -277,3 +277,19 @@
             return null;
         }
     }
+
+// ── 스테퍼 꾹 누르기 ────────────────────────────────────────────────
+let _holdTimer = null;
+
+function startHold(fn) {
+    fn();
+    _holdTimer = setTimeout(function() {
+        _holdTimer = setInterval(fn, 80);
+    }, 400);
+}
+
+function stopHold() {
+    clearTimeout(_holdTimer);
+    clearInterval(_holdTimer);
+    _holdTimer = null;
+}
