@@ -626,15 +626,19 @@ function _bankStopSync() {
 
 async function _bankPollAndMerge() {
     if (!_bank.gameId) return;
-    const [state, history] = await Promise.all([
-        sbGetBankState(_bank.gameId),
-        sbGetBankHistory(_bank.gameId)
-    ]);
-    if (!state) return;
-    _bankMergeRemoteState(state, history || []);
-    if (document.getElementById('bankView2') &&
-        document.getElementById('bankView2').style.display !== 'none') {
-        _bankRenderPlayerList();
+    try {
+        const [state, history] = await Promise.all([
+            sbGetBankState(_bank.gameId),
+            sbGetBankHistory(_bank.gameId)
+        ]);
+        if (!state) return;
+        _bankMergeRemoteState(state, history || []);
+        if (document.getElementById('bankView2') &&
+            document.getElementById('bankView2').style.display !== 'none') {
+            _bankRenderPlayerList();
+        }
+    } catch (e) {
+        console.warn('[bankSync] poll failed:', e.message);
     }
 }
 
