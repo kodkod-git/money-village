@@ -93,6 +93,11 @@
         document.querySelectorAll('.report-paper').forEach(p => p.classList.remove('active-print'));
         if(id === 'reportScreen') document.getElementById('pdfAreaReport').classList.add('active-print');
         if(id === 'fameScreen') document.getElementById('pdfAreaFame').classList.add('active-print');
+
+        _bankStopSync();
+        _quizStopSync();
+        if (id === 'bankScreen') _bankStartSync();
+        if (id === 'quizScreen') _quizStartSync();
     }
 
     function initAssets() {
