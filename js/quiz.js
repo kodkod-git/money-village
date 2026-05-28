@@ -281,7 +281,7 @@ async function quizStep1Complete() {
                 : `보상금액이 ${_quiz.reward.toLocaleString()}원으로 변경되었습니다.\n정말 변경하시겠습니까?`;
             if (!confirm(msg)) return;
         }
-        await sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward });
+        await sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward, is_closed: false });
         await _quizPollAndMerge();
         _quizRenderPlayerList();
         closeQuizModal(true);
