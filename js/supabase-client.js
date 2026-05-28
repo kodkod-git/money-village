@@ -664,7 +664,7 @@ async function sbGetBankHistory(gameId) {
     return data || [];
 }
 
-async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amount, maturedAmount, teamName) {
+async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amount, maturedAmount, isTeam) {
     const { error } = await _sb.from('bank_history').upsert({
         game_id:        gameId,
         nickname:       nickname,
@@ -672,8 +672,8 @@ async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amou
         deposit_type:   depositType,
         amount:         amount,
         matured_amount: maturedAmount,
-        team_name:      teamName || ''
-    }, { onConflict: 'game_id,nickname,round_num,team_name' });
+        is_team:        isTeam || false
+    }, { onConflict: 'game_id,nickname,round_num,is_team' });
     if (error) console.error('[sbUpsertBankHistory]', error);
 }
 

@@ -475,7 +475,7 @@ function _bankSubmitIndividual(p, type, amount) {
 
     _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
-    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, null);
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, false);
 
     // 누적 타입 태그
     if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
@@ -503,7 +503,7 @@ function _bankSubmitTeam(p, type, amount) {
     }
     _bank.teamDeposits[teamName].type = type;
     _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
-    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, 0, teamName);
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, 0, true);
 
     const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
     const teamSize     = teamMembers.length;
@@ -527,7 +527,7 @@ function _bankSubmitTeam(p, type, amount) {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
             const memberMatured = memberPrincipal + perMemberReward;
-            sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, type, memberPrincipal, memberMatured, teamName);
+            sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, type, memberPrincipal, memberMatured, true);
         });
 
         // 누적 타입 태그 — 팀 헤더
@@ -573,7 +573,7 @@ function bankAdvanceRound() {
                 const pl = _bank.players[parseInt(memberIdxStr)];
                 if (pl) {
                     _bankSaveReward(pl.nickname, 'team', amount);
-                    sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, td.type, amount, amount, teamName);
+                    sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, td.type, amount, amount, true);
                 }
             }
         }
@@ -677,15 +677,19 @@ function _bankMergeRemoteState(state, history) {
 
     // 타입 태그는 전체 라운드에서 누적
     history.forEach(r => {
-        if (r.team_name === '') {
+        const player = _bank.players.find(p => p.nickname === r.nickname);
+        if (!player) return;
+        if (!r.is_team) {
             if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
             if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
                 _bank.playerTypeTags[r.nickname].push(r.deposit_type);
             }
         } else {
-            if (!_bank.teamTypeTags[r.team_name]) _bank.teamTypeTags[r.team_name] = [];
-            if (!_bank.teamTypeTags[r.team_name].includes(r.deposit_type)) {
-                _bank.teamTypeTags[r.team_name].push(r.deposit_type);
+            const teamName = player.team_name;
+            if (!teamName) return;
+            if (!_bank.teamTypeTags[teamName]) _bank.teamTypeTags[teamName] = [];
+            if (!_bank.teamTypeTags[teamName].includes(r.deposit_type)) {
+                _bank.teamTypeTags[teamName].push(r.deposit_type);
             }
         }
     });
@@ -695,15 +699,17 @@ function _bankMergeRemoteState(state, history) {
         const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
         if (idx === -1) return;
 
-        if (r.team_name === '') {
+        if (!r.is_team) {
             // 개인 신청
             _bank.indivCompleted[idx] = { type: r.deposit_type, amount: r.amount };
         } else {
             // 팀 신청
-            if (!_bank.teamDeposits[r.team_name]) {
-                _bank.teamDeposits[r.team_name] = { type: r.deposit_type, members: {} };
+            const teamName = _bank.players[idx].team_name;
+            if (!teamName) return;
+            if (!_bank.teamDeposits[teamName]) {
+                _bank.teamDeposits[teamName] = { type: r.deposit_type, members: {} };
             }
-            _bank.teamDeposits[r.team_name].members[idx] = r.amount;
+            _bank.teamDeposits[teamName].members[idx] = r.amount;
         }
     });
 
