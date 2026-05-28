@@ -61,26 +61,13 @@ async function sbDeleteCitizen(nickname) {
     const nick = _nick(nickname);
     if (!nick) return { success: false, code: 'EMPTY_NICKNAME' };
 
-    const { data: user } = await _sb.from('users').select('nickname, user_type').eq('nickname', nick).maybeSingle();
+    const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    const isAdult = (user.user_type || 'child') === 'adult';
-
-    const { error: e1 } = await _sb.from('cash_balance').delete().eq('nickname', nick);
-    if (e1) return { success: false, code: 'DELETE_FAILED', message: e1.message };
-    const { error: e2 } = await _sb.from('game_individual').delete().eq('nickname', nick);
-    if (e2) return { success: false, code: 'DELETE_FAILED', message: e2.message };
-
-    if (isAdult) {
-        const { error: e3 } = await _sb.from('estate_balance').delete().eq('nickname', nick);
-        if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
-        const { error: e4 } = await _sb.from('success_factors').delete().eq('nickname', nick);
-        if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
-    } else {
-        const { error: e3 } = await _sb.from('stock_balance').delete().eq('nickname', nick);
-        if (e3) return { success: false, code: 'DELETE_FAILED', message: e3.message };
-        const { error: e4 } = await _sb.from('traits').delete().eq('nickname', nick);
-        if (e4) return { success: false, code: 'DELETE_FAILED', message: e4.message };
+    const tables = ['cash_balance', 'game_individual', 'estate_balance', 'success_factors', 'stock_balance', 'traits'];
+    for (const table of tables) {
+        const { error } = await _sb.from(table).delete().eq('nickname', nick);
+        if (error) return { success: false, code: 'DELETE_FAILED', table, message: error.message };
     }
 
     const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
@@ -129,9 +116,24 @@ async function sbSaveStockValue(stockValues) {
     return gameId;
 }
 
+async function sbUpdateStockPrice(gameId, stockValues) {
+    if (!gameId) return null;
+    const { error } = await _sb.from('stock_price').upsert({
+        game_id: gameId,
+        sasung:  Number(stockValues[0] ?? 1500),
+        lgi:     Number(stockValues[1] ?? 600),
+        skei:    Number(stockValues[2] ?? 1600),
+        cacao:   Number(stockValues[3] ?? 4000),
+        hyunde:  Number(stockValues[4] ?? 6000),
+        naber:   Number(stockValues[5] ?? 7000)
+    }, { onConflict: 'game_id' });
+    if (error) { console.error('[sbUpdateStockPrice]', error); return null; }
+    return gameId;
+}
+
 // 게임 시작 시 초기 레코드 삽입 (자산 = 0)
-async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic') {
-    const today = new Date().toISOString().slice(0, 10);
+async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic', date = null) {
+    const today = date || new Date().toISOString().slice(0, 10);
     const isAdvancedLike = gameVariant !== 'basic';
 
     // stock_price (기본 모드에서만)
@@ -245,7 +247,6 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
 
     // game_individual (자산 0)
     const indivRows = nicks.map(({ nick, name, p }) => ({
-        date:             today,
         nickname:         nick,
         real_name:        name,
         total_asset:      0,
@@ -276,7 +277,6 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
             const { error } = await _sb.from('game_team').upsert({
                 team_id:          tid,
                 game_id:          gameId,
-                date:             today,
                 team_name:        _text(t.name),
                 team_total_asset: 0,
                 members:          t.members.join(', ')
@@ -366,13 +366,14 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
         }
 
         await _sb.from('game_individual').upsert({
-            date,
             nickname:         finalNickname,
             real_name:        _text(p.real_name ?? ''),
             total_asset:      Number(p.total ?? 0),
             cash:             Number(p.manualCash ?? 0),
             stock:            Number(p.stockVal ?? 0),
             diligence_reward: Number(p.diligence_reward ?? 0),
+            quest_reward:     Number(p.questReward ?? 0),
+            deposit_reward:   Number(p.depositReward ?? 0),
             game_id:          String(p.game_id || '').trim(),
             team_id:          String(p.team_id || '').trim() || null
         }, { onConflict: 'game_id,nickname' });
@@ -387,7 +388,6 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             await _sb.from('game_team').upsert({
                 team_id:          teamId,
                 game_id:          gameId,
-                date,
                 team_name:        teamName,
                 team_total_asset: Number(t.total ?? 0),
                 members:          String(t.members ?? '')

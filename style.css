@@ -125,7 +125,7 @@
         .logo-img { height:55px; margin-bottom:5px; object-fit:contain; display:block; }
         #pdfAreaReport .logo-img { margin-left:0; height:68px; }
         .header-info { font-size: 16px; color: #555; margin-top: 10px; margin-top: 5px;} 
-        .info-row { margin-bottom: 6px; display: flex; justify-content: flex-end; align-items: center; } 
+        .info-row { margin-top: 12px; margin-bottom: 6px; display: flex; justify-content: flex-start; align-items: center; gap: 20px; }
         .info-label { font-weight: bold; margin-right: 8px; width: 45px; text-align: right; display: inline-block; }
         #pdfAreaReport .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;border-bottom:2px solid #eee;column-gap:16px;}
         #pdfAreaReport .header-right{justify-self:end;text-align:right;display:grid;justify-items:end;align-self:start;margin-top:30px;position:relative;max-width:none;}
@@ -785,8 +785,9 @@
             border-color: var(--mv-blue-light); background: #eef4ff;
             box-shadow: 0 3px 12px rgba(0,114,206,0.12);
         }
-        .bank-player-nickname { font-size: 16px; font-weight: 900; color: var(--mv-blue-deep); margin-bottom: 4px; }
-        .bank-player-realname { font-size: 13px; color: #555; margin-bottom: 6px; }
+        .bank-player-name-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+        .bank-player-nickname { font-size: 20px; font-weight: 900; color: var(--mv-blue-deep); }
+        .bank-player-realname { font-size: 15px; color: #555; }
         .bank-player-efti {
             font-size: 11px; color: #888; background: #e3eaf5;
             border-radius: 4px; padding: 2px 6px; display: inline-block;
@@ -1046,8 +1047,8 @@
         }
         .quiz-reward-badge {
             background: #FFF8E1; color: #F57F17;
-            font-weight: 700; padding: 4px 14px;
-            border-radius: 20px; font-size: 13px;
+            font-weight: 700; padding: 6px 18px;
+            border-radius: 20px; font-size: 17px;
             display: inline-block;
         }
         .quiz-progress-badge {

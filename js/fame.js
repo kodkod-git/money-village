@@ -41,7 +41,9 @@
                     total: Number(d.total_asset ?? 0),
                     cash: Number(d.cash ?? 0),
                     stock: Number(d.stock ?? 0),
-                    diligence_reward: Number(d.diligence_reward ?? 0)
+                    diligence_reward: Number(d.diligence_reward ?? 0),
+                    quest_reward:     Number(d.quest_reward ?? 0),
+                    deposit_reward:   Number(d.deposit_reward ?? 0)
                 }));
             } else {
                 fameIndivData = [];
@@ -88,7 +90,8 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
+            const colSpan = isTeam ? 4 : 6;
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
             return;
         }
 
@@ -123,12 +126,13 @@
             if (isTeam) {
                 row += `<td class="member-col">${item.members || '-'}</td>`;
             } else {
-                row += `<td class="sub-asset-col">${item.cash ? Number(item.cash).toLocaleString() : 0}</td>
-                        <td class="sub-asset-col stock">${item.stock ? Number(item.stock).toLocaleString() : 0}</td>
-                        <td class="sub-asset-col">${item.diligence_reward ? Number(item.diligence_reward).toLocaleString() : 0}</td>`;
+                const etc = (Number(item.diligence_reward) || 0) + (Number(item.quest_reward) || 0) + (Number(item.deposit_reward) || 0);
+                row += `<td class="sub-asset-col">${(Number(item.cash) || 0).toLocaleString()}</td>
+                        <td class="sub-asset-col">${(Number(item.stock) || 0).toLocaleString()}</td>
+                        <td class="sub-asset-col">${etc.toLocaleString()}</td>`;
             }
 
-            row += `<td class="date-col">${item.date || '-'}</td></tr>`;
+            row += `</tr>`;
             tbody.innerHTML += row;
         });
     }

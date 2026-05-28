@@ -7,12 +7,16 @@ const _bank = {
     gameDate: null,
     gameType: null,
     players:  [],
-    deposit:  { type: null, amount: 1000 },
+    deposit:  { amount: 1000 },
     currentPlayerIdx: null,
-    indivCompleted: {},
-    teamDeposits:   {},
-    teamRewards:    {},  // { nickname: amount } — 팀 예금 보상 누적
-    indivRewards:   {},  // { nickname: amount } — 개인 예금 보상 누적
+    currentRound:    1,
+    indivCompleted:  {},
+    teamDeposits:    {},
+    teamRewards:     {},  // { nickname: amount } — 팀 예금 보상 누적
+    indivRewards:    {},  // { nickname: amount } — 개인 예금 보상 누적
+    prevRoundsTotal: {},
+    playerTypeTags:  {},
+    teamTypeTags:    {},
     viewMode:  'team'
 };
 
@@ -20,6 +24,14 @@ const _BANK_TYPE = {
     long:  { label: '장기 🏦', round: '1라운드' },
     mid:   { label: '중기 ⏳', round: '2라운드' },
     short: { label: '단기 ⚡', round: '3라운드' }
+};
+
+const _ROUND_TYPE = { 1: 'long', 2: 'mid', 3: 'short' };
+
+const _ROUND_TITLE = {
+    1: '1라운드 장기 예금 신청',
+    2: '2라운드 중기 예금 신청',
+    3: '3라운드 단기 예금 신청'
 };
 
 // ── 설정 영속화 ────────────────────────────────────────────────────
@@ -80,7 +92,8 @@ async function openBankModal() {
     }
 }
 
-function closeBankModal() {
+function closeBankModal(force = false) {
+    if (!force && !confirm('현재 작성중인 내용이 사라집니다\n종료하시겠습니까?')) return;
     document.getElementById('bankModal').classList.remove('show');
 }
 
@@ -129,8 +142,9 @@ async function onBankDateChange() {
             const typeTag   = g.game_type === 'team' ? 'tag-team' : 'tag-individual';
             const typeLabel = g.game_type === 'team' ? '팀전' : '개인전';
             const names     = (g.preview_names || []).join(', ') + (g.player_count > 6 ? ' 등' : '');
-            const variantLabel = (g.game_variant || 'basic') === 'advanced' ? '심화' : '기본';
-            const variantTag   = (g.game_variant || 'basic') === 'advanced' ? 'tag-advanced' : 'tag-basic';
+            const _rv = g.game_variant || 'basic';
+            const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
+            const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
             const card = document.createElement('div');
             card.className = 'past-game-card';
             card.innerHTML = `
@@ -205,13 +219,18 @@ async function bankStep1Complete() {
         const infoEl = document.getElementById('bankGameInfo');
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
-        _bank.indivCompleted = {};
-        _bank.teamDeposits   = {};
-        _bank.teamRewards    = {};
-        _bank.indivRewards   = {};
-        _bank.viewMode       = 'team';
+        _bank.indivCompleted  = {};
+        _bank.teamDeposits    = {};
+        _bank.teamRewards     = {};
+        _bank.indivRewards    = {};
+        _bank.prevRoundsTotal = {};
+        _bank.playerTypeTags  = {};
+        _bank.teamTypeTags    = {};
+        _bank.currentRound    = 1;
+        _bank.currentPlayerIdx = null;   // ← 추가
+        _bank.viewMode        = 'team';
         _bankRenderPlayerList();
-        closeBankModal();
+        closeBankModal(true);
         switchScreen('bankScreen');
         _bankShowView(2);
     } catch(e) {
@@ -228,6 +247,22 @@ function bankSetViewMode(mode) {
 }
 
 function _bankRenderPlayerList() {
+    // 라운드 제목 업데이트
+    const titleEl = document.getElementById('bankRoundTitle');
+    if (titleEl) {
+        titleEl.textContent = _ROUND_TITLE[_bank.currentRound] || '예금 신청 종료';
+    }
+
+    // 다음 라운드 버튼 상태 업데이트
+    const advBtn = document.getElementById('bankAdvanceRoundBtn');
+    if (advBtn) {
+        const isEnded = _bank.currentRound >= 4;
+        advBtn.disabled    = isEnded;
+        advBtn.textContent = _bank.currentRound === 3 ? '예금 신청 종료 →'
+                           : isEnded               ? '종료됨'
+                           :                          '다음 라운드 →';
+    }
+
     const grid   = document.getElementById('bankPlayerGrid');
     const isTeam = _bank.players.some(p => p.team_name);
     grid.innerHTML = '';
@@ -255,25 +290,43 @@ function _bankRenderPlayerList() {
         const done     = _getPlayerDone(p, idx);
         const card     = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
-        // 팀 탭에서는 예금 종류를 팀 헤더에 표시하므로 개별 카드에서 제외
-        const typeTag   = (!isTeamTab && done) ? `<span class="bank-status-type">${_BANK_TYPE[done.type].label}</span>` : '';
+
+        // 개인 탭 / 개인전: 누적 타입 태그 표시 (팀 탭 플레이어 카드에는 표시 안 함)
+        const typeTags = !isTeamTab
+            ? (_bank.playerTypeTags[p.nickname] || [])
+                .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+                .join('')
+            : '';
+
         const statusTag = done
             ? `<span class="bank-status-done">신청 완료</span>`
             : `<span class="bank-status-pending">신청 전</span>`;
+
         card.innerHTML = `
-            <div class="bank-player-nickname">${p.nickname}</div>
-            <div class="bank-player-realname">${p.real_name}</div>
+            <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
             <div class="bank-player-status">
-                <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                ${typeTag}
+                ${typeTags}
                 ${statusTag}
             </div>`;
-        card.onclick = () => bankSelectPlayer(idx);
+
+        card.onclick = () => {
+            if (_bank.currentRound >= 4) return;
+            bankSelectPlayer(idx);
+        };
         return card;
     }
 
     if (!isTeam || _bank.viewMode === 'individual') {
-        _bank.players.forEach((p, idx) => grid.appendChild(_bankMakePlayerCard(p, idx)));
+        const sorted = _bank.players
+            .map((p, idx) => ({ p, idx }))
+            .sort((a, b) => {
+                if (isTeam) {
+                    const teamCmp = (a.p.team_name || '').localeCompare(b.p.team_name || '', 'ko');
+                    if (teamCmp !== 0) return teamCmp;
+                }
+                return (a.p.nickname || '').localeCompare(b.p.nickname || '', 'ko');
+            });
+        sorted.forEach(({ p, idx }) => grid.appendChild(_bankMakePlayerCard(p, idx)));
         return;
     }
 
@@ -284,7 +337,9 @@ function _bankRenderPlayerList() {
         teams.get(key).push({ p, idx });
     });
 
-    teams.forEach((members, teamKey) => {
+    const sortedTeams = [...teams.entries()].sort(([a], [b]) => a.localeCompare(b, 'ko'));
+    sortedTeams.forEach(([teamKey, members]) => {
+        members.sort((a, b) => (a.p.nickname || '').localeCompare(b.p.nickname || '', 'ko'));
         const teamSize     = members.length;
         const td           = _bank.teamDeposits[teamKey];
         const completedCnt = td && td.members ? Object.keys(td.members).length : 0;
@@ -295,8 +350,10 @@ function _bankRenderPlayerList() {
 
         const header = document.createElement('div');
         header.className = 'team-group-header';
-        const typeLabel = td && td.type ? `<span class="bank-status-type">${_BANK_TYPE[td.type].label}</span>` : '';
-        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${typeLabel}`;
+        const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
+            .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+            .join('');
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}`;
         groupEl.appendChild(header);
 
         const playersEl = document.createElement('div');
@@ -317,7 +374,7 @@ function bankSelectPlayer(idx) {
         `${p.nickname}(${p.real_name})의 예금 신청`;
 
     // 이전 금액 복원 (덮어쓰기 지원)
-    let prevAmount = 1000;
+    let prevAmount = 0;
     if (isTeamTab) {
         const td = _bank.teamDeposits[p.team_name];
         if (td && td.members && td.members[idx] !== undefined) prevAmount = td.members[idx];
@@ -325,32 +382,9 @@ function bankSelectPlayer(idx) {
         if (_bank.indivCompleted[idx]) prevAmount = _bank.indivCompleted[idx].amount;
     }
 
-    _bank.deposit = { type: null, amount: prevAmount };
-    document.querySelectorAll('.bank-type-card').forEach(c => c.classList.remove('selected'));
+    _bank.deposit = { amount: prevAmount };
     document.getElementById('bankAmountDisplay').textContent = prevAmount.toLocaleString() + '원';
-    document.getElementById('bankPreviewBox').textContent = '종류를 선택하면 미리보기가 나와요!';
-
-    // 팀/개인 배율을 예금 종류 카드에 표시
-    const ratioStore = isTeamTab ? _bank.teamSettings : _bank.settings;
-    ['long', 'mid', 'short'].forEach(t => {
-        const el = document.getElementById('bankTcInfo' + _bankCap(t));
-        if (el) el.textContent = ratioStore[t].toFixed(1) + '배';
-    });
-
-    // 팀 탭: 팀이 이미 선택한 종류 미리 선택
-    if (isTeamTab) {
-        const td = _bank.teamDeposits[p.team_name];
-        if (td && td.type) {
-            _bank.deposit.type = td.type;
-            document.getElementById('bankTc' + _bankCap(td.type)).classList.add('selected');
-            _bankUpdatePreview();
-        }
-    } else if (_bank.indivCompleted[idx]) {
-        const prevType = _bank.indivCompleted[idx].type;
-        _bank.deposit.type = prevType;
-        document.getElementById('bankTc' + _bankCap(prevType)).classList.add('selected');
-        _bankUpdatePreview();
-    }
+    _bankUpdatePreview();
 
     _bankShowView(3);
 }
@@ -360,38 +394,21 @@ function bankBackToList() {
 }
 
 // ── View 3: 예금 신청 ──────────────────────────────────────────────
-function bankPickType(t) {
-    _bank.deposit.type = t;
-    document.querySelectorAll('.bank-type-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById('bankTc' + _bankCap(t)).classList.add('selected');
-
-    // 팀 탭: 팀 공유 타입 업데이트
-    const p = _bank.players[_bank.currentPlayerIdx];
-    if (_bank.viewMode === 'team' && p && p.team_name) {
-        if (!_bank.teamDeposits[p.team_name]) {
-            _bank.teamDeposits[p.team_name] = { type: t, members: {} };
-        } else {
-            _bank.teamDeposits[p.team_name].type = t;
-        }
-    }
-
-    _bankUpdatePreview();
-}
-
 function bankAdjustAmount(delta) {
     const next = _bank.deposit.amount + delta;
-    if (next < 1000) return;
+    if (next < 0) return;
     _bank.deposit.amount = next;
     document.getElementById('bankAmountDisplay').textContent = next.toLocaleString() + '원';
     _bankUpdatePreview();
 }
 
 function _bankUpdatePreview() {
-    const { type, amount } = _bank.deposit;
-    const box = document.getElementById('bankPreviewBox');
-    if (!type) { box.textContent = '종류를 먼저 선택해주세요'; return; }
+    const type   = _ROUND_TYPE[_bank.currentRound];
+    const amount = _bank.deposit.amount;
+    const box    = document.getElementById('bankPreviewBox');
 
     const p = _bank.players[_bank.currentPlayerIdx];
+    if (!p) return;
     const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
 
     if (isTeamTab) {
@@ -409,8 +426,8 @@ function _bankUpdatePreview() {
 }
 
 async function bankStep2Submit() {
-    if (!_bank.deposit.type) { alert('예금 종류를 선택해주세요'); return; }
-    const { type, amount } = _bank.deposit;
+    const type   = _ROUND_TYPE[_bank.currentRound];
+    const amount = _bank.deposit.amount;
     const p = _bank.players[_bank.currentPlayerIdx];
     const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
     if (isTeamTab) {
@@ -423,7 +440,9 @@ async function bankStep2Submit() {
 function _bankSaveReward(nickname, source, amount) {
     if (source === 'team') _bank.teamRewards[nickname] = amount;
     else                   _bank.indivRewards[nickname] = amount;
-    const total = (_bank.teamRewards[nickname] || 0) + (_bank.indivRewards[nickname] || 0);
+    const total = (_bank.prevRoundsTotal[nickname] || 0)
+                + (_bank.teamRewards[nickname]   || 0)
+                + (_bank.indivRewards[nickname]  || 0);
     sbSaveDepositReward(_bank.gameId, nickname, total).catch(console.error);
 }
 
@@ -432,8 +451,14 @@ function _bankSubmitIndividual(p, type, amount) {
     const maturity = Math.round(amount * ratio);
     const interest = maturity - amount;
 
-    _bankSaveReward(p.nickname, 'indiv', interest);
+    _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
+
+    // 누적 타입 태그
+    if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
+    if (!_bank.playerTypeTags[p.nickname].includes(type)) {
+        _bank.playerTypeTags[p.nickname].push(type);
+    }
 
     document.getElementById('bankTeamStatusSection').style.display = 'none';
     document.getElementById('bankRTeamPendingMsg').style.display   = 'none';
@@ -470,8 +495,16 @@ function _bankSubmitTeam(p, type, amount) {
         const totalInterest = totalMatured - totalPrincipal;
         perMemberReward = Math.floor(totalInterest / teamSize);
         teamMembers.forEach(pl => {
-            _bankSaveReward(pl.nickname, 'team', perMemberReward);
+            const memberIdx = _bank.players.findIndex(x => x === pl);
+            const memberPrincipal = td.members[memberIdx] || 0;
+            _bankSaveReward(pl.nickname, 'team', memberPrincipal + perMemberReward);
         });
+
+        // 누적 타입 태그 — 팀 헤더
+        if (!_bank.teamTypeTags[teamName]) _bank.teamTypeTags[teamName] = [];
+        if (!_bank.teamTypeTags[teamName].includes(type)) {
+            _bank.teamTypeTags[teamName].push(type);
+        }
     }
 
     document.getElementById('bankResultRoundBadge').textContent = _BANK_TYPE[type].round;
@@ -493,6 +526,46 @@ function _bankSubmitTeam(p, type, amount) {
     document.getElementById('bankRTeamPendingMsg').style.display = allDone ? 'none' : 'block';
 
     _bankShowView(4);
+}
+
+// ── 라운드 전환 ────────────────────────────────────────────────────
+function bankAdvanceRound() {
+    const isLast = _bank.currentRound >= 3;
+    const label  = isLast ? '예금 신청을 종료합니다' : '다음 라운드로 넘어갑니다';
+    if (!confirm(`${label}.\n미완료 팀 신청은 원금만 반환됩니다.\n계속하시겠습니까?`)) return;
+
+    // 미완료 팀: 일부만 신청한 경우 신청 멤버에게 원금 반환
+    for (const [teamName, td] of Object.entries(_bank.teamDeposits)) {
+        const teamMembers = _bank.players.filter(pl => pl.team_name === teamName);
+        const completedCnt = td.members ? Object.keys(td.members).length : 0;
+        if (completedCnt > 0 && completedCnt < teamMembers.length) {
+            for (const [memberIdxStr, amount] of Object.entries(td.members)) {
+                const pl = _bank.players[parseInt(memberIdxStr)];
+                if (pl) _bankSaveReward(pl.nickname, 'team', amount);
+            }
+        }
+    }
+
+    // 현재 라운드 보상을 prevRoundsTotal에 스냅샷
+    const allNicks = new Set([
+        ...Object.keys(_bank.teamRewards),
+        ...Object.keys(_bank.indivRewards)
+    ]);
+    allNicks.forEach(nick => {
+        _bank.prevRoundsTotal[nick] = (_bank.prevRoundsTotal[nick] || 0)
+            + (_bank.teamRewards[nick]  || 0)
+            + (_bank.indivRewards[nick] || 0);
+    });
+
+    // 라운드 레벨 상태 리셋 (미완료 팀은 무효 처리)
+    _bank.teamRewards    = {};
+    _bank.indivRewards   = {};
+    _bank.indivCompleted = {};
+    _bank.teamDeposits   = {};
+    _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
+
+    _bankRenderPlayerList();
+    _bankShowView(2);
 }
 
 // ── View 4: 결과 ───────────────────────────────────────────────────

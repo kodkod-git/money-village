@@ -11,7 +11,7 @@
     let nameInputsVisible = false;
     let citizenListData = [];
     let isSavingDrive = false;
-    let currentGameVariant = 'basic'; // 'basic' | 'advanced'
+    let currentGameVariant = 'basic'; // 'basic' | 'advanced' | 'rich_vessel'
 
 
     const stockInfo = {
@@ -24,21 +24,21 @@
     };
 
     const estateInfo = {
-        "NOORIDAMBI": { name: "누리담비 단독주택", price: 100000, color: "#4e7c3f" },
-        "DAMIGORANI": { name: "다미고라니 단독주택", price: 100000, color: "#7b5ea7" },
-        "GIRUGI":     { name: "기러기 다세대주택",   price: 100000, color: "#c0773d" },
-        "MARUSURI":   { name: "마루수리 다세대주택", price: 100000, color: "#2e7d9b" },
-        "CHORONGDAM": { name: "초롱담 아파트",       price: 100000, color: "#c94b4b" },
-        "HANIYUWOO":  { name: "하늬여우 아파트",     price: 100000, color: "#3d7a5e" },
+        "GAONGAEMI":   { name: "가온개미 단독주택",   price: 10000, color: "#4e7c3f" },
+        "NURIGOYANGI": { name: "누리고양이 단독주택", price: 10000, color: "#7b5ea7" },
+        "DAMIWONSUNGI":{ name: "다미원숭이 다세대주택", price: 10000, color: "#c0773d" },
+        "MARUSURI":    { name: "마루수리 다세대주택", price: 10000, color: "#2e7d9b" },
+        "CHORONGBUNGI":{ name: "초롱부엉이 아파트",   price: 10000, color: "#c94b4b" },
+        "HANIYUWOO":   { name: "하늬여우 아파트",     price: 10000, color: "#3d7a5e" },
     };
 
     const SUCCESS_FACTORS = [
-        { key: "financial_management", emo: "\u{1FA99}", name: "재정관리능력" },
-        { key: "communication",        emo: "\u{1F4AC}", name: "의사소통능력" },
-        { key: "critical_thinking",    emo: "\u{1F914}", name: "비판적사고력" },
-        { key: "global_economy",       emo: "\u{1F4A1}", name: "글로벌경제이해력" },
-        { key: "credit_trust",         emo: "\u{1F91D}", name: "신용과신뢰" },
-        { key: "entrepreneurship",     emo: "\u{1F3E2}", name: "기업가정신" },
+        { key: "financial_management", emo: "\u{1FA99}", name: "재정관리능력",           img: "image/icon/money.png",         desc: "용돈을 어떻게 쓰고 얼마나 남길지 스스로 결정하고\n관리하는 능력" },
+        { key: "communication",        emo: "\u{1F4AC}", name: "의사소통 및 협상능력",   img: "image/icon/communication.png", desc: "자신의 생각을 논리적으로 전달하고 타인과 조화롭게\n의견을 조율하는 능력" },
+        { key: "critical_thinking",    emo: "\u{1F914}", name: "비판적 사고와\n문제 해결 능력", img: "image/icon/thinking.png",   desc: "어려운 상황에 직면했을 때 다양한 대안을 고민하여\n최적의 선택을 내리는 능력" },
+        { key: "global_economy",       emo: "\u{1F4A1}", name: "글로벌경제이해력",       img: "image/icon/global.png",        desc: "국내외 경제 변화에 관심을 갖고 복잡한 경제 흐름을\n파악하는 태도" },
+        { key: "credit_trust",         emo: "\u{1F91D}", name: "신용과 신뢰",           img: "image/icon/trust.png",         desc: "맡은 일을 끝까지 책임감 있게 완수하여 타인에게 신뢰를\n주는 태도" },
+        { key: "entrepreneurship",     emo: "\u{1F3E2}", name: "기업가정신",             img: "image/icon/idea.png",          desc: "세상에 도움이 되는 새로운 가치를 상상하고 이를\n실천에 옮기는 창의적인 힘" },
     ];
 
     const TRAITS = [
@@ -67,6 +67,19 @@
         SUCCESS_FACTORS.forEach(f => obj[f.key] = false);
         return obj;
     }
+    function autoResizeInput(el) {
+        const ph = document.createElement('span');
+        const cs = window.getComputedStyle(el);
+        ph.style.font          = cs.font;
+        ph.style.letterSpacing = cs.letterSpacing;
+        ph.style.visibility    = 'hidden';
+        ph.style.position      = 'absolute';
+        ph.style.whiteSpace    = 'pre';
+        ph.textContent = el.value || ' ';
+        document.body.appendChild(ph);
+        el.style.width = Math.max(ph.offsetWidth + 4, 20) + 'px';
+        document.body.removeChild(ph);
+    }
     window.onload = function() {
         initStockConfig();
         initCitizenForm();
@@ -84,7 +97,7 @@
 
     function initAssets() {
         const bills = { "100":0,"500":0,"1000":0,"5000":0,"10000":0,"50000":0 };
-        if (currentGameVariant === 'advanced') {
+        if (currentGameVariant !== 'basic') {
             const est = {};
             for (let k in estateInfo) est[k] = 0;
             return { ...bills, ...est };
@@ -115,7 +128,7 @@
         }
 
         const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
-        p.total = currentGameVariant === 'advanced'
+        p.total = currentGameVariant !== 'basic'
             ? base * calcSuccessMultiplier(p.successFactors || {})
             : base;
     }
@@ -123,7 +136,7 @@
     function recalculateAllRankings() {
         players.forEach(p => {
             const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
-            p.total = currentGameVariant === 'advanced'
+            p.total = currentGameVariant !== 'basic'
                 ? base * calcSuccessMultiplier(p.successFactors || {})
                 : base;
         });
@@ -227,7 +240,7 @@
     }
 
     function calcActiveAsset(assets) {
-        return currentGameVariant === 'advanced' ? calcEstate(assets) : calcStock(assets);
+        return currentGameVariant !== 'basic' ? calcEstate(assets) : calcStock(assets);
     }
 
     function calcSuccessMultiplier(sf) {
@@ -235,7 +248,7 @@
     }
 
     function getActiveAssetInfo() {
-        return currentGameVariant === 'advanced' ? estateInfo : stockInfo;
+        return currentGameVariant !== 'basic' ? estateInfo : stockInfo;
     }
 
 
@@ -264,3 +277,19 @@
             return null;
         }
     }
+
+// ── 스테퍼 꾹 누르기 ────────────────────────────────────────────────
+let _holdTimer = null;
+
+function startHold(fn) {
+    fn();
+    _holdTimer = setTimeout(function() {
+        _holdTimer = setInterval(fn, 80);
+    }, 400);
+}
+
+function stopHold() {
+    clearTimeout(_holdTimer);
+    clearInterval(_holdTimer);
+    _holdTimer = null;
+}

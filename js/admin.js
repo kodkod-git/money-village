@@ -2,16 +2,16 @@ const ADMIN_HASH = 'f1e8d7d4dbad359476ea3786d3bcb02ba1909934fcfe059f3580edaeacea
 
 const ADMIN_ANSWERS = {
     basic: {
-        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
-        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
+        team:  ['image/answers/basic/team_answer1.png',      'image/answers/basic/team_answer2.png'],
+        indiv: ['image/answers/basic/answer1.png',           'image/answers/basic/answer2.png']
     },
     advanced: {
-        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
-        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
+        team:  ['image/answers/advanced/team_answer1.png',   'image/answers/advanced/team_answer2.png'],
+        indiv: ['image/answers/advanced/answer1.png',        'image/answers/advanced/answer2.png']
     },
     rich_vessel: {
-        team:  ['image/answers/answer1.png', 'image/answers/answer2.png'],
-        indiv: ['image/answers/answer3.png', 'image/answers/answer4.png']
+        team:  ['image/answers/rich_vessel/team_answer1.png','image/answers/rich_vessel/team_answer2.png'],
+        indiv: ['image/answers/rich_vessel/answer1.png',     'image/answers/rich_vessel/answer2.png']
     }
 };
 
@@ -86,12 +86,24 @@ function _syncAdminVariantTabs() {
     });
 }
 
+function _adminShowAnswerPopup(src) {
+    const modal = document.getElementById('adminAnswerPopup');
+    const img   = document.getElementById('adminAnswerPopupImg');
+    img.src = src;
+    modal.style.display = 'flex';
+}
+
+function _adminCloseAnswerPopup() {
+    document.getElementById('adminAnswerPopup').style.display = 'none';
+    document.getElementById('adminAnswerPopupImg').src = '';
+}
+
 function renderAdminQuizAnswers() {
     const answers   = ADMIN_ANSWERS[currentAdminVariant];
     const container = document.getElementById('adminAnswerCards');
 
     const makeCards = (list, label) => list.map((src, i) => `
-        <div class="admin-answer-card" ondblclick="window.open('${src}', '_blank')" title="더블클릭하면 원본 이미지를 새 탭에서 열 수 있어요">
+        <div class="admin-answer-card" onclick="_adminShowAnswerPopup('${src}')" title="클릭하면 이미지를 확대해서 볼 수 있어요" style="cursor:pointer;">
             <img src="${src}" alt="${label} ${i + 1}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="admin-answer-card-fallback" style="display:none;">이미지 없음</div>
             <div class="admin-answer-card-label">${label} ${i + 1}</div>
