@@ -629,3 +629,89 @@ function quizResultNext() {
 function quizBackToList() {
     document.getElementById('quizGameView').style.display = 'none';
 }
+
+// ── 멀티-태블릿 동기화 폴링 ────────────────────────────────────────
+let _quizSyncTimer = null;
+
+function _quizStartSync() {
+    if (_quizSyncTimer) return;
+    _quizSyncTimer = setInterval(_quizPollAndMerge, 3000);
+}
+
+function _quizStopSync() {
+    clearInterval(_quizSyncTimer);
+    _quizSyncTimer = null;
+}
+
+async function _quizPollAndMerge() {
+    if (!_quiz.gameId) return;
+    try {
+        const [state, history] = await Promise.all([
+            sbGetQuizState(_quiz.gameId),
+            sbGetQuizHistory(_quiz.gameId)
+        ]);
+        if (!state) return;
+        _quizMergeRemoteState(state, history || []);
+        if (document.getElementById('quizGameView') &&
+            document.getElementById('quizGameView').style.display === 'none') {
+            _quizRenderPlayerList();
+        }
+    } catch (e) {
+        console.warn('[quizSync] poll failed:', e.message);
+    }
+}
+
+function _quizMergeRemoteState(state, history) {
+    // 보상 동기화
+    _quiz.reward     = state.indiv_reward;
+    _quiz.teamReward = state.team_reward;
+
+    // 상태 재구성
+    _quiz.progress         = {};
+    _quiz.cooldowns        = {};
+    _quiz.teamProgress     = {};
+    _quiz.teamPlayers      = {};
+    _quiz.teamPlayerCooldowns = {};
+
+    const now = Date.now();
+
+    history.forEach(r => {
+        const idx = _quiz.players.findIndex(p => p.nickname === r.nickname);
+        if (idx === -1) return;
+        const player = _quiz.players[idx];
+
+        // 개인탭 진행도
+        if (r.indiv_progress) {
+            _quiz.progress[idx] = r.indiv_progress;
+        }
+
+        // 개인탭 쿨다운
+        if (r.indiv_failed_at) {
+            const ts = new Date(r.indiv_failed_at).getTime();
+            if (now - ts < _QUIZ_COOLDOWN_MS) {
+                _quiz.cooldowns[idx] = ts;
+            }
+        }
+
+        // 팀탭 정답
+        if (r.team_answered) {
+            const team = player.team_name;
+            if (team) {
+                if (!_quiz.teamPlayers[team]) _quiz.teamPlayers[team] = new Set();
+                _quiz.teamPlayers[team].add(idx);
+                _quiz.teamProgress[team] = (_quiz.teamProgress[team] || 0) + 1;
+            }
+        }
+
+        // 팀탭 쿨다운
+        if (r.team_failed_at) {
+            const ts = new Date(r.team_failed_at).getTime();
+            if (now - ts < _QUIZ_COOLDOWN_MS) {
+                _quiz.teamPlayerCooldowns[idx] = ts;
+            }
+        }
+    });
+
+    // 보상 뱃지 UI 반영
+    _quizUpdateRewardBadge();
+}
