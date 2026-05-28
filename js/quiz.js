@@ -672,6 +672,7 @@ function _quizMergeRemoteState(state, history) {
     _quiz.teamProgress     = {};
     _quiz.teamPlayers      = {};
     _quiz.teamPlayerCooldowns = {};
+    _quiz.earnedRewards    = {};
 
     const now = Date.now();
 
@@ -709,6 +710,13 @@ function _quizMergeRemoteState(state, history) {
             if (now - ts < _QUIZ_COOLDOWN_MS) {
                 _quiz.teamPlayerCooldowns[idx] = ts;
             }
+        }
+
+        // 누적 보상 역산 (중복 보상 방지)
+        const earnedIndiv = (r.indiv_progress || 0) * _quiz.reward;
+        const earnedTeam  = r.team_answered ? _quiz.teamReward : 0;
+        if (earnedIndiv + earnedTeam > 0) {
+            _quiz.earnedRewards[r.nickname] = (earnedIndiv + earnedTeam);
         }
     });
 
