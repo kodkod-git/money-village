@@ -23,6 +23,18 @@ const _quiz = {
     selections:       [],
 };
 
+let _quizRewardDebounceTimer = null;
+function _quizDebounceRewardSave() {
+    clearTimeout(_quizRewardDebounceTimer);
+    _quizRewardDebounceTimer = setTimeout(() => {
+        if (!_quiz.gameId) return;
+        sbUpsertQuizState(_quiz.gameId, {
+            indiv_reward: _quiz.reward,
+            team_reward: _quiz.teamReward
+        });
+    }, 1000);
+}
+
 // variant × type별 퀴즈 설정 (images: 문제 순서, answers: 정답 배열)
 const _QUIZ_CONFIG = {
     basic: {
@@ -197,6 +209,7 @@ function quizAdjustReward(delta) {
     if (next < 0) return;
     _quiz.reward = next;
     document.getElementById('quizRewardDisplay').textContent = next.toLocaleString() + '원';
+    _quizDebounceRewardSave();
 }
 
 function quizAdjustTeamReward(delta) {
@@ -204,6 +217,7 @@ function quizAdjustTeamReward(delta) {
     if (next < 0) return;
     _quiz.teamReward = next;
     document.getElementById('quizTeamRewardDisplay').textContent = next.toLocaleString() + '원';
+    _quizDebounceRewardSave();
 }
 
 async function quizStep1Complete() {
@@ -241,6 +255,7 @@ async function quizStep1Complete() {
             clearInterval(_quiz.cooldownTimer);
             _quiz.cooldownTimer = null;
         }
+        sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward });
         _quizRenderPlayerList();
         closeQuizModal(true);
         switchScreen('quizScreen');
