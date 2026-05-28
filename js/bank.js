@@ -571,7 +571,10 @@ function bankAdvanceRound() {
         if (completedCnt > 0 && completedCnt < teamMembers.length) {
             for (const [memberIdxStr, amount] of Object.entries(td.members)) {
                 const pl = _bank.players[parseInt(memberIdxStr)];
-                if (pl) _bankSaveReward(pl.nickname, 'team', amount);
+                if (pl) {
+                    _bankSaveReward(pl.nickname, 'team', amount);
+                    sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, td.type, amount, amount, teamName);
+                }
             }
         }
     }
@@ -593,6 +596,7 @@ function bankAdvanceRound() {
     _bank.indivCompleted = {};
     _bank.teamDeposits   = {};
     _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
+    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
 
     _bankRenderPlayerList();
     _bankShowView(2);
