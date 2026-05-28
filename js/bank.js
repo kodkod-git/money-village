@@ -475,6 +475,7 @@ function _bankSubmitIndividual(p, type, amount) {
 
     _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, null);
 
     // 누적 타입 태그
     if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
@@ -502,6 +503,7 @@ function _bankSubmitTeam(p, type, amount) {
     }
     _bank.teamDeposits[teamName].type = type;
     _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, 0, teamName);
 
     const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
     const teamSize     = teamMembers.length;
@@ -520,6 +522,12 @@ function _bankSubmitTeam(p, type, amount) {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
             _bankSaveReward(pl.nickname, 'team', memberPrincipal + perMemberReward);
+        });
+        teamMembers.forEach(pl => {
+            const memberIdx = _bank.players.findIndex(x => x === pl);
+            const memberPrincipal = td.members[memberIdx] || 0;
+            const memberMatured = memberPrincipal + perMemberReward;
+            sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, type, memberPrincipal, memberMatured, teamName);
         });
 
         // 누적 타입 태그 — 팀 헤더
