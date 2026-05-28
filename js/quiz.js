@@ -198,22 +198,19 @@ async function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, 
     document.getElementById('quizIndivRewardLabel').textContent = isTeam ? '개인 보상금액' : '퀴즈 보상금액';
     document.getElementById('quizStep1Btn').disabled = false;
 
+    _quiz._dbReward = null;
+    _quiz._dbTeamReward = null;
     try {
         const saved = await sbGetQuizState(gameId);
         if (saved && (saved.indiv_reward || saved.team_reward)) {
             const indiv = saved.indiv_reward || 0;
             const team  = saved.team_reward  || 0;
-            if (indiv !== _quiz.reward || team !== _quiz.teamReward) {
-                const msg = isTeam
-                    ? `이전 세션에서 설정한 보상금액이 있습니다.\n적용하시겠습니까?\n개인: ${indiv.toLocaleString()}원 / 팀: ${team.toLocaleString()}원`
-                    : `이전 세션에서 설정한 보상금액이 있습니다.\n적용하시겠습니까?\n${indiv.toLocaleString()}원`;
-                if (confirm(msg)) {
-                    _quiz.reward     = indiv;
-                    _quiz.teamReward = team;
-                    document.getElementById('quizRewardDisplay').textContent     = indiv.toLocaleString() + '원';
-                    document.getElementById('quizTeamRewardDisplay').textContent = team.toLocaleString() + '원';
-                }
-            }
+            _quiz._dbReward     = indiv;
+            _quiz._dbTeamReward = team;
+            _quiz.reward     = indiv;
+            _quiz.teamReward = team;
+            document.getElementById('quizRewardDisplay').textContent     = indiv.toLocaleString() + '원';
+            document.getElementById('quizTeamRewardDisplay').textContent = team.toLocaleString() + '원';
         }
     } catch(e) {}
 }
@@ -274,7 +271,15 @@ async function quizStep1Complete() {
             clearInterval(_quiz.cooldownTimer);
             _quiz.cooldownTimer = null;
         }
-        sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward });
+        if (_quiz._dbReward !== null &&
+            (_quiz.reward !== _quiz._dbReward || _quiz.teamReward !== _quiz._dbTeamReward)) {
+            const isTeam = _quiz.gameType === 'team';
+            const msg = isTeam
+                ? `보상금액이 변경되었습니다.\n개인: ${_quiz.reward.toLocaleString()}원 / 팀: ${_quiz.teamReward.toLocaleString()}원\n정말 변경하시겠습니까?`
+                : `보상금액이 ${_quiz.reward.toLocaleString()}원으로 변경되었습니다.\n정말 변경하시겠습니까?`;
+            if (!confirm(msg)) return;
+        }
+        await sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward });
         await _quizPollAndMerge();
         _quizRenderPlayerList();
         closeQuizModal(true);

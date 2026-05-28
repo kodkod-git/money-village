@@ -193,23 +193,17 @@ async function _bankSelectGame(gameId, date, sectionNum, gameType, cardEl) {
     if (teamSection) teamSection.style.display = gameType === 'team' ? 'block' : 'none';
     document.getElementById('bankStep1Btn').disabled = false;
 
+    _bank._dbSettings = null;
     try {
         const saved = await sbGetBankState(gameId);
         if (saved) {
-            const L = saved.long_ratio, M = saved.mid_ratio, S = saved.short_ratio;
-            const TL = saved.team_long_ratio, TM = saved.team_mid_ratio, TS = saved.team_short_ratio;
-            const changed = L !== _bank.settings.long || M !== _bank.settings.mid || S !== _bank.settings.short
-                         || TL !== _bank.teamSettings.long || TM !== _bank.teamSettings.mid || TS !== _bank.teamSettings.short;
-            if (changed) {
-                const msg = gameType === 'team'
-                    ? `이전 세션에서 설정한 이자배율이 있습니다.\n적용하시겠습니까?\n장기: ${L}배 / 중기: ${M}배 / 단기: ${S}배\n팀 장기: ${TL}배 / 팀 중기: ${TM}배 / 팀 단기: ${TS}배`
-                    : `이전 세션에서 설정한 이자배율이 있습니다.\n적용하시겠습니까?\n장기: ${L}배 / 중기: ${M}배 / 단기: ${S}배`;
-                if (confirm(msg)) {
-                    _bank.settings.long = L; _bank.settings.mid = M; _bank.settings.short = S;
-                    _bank.teamSettings.long = TL; _bank.teamSettings.mid = TM; _bank.teamSettings.short = TS;
-                    _bankSyncRatioUI();
-                }
-            }
+            _bank._dbSettings = {
+                L: saved.long_ratio, M: saved.mid_ratio, S: saved.short_ratio,
+                TL: saved.team_long_ratio, TM: saved.team_mid_ratio, TS: saved.team_short_ratio
+            };
+            _bank.settings.long = saved.long_ratio; _bank.settings.mid = saved.mid_ratio; _bank.settings.short = saved.short_ratio;
+            _bank.teamSettings.long = saved.team_long_ratio; _bank.teamSettings.mid = saved.team_mid_ratio; _bank.teamSettings.short = saved.team_short_ratio;
+            _bankSyncRatioUI();
         }
     } catch(e) {}
 }
@@ -266,7 +260,19 @@ async function bankStep1Complete() {
         _bank.currentRound    = 1;
         _bank.currentPlayerIdx = null;   // ← 추가
         _bank.viewMode        = 'team';
-        sbUpsertBankState(_bank.gameId, {
+        if (_bank._dbSettings) {
+            const d = _bank._dbSettings;
+            const changed = _bank.settings.long !== d.L || _bank.settings.mid !== d.M || _bank.settings.short !== d.S
+                         || _bank.teamSettings.long !== d.TL || _bank.teamSettings.mid !== d.TM || _bank.teamSettings.short !== d.TS;
+            if (changed) {
+                const isTeam = _bank.gameType === 'team';
+                const msg = isTeam
+                    ? `이자배율이 변경되었습니다.\n장기: ${_bank.settings.long}배 / 중기: ${_bank.settings.mid}배 / 단기: ${_bank.settings.short}배\n팀 장기: ${_bank.teamSettings.long}배 / 팀 중기: ${_bank.teamSettings.mid}배 / 팀 단기: ${_bank.teamSettings.short}배\n정말 변경하시겠습니까?`
+                    : `이자배율이 변경되었습니다.\n장기: ${_bank.settings.long}배 / 중기: ${_bank.settings.mid}배 / 단기: ${_bank.settings.short}배\n정말 변경하시겠습니까?`;
+                if (!confirm(msg)) return;
+            }
+        }
+        await sbUpsertBankState(_bank.gameId, {
             long_ratio: _bank.settings.long, mid_ratio: _bank.settings.mid, short_ratio: _bank.settings.short,
             team_long_ratio: _bank.teamSettings.long, team_mid_ratio: _bank.teamSettings.mid, team_short_ratio: _bank.teamSettings.short
         });
