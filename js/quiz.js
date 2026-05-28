@@ -183,7 +183,7 @@ async function onQuizDateChange() {
     }
 }
 
-function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, cardEl) {
+async function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, cardEl) {
     document.querySelectorAll('#quizGameCardsGrid .past-game-card')
         .forEach(c => c.classList.remove('bank-selected'));
     cardEl.classList.add('bank-selected');
@@ -197,6 +197,25 @@ function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, cardEl
     document.getElementById('quizTeamRewardCard').style.display = isTeam ? 'block' : 'none';
     document.getElementById('quizIndivRewardLabel').textContent = isTeam ? '개인 보상금액' : '퀴즈 보상금액';
     document.getElementById('quizStep1Btn').disabled = false;
+
+    try {
+        const saved = await sbGetQuizState(gameId);
+        if (saved && (saved.indiv_reward || saved.team_reward)) {
+            const indiv = saved.indiv_reward || 0;
+            const team  = saved.team_reward  || 0;
+            if (indiv !== _quiz.reward || team !== _quiz.teamReward) {
+                const msg = isTeam
+                    ? `이전 세션에서 설정한 보상금액이 있습니다.\n적용하시겠습니까?\n개인: ${indiv.toLocaleString()}원 / 팀: ${team.toLocaleString()}원`
+                    : `이전 세션에서 설정한 보상금액이 있습니다.\n적용하시겠습니까?\n${indiv.toLocaleString()}원`;
+                if (confirm(msg)) {
+                    _quiz.reward     = indiv;
+                    _quiz.teamReward = team;
+                    document.getElementById('quizRewardDisplay').textContent     = indiv.toLocaleString() + '원';
+                    document.getElementById('quizTeamRewardDisplay').textContent = team.toLocaleString() + '원';
+                }
+            }
+        }
+    } catch(e) {}
 }
 
 function _quizSaveReward(nickname, amount) {
@@ -256,6 +275,7 @@ async function quizStep1Complete() {
             _quiz.cooldownTimer = null;
         }
         sbUpsertQuizState(_quiz.gameId, { indiv_reward: _quiz.reward, team_reward: _quiz.teamReward });
+        await _quizPollAndMerge();
         _quizRenderPlayerList();
         closeQuizModal(true);
         switchScreen('quizScreen');
@@ -711,12 +731,27 @@ function _quizMergeRemoteState(state, history) {
                 _quiz.teamPlayerCooldowns[idx] = ts;
             }
         }
+    });
 
-        // 누적 보상 역산 (중복 보상 방지)
+    // 팀 완료 여부를 모두 집계한 뒤 보상 역산 (팀원 전체 정답 시에만 팀 보상 반영)
+    history.forEach(r => {
+        const idx = _quiz.players.findIndex(p => p.nickname === r.nickname);
+        if (idx === -1) return;
+        const player = _quiz.players[idx];
+
         const earnedIndiv = (r.indiv_progress || 0) * _quiz.reward;
-        const earnedTeam  = r.team_answered ? _quiz.teamReward : 0;
+        let earnedTeam = 0;
+        if (r.team_answered) {
+            const team = player.team_name;
+            if (team) {
+                const teamSize = _quiz.players.filter(p => p.team_name === team).length;
+                if ((_quiz.teamProgress[team] || 0) >= teamSize) {
+                    earnedTeam = _quiz.teamReward;
+                }
+            }
+        }
         if (earnedIndiv + earnedTeam > 0) {
-            _quiz.earnedRewards[r.nickname] = (earnedIndiv + earnedTeam);
+            _quiz.earnedRewards[r.nickname] = earnedIndiv + earnedTeam;
         }
     });
 
