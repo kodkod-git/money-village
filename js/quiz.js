@@ -16,6 +16,7 @@ const _quiz = {
     cooldowns:           {},   // 개인탭: { [playerIdx]: timestamp }
     teamPlayerCooldowns: {},   // 팀탭: { [playerIdx]: timestamp } — 개인탭과 독립
     teamCooldowns:       {},   // (미사용, 보존)
+    isClosed:         false,
     cooldownTimer:    null,
     viewMode:         'team', // 팀전 목록 보기: 'team' | 'individual'
     currentPlayerIdx: null,
@@ -259,6 +260,7 @@ async function quizStep1Complete() {
 
         _quizUpdateRewardBadge();
 
+        _quiz.isClosed      = false;
         _quiz.progress      = {};
         _quiz.teamProgress  = {};
         _quiz.teamPlayers   = {};
@@ -294,6 +296,14 @@ async function quizStep1Complete() {
 // ── 플레이어 리스트 ───────────────────────────────────────────────────
 const _QUIZ_COOLDOWN_MS = 60000;
 
+function quizClose() {
+    if (_quiz.isClosed) return;
+    if (!confirm('퀴즈 퀘스트를 마감합니다.\n이후 진행이 불가능합니다.\n계속하시겠습니까?')) return;
+    _quiz.isClosed = true;
+    sbUpsertQuizState(_quiz.gameId, { is_closed: true });
+    _quizRenderPlayerList();
+}
+
 function quizSetViewMode(mode) {
     _quiz.viewMode = mode;
     _quizUpdateRewardBadge();
@@ -312,6 +322,12 @@ function _quizRenderPlayerList() {
     const isTeam = _quiz.gameType === 'team';
     const now    = Date.now();
     grid.innerHTML = '';
+
+    const closeBtn = document.getElementById('quizCloseBtn');
+    if (closeBtn) {
+        closeBtn.disabled    = _quiz.isClosed;
+        closeBtn.textContent = _quiz.isClosed ? '마감됨' : '마감';
+    }
 
     // 탭바 표시/업데이트
     const tabBar = document.getElementById('quizTabBar');
@@ -342,7 +358,7 @@ function _quizRenderPlayerList() {
                 }
             }
 
-            const isClickable   = !done && !onCooldown;
+            const isClickable   = !_quiz.isClosed && !done && !onCooldown;
             const badgeClass    = done ? ' quiz-done' : '';
             const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
 
@@ -385,7 +401,7 @@ function _quizRenderPlayerList() {
                 }
             }
 
-            const isClickable   = !done && !onCooldown;
+            const isClickable   = !_quiz.isClosed && !done && !onCooldown;
             const badgeClass    = done ? ' quiz-done' : '';
             const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
 
@@ -443,7 +459,7 @@ function _quizRenderPlayerList() {
                 }
             }
 
-            const isClickable   = !done && !playerAlreadyDone && !onCooldown;
+            const isClickable   = !_quiz.isClosed && !done && !playerAlreadyDone && !onCooldown;
             const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
 
             const card = document.createElement('div');
@@ -690,6 +706,7 @@ function _quizMergeRemoteState(state, history) {
     // 보상 동기화
     _quiz.reward     = state.indiv_reward;
     _quiz.teamReward = state.team_reward;
+    _quiz.isClosed   = !!(state.is_closed);
 
     // 상태 재구성
     _quiz.progress         = {};
