@@ -20,6 +20,22 @@ const _bank = {
     viewMode:  'team'
 };
 
+let _bankRatioDebounceTimer = null;
+function _bankDebounceRatioSave() {
+    clearTimeout(_bankRatioDebounceTimer);
+    _bankRatioDebounceTimer = setTimeout(() => {
+        if (!_bank.gameId) return;
+        sbUpsertBankState(_bank.gameId, {
+            long_ratio: _bank.settings.long,
+            mid_ratio: _bank.settings.mid,
+            short_ratio: _bank.settings.short,
+            team_long_ratio: _bank.teamSettings.long,
+            team_mid_ratio: _bank.teamSettings.mid,
+            team_short_ratio: _bank.teamSettings.short
+        });
+    }, 1000);
+}
+
 const _BANK_TYPE = {
     long:  { label: '장기 🏦', round: '1라운드' },
     mid:   { label: '중기 ⏳', round: '2라운드' },
@@ -185,6 +201,7 @@ function bankAdjustRatio(type, delta, isTeam = false) {
     if (next < 1.0) return;
     store[type] = next;
     document.getElementById(prefix + _bankCap(type) + 'RatioDisplay').textContent = next.toFixed(1) + '배';
+    _bankDebounceRatioSave();
 }
 
 function _bankSyncRatioUI() {
@@ -229,6 +246,11 @@ async function bankStep1Complete() {
         _bank.currentRound    = 1;
         _bank.currentPlayerIdx = null;   // ← 추가
         _bank.viewMode        = 'team';
+        sbUpsertBankState(_bank.gameId, {
+            current_round: 1,
+            long_ratio: _bank.settings.long, mid_ratio: _bank.settings.mid, short_ratio: _bank.settings.short,
+            team_long_ratio: _bank.teamSettings.long, team_mid_ratio: _bank.teamSettings.mid, team_short_ratio: _bank.teamSettings.short
+        });
         _bankRenderPlayerList();
         closeBankModal(true);
         switchScreen('bankScreen');
