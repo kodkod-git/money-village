@@ -203,7 +203,7 @@ async function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, 
     _quiz._dbTeamReward = null;
     try {
         const saved = await sbGetQuizState(gameId);
-        if (saved && (saved.indiv_reward || saved.team_reward)) {
+        if (saved && saved.indiv_reward !== null && saved.indiv_reward !== undefined) {
             const indiv = saved.indiv_reward || 0;
             const team  = saved.team_reward  || 0;
             _quiz._dbReward     = indiv;
@@ -625,7 +625,7 @@ function _quizShowResult() {
             // 개인 — 문제당 보상
             const prevCount = _quiz.progress[_quiz.currentPlayerIdx] || 0;
             _quiz.progress[_quiz.currentPlayerIdx] = prevCount + 1;
-            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_progress: _quiz.progress[_quiz.currentPlayerIdx] });
+            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_progress: _quiz.progress[_quiz.currentPlayerIdx], indiv_failed_at: null });
             _quizSaveReward(p.nickname, _quiz.reward);
 
             if (_quiz.progress[_quiz.currentPlayerIdx] >= 2) {
@@ -682,6 +682,8 @@ function _quizStartSync() {
 function _quizStopSync() {
     clearInterval(_quizSyncTimer);
     _quizSyncTimer = null;
+    clearTimeout(_quizRewardDebounceTimer);
+    _quizRewardDebounceTimer = null;
 }
 
 async function _quizPollAndMerge() {
@@ -704,8 +706,8 @@ async function _quizPollAndMerge() {
 
 function _quizMergeRemoteState(state, history) {
     // 보상 동기화
-    _quiz.reward     = state.indiv_reward;
-    _quiz.teamReward = state.team_reward;
+    _quiz.reward     = state.indiv_reward  ?? 0;
+    _quiz.teamReward = state.team_reward   ?? 0;
     _quiz.isClosed   = !!(state.is_closed);
 
     // 상태 재구성
@@ -766,8 +768,7 @@ function _quizMergeRemoteState(state, history) {
         if (r.team_answered) {
             const team = player.team_name;
             if (team) {
-                const teamSize = _quiz.players.filter(p => p.team_name === team).length;
-                if ((_quiz.teamProgress[team] || 0) >= teamSize) {
+                if ((_quiz.teamProgress[team] || 0) >= 2) {
                     earnedTeam = _quiz.teamReward;
                 }
             }

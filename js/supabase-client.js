@@ -672,7 +672,7 @@ async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amou
         deposit_type:   depositType,
         amount:         amount,
         matured_amount: maturedAmount,
-        is_team:        isTeam || false
+        is_team:        !!isTeam
     }, { onConflict: 'game_id,nickname,round_num,is_team' });
     if (error) console.error('[sbUpsertBankHistory]', error);
 }

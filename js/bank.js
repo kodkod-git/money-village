@@ -250,16 +250,6 @@ async function bankStep1Complete() {
         const infoEl = document.getElementById('bankGameInfo');
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
-        _bank.indivCompleted  = {};
-        _bank.teamDeposits    = {};
-        _bank.teamRewards     = {};
-        _bank.indivRewards    = {};
-        _bank.prevRoundsTotal = {};
-        _bank.playerTypeTags  = {};
-        _bank.teamTypeTags    = {};
-        _bank.currentRound    = 1;
-        _bank.currentPlayerIdx = null;   // ← 추가
-        _bank.viewMode        = 'team';
         if (_bank._dbSettings) {
             const d = _bank._dbSettings;
             const changed = _bank.settings.long !== d.L || _bank.settings.mid !== d.M || _bank.settings.short !== d.S
@@ -272,6 +262,16 @@ async function bankStep1Complete() {
                 if (!confirm(msg)) return;
             }
         }
+        _bank.indivCompleted  = {};
+        _bank.teamDeposits    = {};
+        _bank.teamRewards     = {};
+        _bank.indivRewards    = {};
+        _bank.prevRoundsTotal = {};
+        _bank.playerTypeTags  = {};
+        _bank.teamTypeTags    = {};
+        _bank.currentRound    = 1;
+        _bank.currentPlayerIdx = null;
+        _bank.viewMode        = 'team';
         await sbUpsertBankState(_bank.gameId, {
             long_ratio: _bank.settings.long, mid_ratio: _bank.settings.mid, short_ratio: _bank.settings.short,
             team_long_ratio: _bank.teamSettings.long, team_mid_ratio: _bank.teamSettings.mid, team_short_ratio: _bank.teamSettings.short
@@ -648,6 +648,8 @@ function _bankStartSync() {
 function _bankStopSync() {
     clearInterval(_bankSyncTimer);
     _bankSyncTimer = null;
+    clearTimeout(_bankRatioDebounceTimer);
+    _bankRatioDebounceTimer = null;
 }
 
 async function _bankPollAndMerge() {
@@ -677,7 +679,7 @@ function _bankMergeRemoteState(state, history) {
     _bank.teamSettings.mid   = state.team_mid_ratio;
     _bank.teamSettings.short = state.team_short_ratio;
 
-    const remoteRound = state.current_round;
+    const remoteRound = state.current_round ?? 1;
 
     // 라운드 전환 감지: 원격이 더 앞서 있으면 로컬 라운드 레벨 상태 리셋
     if (remoteRound > _bank.currentRound) {
@@ -736,6 +738,18 @@ function _bankMergeRemoteState(state, history) {
                 _bank.teamDeposits[teamName] = { type: r.deposit_type, members: {} };
             }
             _bank.teamDeposits[teamName].members[idx] = r.amount;
+        }
+    });
+
+    // 현재 라운드 matured_amount에서 indivRewards / teamRewards 재구성
+    _bank.indivRewards = {};
+    _bank.teamRewards  = {};
+    currentRows.forEach(r => {
+        if (!r.matured_amount) return;
+        if (!r.is_team) {
+            _bank.indivRewards[r.nickname] = r.matured_amount;
+        } else {
+            _bank.teamRewards[r.nickname] = r.matured_amount;
         }
     });
 
