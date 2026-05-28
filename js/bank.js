@@ -247,10 +247,10 @@ async function bankStep1Complete() {
         _bank.currentPlayerIdx = null;   // ← 추가
         _bank.viewMode        = 'team';
         sbUpsertBankState(_bank.gameId, {
-            current_round: 1,
             long_ratio: _bank.settings.long, mid_ratio: _bank.settings.mid, short_ratio: _bank.settings.short,
             team_long_ratio: _bank.teamSettings.long, team_mid_ratio: _bank.teamSettings.mid, team_short_ratio: _bank.teamSettings.short
         });
+        await _bankPollAndMerge();
         _bankRenderPlayerList();
         closeBankModal(true);
         switchScreen('bankScreen');
@@ -677,7 +677,7 @@ function _bankMergeRemoteState(state, history) {
 
     // 타입 태그는 전체 라운드에서 누적
     history.forEach(r => {
-        if (!r.team_name) {
+        if (r.team_name === '') {
             if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
             if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
                 _bank.playerTypeTags[r.nickname].push(r.deposit_type);
@@ -695,7 +695,7 @@ function _bankMergeRemoteState(state, history) {
         const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
         if (idx === -1) return;
 
-        if (!r.team_name) {
+        if (r.team_name === '') {
             // 개인 신청
             _bank.indivCompleted[idx] = { type: r.deposit_type, amount: r.amount };
         } else {
