@@ -611,4 +611,93 @@ function bankNextStudent() {
 // ── Util ───────────────────────────────────────────────────────────
 function _bankCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+// ── 멀티-태블릿 동기화 폴링 ────────────────────────────────────────
+let _bankSyncTimer = null;
+
+function _bankStartSync() {
+    if (_bankSyncTimer) return;
+    _bankSyncTimer = setInterval(_bankPollAndMerge, 3000);
+}
+
+function _bankStopSync() {
+    clearInterval(_bankSyncTimer);
+    _bankSyncTimer = null;
+}
+
+async function _bankPollAndMerge() {
+    if (!_bank.gameId) return;
+    const [state, history] = await Promise.all([
+        sbGetBankState(_bank.gameId),
+        sbGetBankHistory(_bank.gameId)
+    ]);
+    if (!state) return;
+    _bankMergeRemoteState(state, history || []);
+    if (document.getElementById('bankView2') &&
+        document.getElementById('bankView2').style.display !== 'none') {
+        _bankRenderPlayerList();
+    }
+}
+
+function _bankMergeRemoteState(state, history) {
+    // 배율 동기화
+    _bank.settings.long  = state.long_ratio;
+    _bank.settings.mid   = state.mid_ratio;
+    _bank.settings.short = state.short_ratio;
+    _bank.teamSettings.long  = state.team_long_ratio;
+    _bank.teamSettings.mid   = state.team_mid_ratio;
+    _bank.teamSettings.short = state.team_short_ratio;
+
+    const remoteRound = state.current_round;
+
+    // 라운드 전환 감지: 원격이 더 앞서 있으면 로컬 라운드 레벨 상태 리셋
+    if (remoteRound > _bank.currentRound) {
+        _bank.currentRound   = remoteRound;
+        _bank.indivCompleted = {};
+        _bank.teamDeposits   = {};
+        _bank.teamRewards    = {};
+        _bank.indivRewards   = {};
+    }
+
+    // prevRoundsTotal: 현재 라운드 미만 행의 matured_amount 합산
+    const prevTotals = {};
+    history.filter(r => r.round_num < _bank.currentRound).forEach(r => {
+        prevTotals[r.nickname] = (prevTotals[r.nickname] || 0) + (r.matured_amount || 0);
+    });
+    _bank.prevRoundsTotal = prevTotals;
+
+    // 현재 라운드 행으로 indivCompleted / teamDeposits 재구성
+    _bank.indivCompleted = {};
+    _bank.teamDeposits   = {};
+    _bank.playerTypeTags = {};
+    _bank.teamTypeTags   = {};
+
+    const currentRows = history.filter(r => r.round_num === _bank.currentRound);
+    currentRows.forEach(r => {
+        const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
+        if (idx === -1) return;
+
+        if (!r.team_name) {
+            // 개인 신청
+            _bank.indivCompleted[idx] = { type: r.deposit_type, amount: r.amount };
+            if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
+            if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
+                _bank.playerTypeTags[r.nickname].push(r.deposit_type);
+            }
+        } else {
+            // 팀 신청
+            if (!_bank.teamDeposits[r.team_name]) {
+                _bank.teamDeposits[r.team_name] = { type: r.deposit_type, members: {} };
+            }
+            _bank.teamDeposits[r.team_name].members[idx] = r.amount;
+            if (!_bank.teamTypeTags[r.team_name]) _bank.teamTypeTags[r.team_name] = [];
+            if (!_bank.teamTypeTags[r.team_name].includes(r.deposit_type)) {
+                _bank.teamTypeTags[r.team_name].push(r.deposit_type);
+            }
+        }
+    });
+
+    // 배율 UI 반영 (View 1 모달이 열려 있을 때)
+    _bankSyncRatioUI();
+}
+
 _bankLoad();
