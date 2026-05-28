@@ -567,6 +567,7 @@ function _quizShowResult() {
             if (!_quiz.teamPlayers[p.team_name]) _quiz.teamPlayers[p.team_name] = new Set();
             _quiz.teamPlayers[p.team_name].add(_quiz.currentPlayerIdx);
             _quiz.teamProgress[p.team_name] = (_quiz.teamProgress[p.team_name] || 0) + 1;
+            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { team_answered: true });
 
             if (_quiz.teamProgress[p.team_name] >= 2) {
                 // 팀 [2/2] 달성 — 팀원 전체에 보상 저장
@@ -583,6 +584,7 @@ function _quizShowResult() {
             // 개인 — 문제당 보상
             const prevCount = _quiz.progress[_quiz.currentPlayerIdx] || 0;
             _quiz.progress[_quiz.currentPlayerIdx] = prevCount + 1;
+            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_progress: _quiz.progress[_quiz.currentPlayerIdx] });
             _quizSaveReward(p.nickname, _quiz.reward);
 
             if (_quiz.progress[_quiz.currentPlayerIdx] >= 2) {
@@ -603,8 +605,10 @@ function _quizShowResult() {
         const p = _quiz.players[_quiz.currentPlayerIdx];
         if (isTeamMode) {
             _quiz.teamPlayerCooldowns[_quiz.currentPlayerIdx] = Date.now();
+            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { team_failed_at: new Date().toISOString() });
         } else {
             _quiz.cooldowns[_quiz.currentPlayerIdx] = Date.now();
+            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_failed_at: new Date().toISOString() });
         }
     }
 
