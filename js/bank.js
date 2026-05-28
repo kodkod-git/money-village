@@ -675,6 +675,21 @@ function _bankMergeRemoteState(state, history) {
     _bank.playerTypeTags = {};
     _bank.teamTypeTags   = {};
 
+    // 타입 태그는 전체 라운드에서 누적
+    history.forEach(r => {
+        if (!r.team_name) {
+            if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
+            if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
+                _bank.playerTypeTags[r.nickname].push(r.deposit_type);
+            }
+        } else {
+            if (!_bank.teamTypeTags[r.team_name]) _bank.teamTypeTags[r.team_name] = [];
+            if (!_bank.teamTypeTags[r.team_name].includes(r.deposit_type)) {
+                _bank.teamTypeTags[r.team_name].push(r.deposit_type);
+            }
+        }
+    });
+
     const currentRows = history.filter(r => r.round_num === _bank.currentRound);
     currentRows.forEach(r => {
         const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
@@ -683,20 +698,12 @@ function _bankMergeRemoteState(state, history) {
         if (!r.team_name) {
             // 개인 신청
             _bank.indivCompleted[idx] = { type: r.deposit_type, amount: r.amount };
-            if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
-            if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
-                _bank.playerTypeTags[r.nickname].push(r.deposit_type);
-            }
         } else {
             // 팀 신청
             if (!_bank.teamDeposits[r.team_name]) {
                 _bank.teamDeposits[r.team_name] = { type: r.deposit_type, members: {} };
             }
             _bank.teamDeposits[r.team_name].members[idx] = r.amount;
-            if (!_bank.teamTypeTags[r.team_name]) _bank.teamTypeTags[r.team_name] = [];
-            if (!_bank.teamTypeTags[r.team_name].includes(r.deposit_type)) {
-                _bank.teamTypeTags[r.team_name].push(r.deposit_type);
-            }
         }
     });
 
