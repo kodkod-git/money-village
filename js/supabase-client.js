@@ -639,3 +639,72 @@ async function sbUploadPDF({ pdfBase64, fileName, gameDate, category }) {
     const { data } = _sb.storage.from('pdfs').getPublicUrl(path);
     return { success: true, path, publicUrl: data.publicUrl };
 }
+
+// =========================================================
+// 동기화: bank_state / bank_history
+// =========================================================
+
+async function sbGetBankState(gameId) {
+    const { data } = await _sb.from('bank_state').select('*')
+        .eq('game_id', gameId).maybeSingle();
+    return data || null;
+}
+
+async function sbUpsertBankState(gameId, fields) {
+    const { error } = await _sb.from('bank_state').upsert(
+        { game_id: gameId, ...fields, updated_at: new Date().toISOString() },
+        { onConflict: 'game_id' }
+    );
+    if (error) console.error('[sbUpsertBankState]', error);
+}
+
+async function sbGetBankHistory(gameId) {
+    const { data } = await _sb.from('bank_history').select('*')
+        .eq('game_id', gameId);
+    return data || [];
+}
+
+async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amount, maturedAmount, teamName) {
+    const { error } = await _sb.from('bank_history').upsert({
+        game_id:        gameId,
+        nickname:       nickname,
+        round_num:      roundNum,
+        deposit_type:   depositType,
+        amount:         amount,
+        matured_amount: maturedAmount,
+        team_name:      teamName || null
+    }, { onConflict: 'game_id,nickname,round_num' });
+    if (error) console.error('[sbUpsertBankHistory]', error);
+}
+
+// =========================================================
+// 동기화: quiz_state / quiz_history
+// =========================================================
+
+async function sbGetQuizState(gameId) {
+    const { data } = await _sb.from('quiz_state').select('*')
+        .eq('game_id', gameId).maybeSingle();
+    return data || null;
+}
+
+async function sbUpsertQuizState(gameId, fields) {
+    const { error } = await _sb.from('quiz_state').upsert(
+        { game_id: gameId, ...fields, updated_at: new Date().toISOString() },
+        { onConflict: 'game_id' }
+    );
+    if (error) console.error('[sbUpsertQuizState]', error);
+}
+
+async function sbGetQuizHistory(gameId) {
+    const { data } = await _sb.from('quiz_history').select('*')
+        .eq('game_id', gameId);
+    return data || [];
+}
+
+async function sbUpsertQuizHistory(gameId, nickname, fields) {
+    const { error } = await _sb.from('quiz_history').upsert(
+        { game_id: gameId, nickname, ...fields },
+        { onConflict: 'game_id,nickname' }
+    );
+    if (error) console.error('[sbUpsertQuizHistory]', error);
+}
