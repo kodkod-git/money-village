@@ -21,6 +21,22 @@ const _bank = {
     viewMode:  'team'
 };
 
+let _bankRatioDebounceTimer = null;
+function _bankDebounceRatioSave() {
+    clearTimeout(_bankRatioDebounceTimer);
+    _bankRatioDebounceTimer = setTimeout(() => {
+        if (!_bank.gameId) return;
+        sbUpsertBankState(_bank.gameId, {
+            long_ratio: _bank.settings.long,
+            mid_ratio: _bank.settings.mid,
+            short_ratio: _bank.settings.short,
+            team_long_ratio: _bank.teamSettings.long,
+            team_mid_ratio: _bank.teamSettings.mid,
+            team_short_ratio: _bank.teamSettings.short
+        });
+    }, 1000);
+}
+
 const _BANK_TYPE = {
     long:  { label: '장기 🏦', round: '1라운드' },
     mid:   { label: '중기 ⏳', round: '2라운드' },
@@ -165,7 +181,7 @@ async function onBankDateChange() {
     }
 }
 
-function _bankSelectGame(gameId, date, sectionNum, gameType, cardEl) {
+async function _bankSelectGame(gameId, date, sectionNum, gameType, cardEl) {
     document.querySelectorAll('#bankGameCardsGrid .past-game-card')
         .forEach(c => c.classList.remove('bank-selected'));
     cardEl.classList.add('bank-selected');
@@ -177,6 +193,20 @@ function _bankSelectGame(gameId, date, sectionNum, gameType, cardEl) {
     const teamSection = document.getElementById('bankTeamRatioSection');
     if (teamSection) teamSection.style.display = gameType === 'team' ? 'block' : 'none';
     document.getElementById('bankStep1Btn').disabled = false;
+
+    _bank._dbSettings = null;
+    try {
+        const saved = await sbGetBankState(gameId);
+        if (saved) {
+            _bank._dbSettings = {
+                L: saved.long_ratio, M: saved.mid_ratio, S: saved.short_ratio,
+                TL: saved.team_long_ratio, TM: saved.team_mid_ratio, TS: saved.team_short_ratio
+            };
+            _bank.settings.long = saved.long_ratio; _bank.settings.mid = saved.mid_ratio; _bank.settings.short = saved.short_ratio;
+            _bank.teamSettings.long = saved.team_long_ratio; _bank.teamSettings.mid = saved.team_mid_ratio; _bank.teamSettings.short = saved.team_short_ratio;
+            _bankSyncRatioUI();
+        }
+    } catch(e) {}
 }
 
 function bankAdjustRatio(type, delta, isTeam = false) {
@@ -186,6 +216,7 @@ function bankAdjustRatio(type, delta, isTeam = false) {
     if (next < 1.0) return;
     store[type] = next;
     document.getElementById(prefix + _bankCap(type) + 'RatioDisplay').textContent = next.toFixed(1) + '배';
+    _bankDebounceRatioSave();
 }
 
 function _bankSyncRatioUI() {
@@ -220,6 +251,18 @@ async function bankStep1Complete() {
         const infoEl = document.getElementById('bankGameInfo');
         if (infoEl) infoEl.textContent = `${_bank.gameDate} · ${section}분반`;
 
+        if (_bank._dbSettings) {
+            const d = _bank._dbSettings;
+            const changed = _bank.settings.long !== d.L || _bank.settings.mid !== d.M || _bank.settings.short !== d.S
+                         || _bank.teamSettings.long !== d.TL || _bank.teamSettings.mid !== d.TM || _bank.teamSettings.short !== d.TS;
+            if (changed) {
+                const isTeam = _bank.gameType === 'team';
+                const msg = isTeam
+                    ? `이자배율이 변경되었습니다.\n장기: ${_bank.settings.long}배 / 중기: ${_bank.settings.mid}배 / 단기: ${_bank.settings.short}배\n팀 장기: ${_bank.teamSettings.long}배 / 팀 중기: ${_bank.teamSettings.mid}배 / 팀 단기: ${_bank.teamSettings.short}배\n정말 변경하시겠습니까?`
+                    : `이자배율이 변경되었습니다.\n장기: ${_bank.settings.long}배 / 중기: ${_bank.settings.mid}배 / 단기: ${_bank.settings.short}배\n정말 변경하시겠습니까?`;
+                if (!confirm(msg)) return;
+            }
+        }
         _bank.indivCompleted  = {};
         _bank.teamDeposits    = {};
         _bank.teamRewards     = {};
@@ -229,8 +272,13 @@ async function bankStep1Complete() {
         _bank.teamTypeTags    = {};
         _bank.roundSnapshots  = [];
         _bank.currentRound    = 1;
-        _bank.currentPlayerIdx = null;   // ← 추가
+        _bank.currentPlayerIdx = null;
         _bank.viewMode        = 'team';
+        await sbUpsertBankState(_bank.gameId, {
+            long_ratio: _bank.settings.long, mid_ratio: _bank.settings.mid, short_ratio: _bank.settings.short,
+            team_long_ratio: _bank.teamSettings.long, team_mid_ratio: _bank.teamSettings.mid, team_short_ratio: _bank.teamSettings.short
+        });
+        await _bankPollAndMerge();
         _bankRenderPlayerList();
         closeBankModal(true);
         switchScreen('bankScreen');
@@ -459,6 +507,7 @@ function _bankSubmitIndividual(p, type, amount) {
 
     _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, false);
 
     // 누적 타입 태그
     if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
@@ -486,6 +535,7 @@ function _bankSubmitTeam(p, type, amount) {
     }
     _bank.teamDeposits[teamName].type = type;
     _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
+    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, 0, true);
 
     const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
     const teamSize     = teamMembers.length;
@@ -504,6 +554,12 @@ function _bankSubmitTeam(p, type, amount) {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
             _bankSaveReward(pl.nickname, 'team', memberPrincipal + perMemberReward);
+        });
+        teamMembers.forEach(pl => {
+            const memberIdx = _bank.players.findIndex(x => x === pl);
+            const memberPrincipal = td.members[memberIdx] || 0;
+            const memberMatured = memberPrincipal + perMemberReward;
+            sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, type, memberPrincipal, memberMatured, true);
         });
 
         // 누적 타입 태그 — 팀 헤더
@@ -551,6 +607,7 @@ function bankGoBackRound() {
     _bank.playerTypeTags  = snapshot.playerTypeTags;
     _bank.teamTypeTags    = snapshot.teamTypeTags;
 
+    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
     _bankRenderPlayerList();
     _bankShowView(2);
 }
@@ -578,7 +635,10 @@ function bankAdvanceRound() {
         if (completedCnt > 0 && completedCnt < teamMembers.length) {
             for (const [memberIdxStr, amount] of Object.entries(td.members)) {
                 const pl = _bank.players[parseInt(memberIdxStr)];
-                if (pl) _bankSaveReward(pl.nickname, 'team', amount);
+                if (pl) {
+                    _bankSaveReward(pl.nickname, 'team', amount);
+                    sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, td.type, amount, amount, true);
+                }
             }
         }
     }
@@ -600,6 +660,7 @@ function bankAdvanceRound() {
     _bank.indivCompleted = {};
     _bank.teamDeposits   = {};
     _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
+    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
 
     _bankRenderPlayerList();
     _bankShowView(2);
@@ -613,5 +674,199 @@ function bankNextStudent() {
 
 // ── Util ───────────────────────────────────────────────────────────
 function _bankCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── 멀티-태블릿 동기화 폴링 ────────────────────────────────────────
+let _bankSyncTimer = null;
+
+function _bankStartSync() {
+    if (_bankSyncTimer) return;
+    _bankSyncTimer = setInterval(_bankPollAndMerge, 3000);
+}
+
+function _bankStopSync() {
+    clearInterval(_bankSyncTimer);
+    _bankSyncTimer = null;
+    clearTimeout(_bankRatioDebounceTimer);
+    _bankRatioDebounceTimer = null;
+}
+
+async function _bankPollAndMerge() {
+    if (!_bank.gameId) return;
+    try {
+        const [state, history] = await Promise.all([
+            sbGetBankState(_bank.gameId),
+            sbGetBankHistory(_bank.gameId)
+        ]);
+        if (!state) return;
+        _bankMergeRemoteState(state, history || []);
+        if (document.getElementById('bankView2') &&
+            document.getElementById('bankView2').style.display !== 'none') {
+            _bankRenderPlayerList();
+        }
+    } catch (e) {
+        console.warn('[bankSync] poll failed:', e.message);
+    }
+}
+
+function _bankMergeRemoteState(state, history) {
+    // 배율 동기화
+    _bank.settings.long  = state.long_ratio;
+    _bank.settings.mid   = state.mid_ratio;
+    _bank.settings.short = state.short_ratio;
+    _bank.teamSettings.long  = state.team_long_ratio;
+    _bank.teamSettings.mid   = state.team_mid_ratio;
+    _bank.teamSettings.short = state.team_short_ratio;
+
+    const remoteRound = state.current_round ?? 1;
+
+    // 라운드 전환 감지: 원격과 로컬이 다르면 동기화 (전진 및 후퇴 모두 처리)
+    if (remoteRound !== _bank.currentRound) {
+        _bank.currentRound   = remoteRound;
+        _bank.indivCompleted = {};
+        _bank.teamDeposits   = {};
+        _bank.teamRewards    = {};
+        _bank.indivRewards   = {};
+    }
+
+    // prevRoundsTotal: 현재 라운드 미만 행의 matured_amount 합산
+    const prevTotals = {};
+    history.filter(r => r.round_num < _bank.currentRound).forEach(r => {
+        prevTotals[r.nickname] = (prevTotals[r.nickname] || 0) + (r.matured_amount || 0);
+    });
+    _bank.prevRoundsTotal = prevTotals;
+
+    // 현재 라운드 행으로 indivCompleted / teamDeposits 재구성
+    _bank.indivCompleted = {};
+    _bank.teamDeposits   = {};
+    _bank.playerTypeTags = {};
+    _bank.teamTypeTags   = {};
+
+    // 팀 완료 라운드 사전 계산 (팀 전원 신청한 경우만 뱃지 부여)
+    const _teamRoundCounts = {};
+    history.filter(h => h.is_team).forEach(h => {
+        const pl = _bank.players.find(p => p.nickname === h.nickname);
+        if (!pl || !pl.team_name) return;
+        const key = `${pl.team_name}|${h.round_num}`;
+        _teamRoundCounts[key] = (_teamRoundCounts[key] || 0) + 1;
+    });
+    const _completedTeamRounds = new Set(
+        Object.entries(_teamRoundCounts)
+            .filter(([key, cnt]) => cnt >= _bank.players.filter(p => p.team_name === key.split('|')[0]).length)
+            .map(([key]) => key)
+    );
+
+    // 타입 태그는 전체 라운드에서 누적 (팀은 전원 완료된 라운드만)
+    history.forEach(r => {
+        const player = _bank.players.find(p => p.nickname === r.nickname);
+        if (!player) return;
+        if (!r.is_team) {
+            if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
+            if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
+                _bank.playerTypeTags[r.nickname].push(r.deposit_type);
+            }
+        } else {
+            const teamName = player.team_name;
+            if (!teamName || !_completedTeamRounds.has(`${teamName}|${r.round_num}`)) return;
+            if (!_bank.teamTypeTags[teamName]) _bank.teamTypeTags[teamName] = [];
+            if (!_bank.teamTypeTags[teamName].includes(r.deposit_type)) {
+                _bank.teamTypeTags[teamName].push(r.deposit_type);
+            }
+        }
+    });
+
+    const currentRows = history.filter(r => r.round_num === _bank.currentRound);
+    currentRows.forEach(r => {
+        const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
+        if (idx === -1) return;
+
+        if (!r.is_team) {
+            // 개인 신청
+            _bank.indivCompleted[idx] = { type: r.deposit_type, amount: r.amount };
+        } else {
+            // 팀 신청
+            const teamName = _bank.players[idx].team_name;
+            if (!teamName) return;
+            if (!_bank.teamDeposits[teamName]) {
+                _bank.teamDeposits[teamName] = { type: r.deposit_type, members: {} };
+            }
+            _bank.teamDeposits[teamName].members[idx] = r.amount;
+        }
+    });
+
+    // 현재 라운드 matured_amount에서 indivRewards / teamRewards 재구성
+    _bank.indivRewards = {};
+    _bank.teamRewards  = {};
+    currentRows.forEach(r => {
+        if (!r.matured_amount) return;
+        if (!r.is_team) {
+            _bank.indivRewards[r.nickname] = r.matured_amount;
+        } else {
+            _bank.teamRewards[r.nickname] = r.matured_amount;
+        }
+    });
+
+    // roundSnapshots 재구성: history 기반으로 각 완료 라운드의 스냅샷 복원
+    _bank.roundSnapshots = [];
+    for (let rNum = 1; rNum < _bank.currentRound; rNum++) {
+        const roundRows = history.filter(h => h.round_num === rNum);
+        const snap = {
+            round:          rNum,
+            indivCompleted: {},
+            teamDeposits:   {},
+            indivRewards:   {},
+            teamRewards:    {},
+            prevRoundsTotal:{},
+            playerTypeTags: {},
+            teamTypeTags:   {},
+        };
+        history.filter(h => h.round_num < rNum).forEach(h => {
+            snap.prevRoundsTotal[h.nickname] = (snap.prevRoundsTotal[h.nickname] || 0) + (h.matured_amount || 0);
+        });
+        roundRows.forEach(h => {
+            const idx = _bank.players.findIndex(p => p.nickname === h.nickname);
+            if (idx === -1) return;
+            if (!h.is_team) {
+                snap.indivCompleted[idx] = { type: h.deposit_type, amount: h.amount };
+                if (h.matured_amount) snap.indivRewards[h.nickname] = h.matured_amount;
+            } else {
+                const teamName = _bank.players[idx].team_name;
+                if (!teamName) return;
+                if (!snap.teamDeposits[teamName]) snap.teamDeposits[teamName] = { type: h.deposit_type, members: {} };
+                snap.teamDeposits[teamName].members[idx] = h.amount;
+                if (h.matured_amount) snap.teamRewards[h.nickname] = h.matured_amount;
+            }
+        });
+        const snapTeamRoundCounts = {};
+        history.filter(h => h.is_team && h.round_num <= rNum).forEach(h => {
+            const pl = _bank.players.find(p => p.nickname === h.nickname);
+            if (!pl || !pl.team_name) return;
+            const key = `${pl.team_name}|${h.round_num}`;
+            snapTeamRoundCounts[key] = (snapTeamRoundCounts[key] || 0) + 1;
+        });
+        const snapCompletedTeamRounds = new Set(
+            Object.entries(snapTeamRoundCounts)
+                .filter(([key, cnt]) => cnt >= _bank.players.filter(p => p.team_name === key.split('|')[0]).length)
+                .map(([key]) => key)
+        );
+
+        history.filter(h => h.round_num <= rNum).forEach(h => {
+            const player = _bank.players.find(p => p.nickname === h.nickname);
+            if (!player) return;
+            if (!h.is_team) {
+                if (!snap.playerTypeTags[h.nickname]) snap.playerTypeTags[h.nickname] = [];
+                if (!snap.playerTypeTags[h.nickname].includes(h.deposit_type)) snap.playerTypeTags[h.nickname].push(h.deposit_type);
+            } else {
+                const teamName = player.team_name;
+                if (!teamName || !snapCompletedTeamRounds.has(`${teamName}|${h.round_num}`)) return;
+                if (!snap.teamTypeTags[teamName]) snap.teamTypeTags[teamName] = [];
+                if (!snap.teamTypeTags[teamName].includes(h.deposit_type)) snap.teamTypeTags[teamName].push(h.deposit_type);
+            }
+        });
+        _bank.roundSnapshots.push(snap);
+    }
+
+    // 배율 UI 반영 (View 1 모달이 열려 있을 때)
+    _bankSyncRatioUI();
+}
 
 _bankLoad();
