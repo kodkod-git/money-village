@@ -1213,7 +1213,7 @@
         .tr-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; }
         @media (max-width: 480px) { .tr-cards-grid { grid-template-columns: 1fr; } }
         .tr-card { position: relative; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.10); border: 1.5px solid #d0d0d0; }
-        .tr-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent); z-index: 1; pointer-events: none; }
+        .tr-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 120px; background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent); z-index: 1; pointer-events: none; }
         .tr-thumbnail { overflow: hidden; }
         .tr-thumbnail img { width: 100%; height: auto; display: block; }
         .tr-card-body { padding: 10px 12px; }
