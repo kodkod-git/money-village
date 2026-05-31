@@ -155,7 +155,6 @@
             <div style="display:flex; align-items:center; gap:8px;">
                 <button class="btn btn-dark" style="background:#607d8b;" id="btnEditPrev" onclick="switchScreen('countingScreen')">✏️ 수정(이전으로)</button>
                 <button class="btn btn-drive" id="btnSaveDriveReport" onclick="uploadPdfToDrive()">☁️ 드라이브 저장</button>
-                <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()">📤 공유하기</button>
                 <button class="btn btn-danger" id="btnUploadPdf" onclick="downloadPDF('report')">📄 PDF 저장</button>
                 <button class="btn btn-success" onclick="printReport()">🖨️ 출력</button>
                 <button class="btn btn-primary" onclick="confirmResetSession()">🔄 처음으로</button>
@@ -166,6 +165,7 @@
             <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
             <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
             <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
+            <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()" style="font-size:12px; padding:5px 12px;">📤 공유하기</button>
         </div>
 
         <div class="report-paper" id="pdfAreaReport">
