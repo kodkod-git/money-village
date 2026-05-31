@@ -193,7 +193,6 @@
         updateRankUI(p);
         refreshDisplayOnly(p);
         renderPlayStyleReport(p);
-        _updateKakaoShareBtn(idx);
     }
 
     function updatePlayerNickname() {
@@ -544,40 +543,37 @@
             .replace(/\s/g, '');
     }
 
-    function _updateKakaoShareBtn(idx) {
-        const btn = document.getElementById('btnKakaoShare');
-        if (!btn) return;
-        const url = _driveFileUrls[idx];
+    function shareReport() {
+        const url = _driveFileUrls[viewingPlayerIndex];
+        const modal = document.getElementById('shareModal');
+        const urlRow = document.getElementById('shareUrlRow');
+        const urlInput = document.getElementById('shareUrlInput');
+        const noUrlMsg = document.getElementById('shareNoUrlMsg');
         if (url) {
-            btn.style.display = '';
-            btn.dataset.shareUrl = url;
+            urlInput.value = url;
+            urlRow.style.display = 'flex';
+            noUrlMsg.style.display = 'none';
         } else {
-            btn.style.display = 'none';
-            btn.dataset.shareUrl = '';
+            urlRow.style.display = 'none';
+            noUrlMsg.style.display = 'block';
         }
+        modal.classList.add('show');
     }
 
-    function shareKakao() {
-        const btn = document.getElementById('btnKakaoShare');
-        const url = btn?.dataset.shareUrl;
-        if (!url) return;
+    function closeShareModal() {
+        document.getElementById('shareModal').classList.remove('show');
+    }
 
-        if (typeof Kakao !== 'undefined' && Kakao.isInitialized()) {
-            const p = players[viewingPlayerIndex];
-            const name = (p?.nickname || p?.name || '참가자');
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: `머니빌리지 자산 리포트 - ${name}`,
-                    description: '자산 리포트를 확인해보세요!',
-                    link: { mobileWebUrl: url, webUrl: url }
-                }
-            });
-        } else {
-            navigator.clipboard.writeText(url)
-                .then(() => alert('📋 링크가 클립보드에 복사되었습니다.\n카카오톡에 붙여넣기 하세요.\n\n' + url))
-                .catch(() => prompt('아래 링크를 복사하세요:', url));
-        }
+    function copyShareLink() {
+        const url = document.getElementById('shareUrlInput').value;
+        navigator.clipboard.writeText(url)
+            .then(() => {
+                const btn = document.querySelector('#shareModal .btn-primary');
+                const orig = btn.textContent;
+                btn.textContent = '✅ 복사됨';
+                setTimeout(() => { btn.textContent = orig; }, 1500);
+            })
+            .catch(() => prompt('아래 링크를 복사하세요:', url));
     }
 
     async function uploadPdfToDrive() {
