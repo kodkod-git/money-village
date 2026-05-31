@@ -17,6 +17,7 @@ const _bank = {
     prevRoundsTotal: {},
     playerTypeTags:  {},
     teamTypeTags:    {},
+    roundSnapshots:  [],
     viewMode:  'team'
 };
 
@@ -226,6 +227,7 @@ async function bankStep1Complete() {
         _bank.prevRoundsTotal = {};
         _bank.playerTypeTags  = {};
         _bank.teamTypeTags    = {};
+        _bank.roundSnapshots  = [];
         _bank.currentRound    = 1;
         _bank.currentPlayerIdx = null;   // ← 추가
         _bank.viewMode        = 'team';
@@ -253,7 +255,11 @@ function _bankRenderPlayerList() {
         titleEl.textContent = _ROUND_TITLE[_bank.currentRound] || '예금 신청 종료';
     }
 
-    // 다음 라운드 버튼 상태 업데이트
+    // 이전/다음 라운드 버튼 상태 업데이트
+    const backBtn = document.getElementById('bankGoBackRoundBtn');
+    if (backBtn) {
+        backBtn.disabled = _bank.currentRound <= 1 || _bank.roundSnapshots.length === 0;
+    }
     const advBtn = document.getElementById('bankAdvanceRoundBtn');
     if (advBtn) {
         const isEnded = _bank.currentRound >= 4;
@@ -529,10 +535,41 @@ function _bankSubmitTeam(p, type, amount) {
 }
 
 // ── 라운드 전환 ────────────────────────────────────────────────────
+function bankGoBackRound() {
+    if (_bank.currentRound <= 1) { alert('첫 번째 라운드입니다.'); return; }
+    if (!confirm('이전 라운드로 돌아갑니다.\n현재 라운드 입력 내용은 초기화됩니다.\n계속하시겠습니까?')) return;
+
+    const snapshot = _bank.roundSnapshots.pop();
+    if (!snapshot) { alert('이전 라운드 데이터가 없습니다.'); return; }
+
+    _bank.currentRound    = snapshot.round;
+    _bank.teamDeposits    = snapshot.teamDeposits;
+    _bank.indivCompleted  = snapshot.indivCompleted;
+    _bank.teamRewards     = snapshot.teamRewards;
+    _bank.indivRewards    = snapshot.indivRewards;
+    _bank.prevRoundsTotal = snapshot.prevRoundsTotal;
+    _bank.playerTypeTags  = snapshot.playerTypeTags;
+    _bank.teamTypeTags    = snapshot.teamTypeTags;
+
+    _bankRenderPlayerList();
+    _bankShowView(2);
+}
+
 function bankAdvanceRound() {
     const isLast = _bank.currentRound >= 3;
     const label  = isLast ? '예금 신청을 종료합니다' : '다음 라운드로 넘어갑니다';
-    if (!confirm(`${label}.\n미완료 팀 신청은 원금만 반환됩니다.\n계속하시겠습니까?`)) return;
+    if (!confirm(`${label}.\n미완료 팀 신청은 원금만 반환됩니다.\n마감하시겠습니까?`)) return;
+
+    _bank.roundSnapshots.push({
+        round:          _bank.currentRound,
+        teamDeposits:   JSON.parse(JSON.stringify(_bank.teamDeposits)),
+        indivCompleted: JSON.parse(JSON.stringify(_bank.indivCompleted)),
+        teamRewards:    JSON.parse(JSON.stringify(_bank.teamRewards)),
+        indivRewards:   JSON.parse(JSON.stringify(_bank.indivRewards)),
+        prevRoundsTotal:JSON.parse(JSON.stringify(_bank.prevRoundsTotal)),
+        playerTypeTags: JSON.parse(JSON.stringify(_bank.playerTypeTags)),
+        teamTypeTags:   JSON.parse(JSON.stringify(_bank.teamTypeTags)),
+    });
 
     // 미완료 팀: 일부만 신청한 경우 신청 멤버에게 원금 반환
     for (const [teamName, td] of Object.entries(_bank.teamDeposits)) {
