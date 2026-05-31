@@ -544,7 +544,8 @@
     }
 
     function shareReport() {
-        const url = _driveFileUrls[viewingPlayerIndex];
+        const p = players[viewingPlayerIndex];
+        const url = (p && p.reportFileUrl) || _driveFileUrls[viewingPlayerIndex];
         const modal = document.getElementById('shareModal');
         const urlRow = document.getElementById('shareUrlRow');
         const urlInput = document.getElementById('shareUrlInput');
@@ -633,7 +634,10 @@
                 if (!json.success) {
                     throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || ''}`);
                 }
-                if (json.fileUrl) _driveFileUrls[i] = json.fileUrl;
+                if (json.fileUrl) {
+                    _driveFileUrls[i] = json.fileUrl;
+                    players[i].reportFileUrl = json.fileUrl;
+                }
             }
 
             alert(`✅ 현재 세션 참가자 ${players.length}명의 PDF를 모두 드라이브에 저장했습니다.`);
