@@ -607,6 +607,7 @@ function bankGoBackRound() {
     _bank.playerTypeTags  = snapshot.playerTypeTags;
     _bank.teamTypeTags    = snapshot.teamTypeTags;
 
+    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
     _bankRenderPlayerList();
     _bankShowView(2);
 }
@@ -718,8 +719,8 @@ function _bankMergeRemoteState(state, history) {
 
     const remoteRound = state.current_round ?? 1;
 
-    // 라운드 전환 감지: 원격이 더 앞서 있으면 로컬 라운드 레벨 상태 리셋
-    if (remoteRound > _bank.currentRound) {
+    // 라운드 전환 감지: 원격과 로컬이 다르면 동기화 (전진 및 후퇴 모두 처리)
+    if (remoteRound !== _bank.currentRound) {
         _bank.currentRound   = remoteRound;
         _bank.indivCompleted = {};
         _bank.teamDeposits   = {};
@@ -789,6 +790,53 @@ function _bankMergeRemoteState(state, history) {
             _bank.teamRewards[r.nickname] = r.matured_amount;
         }
     });
+
+    // roundSnapshots 재구성: history 기반으로 각 완료 라운드의 스냅샷 복원
+    _bank.roundSnapshots = [];
+    for (let rNum = 1; rNum < _bank.currentRound; rNum++) {
+        const roundRows = history.filter(h => h.round_num === rNum);
+        const snap = {
+            round:          rNum,
+            indivCompleted: {},
+            teamDeposits:   {},
+            indivRewards:   {},
+            teamRewards:    {},
+            prevRoundsTotal:{},
+            playerTypeTags: {},
+            teamTypeTags:   {},
+        };
+        history.filter(h => h.round_num < rNum).forEach(h => {
+            snap.prevRoundsTotal[h.nickname] = (snap.prevRoundsTotal[h.nickname] || 0) + (h.matured_amount || 0);
+        });
+        roundRows.forEach(h => {
+            const idx = _bank.players.findIndex(p => p.nickname === h.nickname);
+            if (idx === -1) return;
+            if (!h.is_team) {
+                snap.indivCompleted[idx] = { type: h.deposit_type, amount: h.amount };
+                if (h.matured_amount) snap.indivRewards[h.nickname] = h.matured_amount;
+            } else {
+                const teamName = _bank.players[idx].team_name;
+                if (!teamName) return;
+                if (!snap.teamDeposits[teamName]) snap.teamDeposits[teamName] = { type: h.deposit_type, members: {} };
+                snap.teamDeposits[teamName].members[idx] = h.amount;
+                if (h.matured_amount) snap.teamRewards[h.nickname] = h.matured_amount;
+            }
+        });
+        history.filter(h => h.round_num <= rNum).forEach(h => {
+            const player = _bank.players.find(p => p.nickname === h.nickname);
+            if (!player) return;
+            if (!h.is_team) {
+                if (!snap.playerTypeTags[h.nickname]) snap.playerTypeTags[h.nickname] = [];
+                if (!snap.playerTypeTags[h.nickname].includes(h.deposit_type)) snap.playerTypeTags[h.nickname].push(h.deposit_type);
+            } else {
+                const teamName = player.team_name;
+                if (!teamName) return;
+                if (!snap.teamTypeTags[teamName]) snap.teamTypeTags[teamName] = [];
+                if (!snap.teamTypeTags[teamName].includes(h.deposit_type)) snap.teamTypeTags[teamName].push(h.deposit_type);
+            }
+        });
+        _bank.roundSnapshots.push(snap);
+    }
 
     // 배율 UI 반영 (View 1 모달이 열려 있을 때)
     _bankSyncRatioUI();

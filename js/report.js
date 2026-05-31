@@ -93,6 +93,7 @@
         switchScreen('reportScreen');
         initAssetGrid('rptStockGrid', false, false);
         viewingPlayerIndex = 0;
+        _driveFileUrls = {};
 
         const gameId = players[0]?.gameId;
         if (gameId) {
