@@ -261,6 +261,7 @@ function quizClose() {
     if (!confirm('퀴즈 퀘스트를 마감합니다.\n이후 진행이 불가능합니다.\n마감하시겠습니까?')) return;
     _quiz.isClosed = true;
     sbUpsertQuizState(_quiz.gameId, { is_closed: true });
+    document.getElementById('quizGameView').style.display = 'none';
     _quizRenderPlayerList();
 }
 
