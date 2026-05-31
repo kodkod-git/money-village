@@ -55,6 +55,9 @@
             <button class="btn btn-citizen" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openCitizenMgmtModal()">
                 👥 머니빌리지 시민권자 관리
             </button>
+            <button class="btn btn-primary" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="showTestReportScreen()">
+                📋 경제적 잠재력 테스트 보고서 출력하기
+            </button>
         </div>
     </div>
 
@@ -1001,7 +1004,20 @@
         </div>
     </div>
 
+    <!-- 경제적 잠재력 테스트 보고서 화면 -->
+    <div id="testReportScreen" class="screen">
+        <div class="bank-screen-wrap">
+            <div class="bank-screen-header">
+                <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                <div class="bank-screen-title">📋 경제적 잠재력 테스트 보고서</div>
+                <button class="btn btn-primary" style="margin-left:auto; padding:8px 14px; font-size:13px;" onclick="fetchTestReports()">🔄 새로고침</button>
+            </div>
+            <div id="testReportCards" class="tr-cards-grid"></div>
+        </div>
+    </div>
+
 </div>
+<div id="testReportPrintArea"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -1019,6 +1035,7 @@
 <script src="js/bank.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/test-report.js"></script>
 <script>
     if (typeof KAKAO_APP_KEY !== 'undefined' && KAKAO_APP_KEY && typeof Kakao !== 'undefined') {
         Kakao.init(KAKAO_APP_KEY);
