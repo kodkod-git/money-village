@@ -298,9 +298,10 @@ const _QUIZ_COOLDOWN_MS = 60000;
 
 function quizClose() {
     if (_quiz.isClosed) return;
-    if (!confirm('퀴즈 퀘스트를 마감합니다.\n이후 진행이 불가능합니다.\n계속하시겠습니까?')) return;
+    if (!confirm('퀴즈 퀘스트를 마감합니다.\n이후 진행이 불가능합니다.\n마감하시겠습니까?')) return;
     _quiz.isClosed = true;
     sbUpsertQuizState(_quiz.gameId, { is_closed: true });
+    document.getElementById('quizGameView').style.display = 'none';
     _quizRenderPlayerList();
 }
 

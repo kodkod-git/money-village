@@ -27,6 +27,7 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">    
     <link rel="stylesheet" href="style.css">
 </head>
@@ -154,13 +155,14 @@
             <div style="display:flex; align-items:center; gap:8px;">
                 <button class="btn btn-dark" style="background:#607d8b;" id="btnEditPrev" onclick="switchScreen('countingScreen')">✏️ 수정(이전으로)</button>
                 <button class="btn btn-drive" id="btnSaveDriveReport" onclick="uploadPdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareKakao()" style="display:none;">💬 카카오 공유</button>
                 <button class="btn btn-danger" id="btnUploadPdf" onclick="downloadPDF('report')">📄 PDF 저장</button>
                 <button class="btn btn-success" onclick="printReport()">🖨️ 출력</button>
                 <button class="btn btn-primary" onclick="confirmResetSession()">🔄 처음으로</button>
             </div>
         </div>
 
-        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0;">
+        <div class="no-print" style="display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0;">
             <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
             <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
             <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
@@ -323,7 +325,7 @@
             </div>
         </div>
 
-        <div style="display:flex; align-items:center; justify-content:center; padding:2px 0 14px;">
+        <div class="no-print" style="display:flex; align-items:center; justify-content:center; padding:2px 0 14px;">
             <div class="fame-tabs">
                 <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
                 <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
@@ -455,19 +457,17 @@
                         <div id="bankGameInfo" class="bank-screen-subtitle"></div>
                     </div>
                 </div>
-                <div class="bank-step-indicator">
-                    <div class="bank-step-dot on"></div>
-                    <div class="bank-step-dot"></div>
-                    <div class="bank-step-dot"></div>
-                </div>
                 <div id="bankTabBar" style="display:none;" class="player-tab-bar">
                     <button id="bankTabTeam"  class="player-tab active" onclick="bankSetViewMode('team')">팀</button>
                     <button id="bankTabIndiv" class="player-tab"        onclick="bankSetViewMode('individual')">개인</button>
                 </div>
                 <div id="bankPlayerGrid" class="bank-player-grid"></div>
-                <div style="padding: 16px 0 8px;">
+                <div style="padding: 16px 0 8px; display:flex; gap:8px;">
+                    <button id="bankGoBackRoundBtn" class="btn btn-dark"
+                        style="flex:1; padding:14px; font-size:15px; justify-content:center;"
+                        onclick="bankGoBackRound()">← 이전 라운드</button>
                     <button id="bankAdvanceRoundBtn" class="btn btn-purple"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
+                        style="flex:1; padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankAdvanceRound()">다음 라운드 →</button>
                 </div>
             </div>
@@ -477,11 +477,6 @@
                 <div class="bank-screen-header">
                     <button class="bank-back-btn" onclick="bankBackToList()">←</button>
                     <div class="bank-screen-title">💰 예금 신청서</div>
-                </div>
-                <div class="bank-step-indicator">
-                    <div class="bank-step-dot on"></div>
-                    <div class="bank-step-dot on"></div>
-                    <div class="bank-step-dot"></div>
                 </div>
                 <p id="bankDepositPlayerName" class="bank-screen-subtitle" style="text-align:center; margin-bottom:16px;"></p>
 
@@ -502,11 +497,6 @@
 
             <!-- View 4: 결과 -->
             <div id="bankView4" style="display:none;">
-                <div class="bank-step-indicator">
-                    <div class="bank-step-dot on"></div>
-                    <div class="bank-step-dot on"></div>
-                    <div class="bank-step-dot on"></div>
-                </div>
                 <div class="bank-screen-title" style="text-align:center; margin-bottom:20px;">🎉 예금 신청 완료</div>
                 <div class="bank-result-card">
                     <div class="bank-result-badge" id="bankResultRoundBadge">1라운드</div>
@@ -1014,5 +1004,10 @@
 <script src="js/bank.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/admin.js"></script>
+<script>
+    if (typeof KAKAO_APP_KEY !== 'undefined' && KAKAO_APP_KEY && typeof Kakao !== 'undefined') {
+        Kakao.init(KAKAO_APP_KEY);
+    }
+</script>
 </body>
 </html>

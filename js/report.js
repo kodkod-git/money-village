@@ -1,3 +1,5 @@
+    let _driveFileUrls = {};
+
     function renderPlayStyleReport(p) {
         const badgeWrap = document.getElementById('rptTraitBadges');
         const grid = document.getElementById('rptPlayStyleGrid');
@@ -190,6 +192,7 @@
         updateRankUI(p);
         refreshDisplayOnly(p);
         renderPlayStyleReport(p);
+        _updateKakaoShareBtn(idx);
     }
 
     function updatePlayerNickname() {
@@ -540,6 +543,42 @@
             .replace(/\s/g, '');
     }
 
+    function _updateKakaoShareBtn(idx) {
+        const btn = document.getElementById('btnKakaoShare');
+        if (!btn) return;
+        const url = _driveFileUrls[idx];
+        if (url) {
+            btn.style.display = '';
+            btn.dataset.shareUrl = url;
+        } else {
+            btn.style.display = 'none';
+            btn.dataset.shareUrl = '';
+        }
+    }
+
+    function shareKakao() {
+        const btn = document.getElementById('btnKakaoShare');
+        const url = btn?.dataset.shareUrl;
+        if (!url) return;
+
+        if (typeof Kakao !== 'undefined' && Kakao.isInitialized()) {
+            const p = players[viewingPlayerIndex];
+            const name = (p?.nickname || p?.name || '참가자');
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: `머니빌리지 자산 리포트 - ${name}`,
+                    description: '자산 리포트를 확인해보세요!',
+                    link: { mobileWebUrl: url, webUrl: url }
+                }
+            });
+        } else {
+            navigator.clipboard.writeText(url)
+                .then(() => alert('📋 링크가 클립보드에 복사되었습니다.\n카카오톡에 붙여넣기 하세요.\n\n' + url))
+                .catch(() => prompt('아래 링크를 복사하세요:', url));
+        }
+    }
+
     async function uploadPdfToDrive() {
         const btn = document.getElementById('btnSaveDriveReport');
 
@@ -597,6 +636,7 @@
                 if (!json.success) {
                     throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || ''}`);
                 }
+                if (json.fileUrl) _driveFileUrls[i] = json.fileUrl;
             }
 
             alert(`✅ 현재 세션 참가자 ${players.length}명의 PDF를 모두 드라이브에 저장했습니다.`);

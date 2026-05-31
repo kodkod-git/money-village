@@ -16,9 +16,10 @@
         .btn-success { background: var(--mv-orange); } 
         .btn-dark { background: #455a64; }
         .btn-danger { background: #e74c3c; }
-        .btn-drive { background: #00897b; } 
-        .btn-fame { background: #ffd700; color: #333; } 
+        .btn-drive { background: #00897b; }
+        .btn-fame { background: #ffd700; color: #333; }
         .btn-purple { background: #7e57c2; }
+        .btn-kakao { background: #FEE500; color: #3C1E1E; }
         .btn-setup-big { width: 48%; padding: 12px; margin-top: 10px; }
 
         /* 화면 전환 */
@@ -496,7 +497,7 @@
             }
             
             /* 모든 불필요 요소 숨김 */
-            .setup-card, .dashboard-layout, .report-controls, .screen { display: none !important; }
+            .setup-card, .dashboard-layout, .report-controls, .screen, .no-print { display: none !important; }
             
             /* 활성화된 화면만 표시 */
             .screen.active-screen {
