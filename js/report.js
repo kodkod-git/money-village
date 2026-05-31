@@ -443,6 +443,7 @@
 
                     cloned.classList.add('pdf-export');
                     cloned.style.boxShadow = 'none';
+                    cloned.querySelectorAll('.no-print').forEach(el => { el.style.display = 'none'; });
 
                     // input -> span 치환
                     cloned.querySelectorAll('input').forEach((inp) => {
@@ -496,6 +497,7 @@
 
                     cloned.classList.add('pdf-export');
                     cloned.style.boxShadow = 'none';
+                    cloned.querySelectorAll('.no-print').forEach(el => { el.style.display = 'none'; });
 
                     cloned.querySelectorAll('input').forEach((inp) => {
                         const span = doc.createElement('span');
@@ -634,9 +636,10 @@
                 if (!json.success) {
                     throw new Error(`업로드 실패 (${i + 1}/${players.length})\n${json?.message || ''}`);
                 }
-                if (json.fileUrl) {
-                    _driveFileUrls[i] = json.fileUrl;
-                    players[i].reportFileUrl = json.fileUrl;
+                const fileUrl = json.fileUrl || (json.fileId ? `https://drive.google.com/file/d/${json.fileId}/view` : null);
+                if (fileUrl) {
+                    _driveFileUrls[i] = fileUrl;
+                    players[i].reportFileUrl = fileUrl;
                 }
             }
 
