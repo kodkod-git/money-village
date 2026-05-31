@@ -14,7 +14,7 @@ function showTestReportScreen() {
     fetchTestReports();
 }
 
-async function fetchTestReports() {
+function fetchTestReports() {
     const container = document.getElementById('testReportCards');
     container.innerHTML = '<div class="tr-status-msg">불러오는 중...</div>';
 
@@ -23,15 +23,28 @@ async function fetchTestReports() {
         return;
     }
 
-    try {
-        const res  = await fetch(`${SURVEY_SCRIPT_URL}?action=listTestReports`);
-        const data = await res.json();
-        if (!data.success) throw new Error(data.code || 'FETCH_ERROR');
+    const cbName = '_trCb_' + Date.now();
+    const script = document.createElement('script');
+
+    window[cbName] = function(data) {
+        delete window[cbName];
+        document.body.removeChild(script);
+        if (!data.success) {
+            container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}</div>`;
+            return;
+        }
         _testReports = data.reports || [];
         renderTestReportCards();
-    } catch (err) {
-        container.innerHTML = `<div class="tr-status-msg">❌ 불러오기 실패: ${err.message}</div>`;
-    }
+    };
+
+    script.onerror = function() {
+        delete window[cbName];
+        document.body.removeChild(script);
+        container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 네트워크 오류</div>';
+    };
+
+    script.src = `${SURVEY_SCRIPT_URL}?action=listTestReports&callback=${cbName}`;
+    document.body.appendChild(script);
 }
 
 function renderTestReportCards() {
