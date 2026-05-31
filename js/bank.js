@@ -741,7 +741,21 @@ function _bankMergeRemoteState(state, history) {
     _bank.playerTypeTags = {};
     _bank.teamTypeTags   = {};
 
-    // 타입 태그는 전체 라운드에서 누적
+    // 팀 완료 라운드 사전 계산 (팀 전원 신청한 경우만 뱃지 부여)
+    const _teamRoundCounts = {};
+    history.filter(h => h.is_team).forEach(h => {
+        const pl = _bank.players.find(p => p.nickname === h.nickname);
+        if (!pl || !pl.team_name) return;
+        const key = `${pl.team_name}|${h.round_num}`;
+        _teamRoundCounts[key] = (_teamRoundCounts[key] || 0) + 1;
+    });
+    const _completedTeamRounds = new Set(
+        Object.entries(_teamRoundCounts)
+            .filter(([key, cnt]) => cnt >= _bank.players.filter(p => p.team_name === key.split('|')[0]).length)
+            .map(([key]) => key)
+    );
+
+    // 타입 태그는 전체 라운드에서 누적 (팀은 전원 완료된 라운드만)
     history.forEach(r => {
         const player = _bank.players.find(p => p.nickname === r.nickname);
         if (!player) return;
@@ -752,7 +766,7 @@ function _bankMergeRemoteState(state, history) {
             }
         } else {
             const teamName = player.team_name;
-            if (!teamName) return;
+            if (!teamName || !_completedTeamRounds.has(`${teamName}|${r.round_num}`)) return;
             if (!_bank.teamTypeTags[teamName]) _bank.teamTypeTags[teamName] = [];
             if (!_bank.teamTypeTags[teamName].includes(r.deposit_type)) {
                 _bank.teamTypeTags[teamName].push(r.deposit_type);
@@ -822,6 +836,19 @@ function _bankMergeRemoteState(state, history) {
                 if (h.matured_amount) snap.teamRewards[h.nickname] = h.matured_amount;
             }
         });
+        const snapTeamRoundCounts = {};
+        history.filter(h => h.is_team && h.round_num <= rNum).forEach(h => {
+            const pl = _bank.players.find(p => p.nickname === h.nickname);
+            if (!pl || !pl.team_name) return;
+            const key = `${pl.team_name}|${h.round_num}`;
+            snapTeamRoundCounts[key] = (snapTeamRoundCounts[key] || 0) + 1;
+        });
+        const snapCompletedTeamRounds = new Set(
+            Object.entries(snapTeamRoundCounts)
+                .filter(([key, cnt]) => cnt >= _bank.players.filter(p => p.team_name === key.split('|')[0]).length)
+                .map(([key]) => key)
+        );
+
         history.filter(h => h.round_num <= rNum).forEach(h => {
             const player = _bank.players.find(p => p.nickname === h.nickname);
             if (!player) return;
@@ -830,7 +857,7 @@ function _bankMergeRemoteState(state, history) {
                 if (!snap.playerTypeTags[h.nickname].includes(h.deposit_type)) snap.playerTypeTags[h.nickname].push(h.deposit_type);
             } else {
                 const teamName = player.team_name;
-                if (!teamName) return;
+                if (!teamName || !snapCompletedTeamRounds.has(`${teamName}|${h.round_num}`)) return;
                 if (!snap.teamTypeTags[teamName]) snap.teamTypeTags[teamName] = [];
                 if (!snap.teamTypeTags[teamName].includes(h.deposit_type)) snap.teamTypeTags[teamName].push(h.deposit_type);
             }
