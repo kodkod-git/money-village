@@ -97,6 +97,7 @@ function printTestReport(idx) {
             <img src="${imagePath}" style="width:100%; display:block;">
             <span class="tr-overlay tr-name">${r.name}</span>
             <span class="tr-overlay tr-age">${ageText}</span>
+            <span class="tr-overlay tr-date">${r.createdAt || ''}</span>
         </div>
     `;
 
