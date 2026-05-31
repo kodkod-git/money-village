@@ -1209,10 +1209,11 @@
         .btn-retry:active { background: #333; }
 
         /* [화면 테스트보고서] */
-        #testReportScreen .bank-screen-wrap { max-width: 960px; }
-        .tr-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+        #testReportScreen .bank-screen-wrap { max-width: 1200px; }
+        .tr-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; }
+        @media (max-width: 700px) { .tr-cards-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 480px) { .tr-cards-grid { grid-template-columns: 1fr; } }
-        .tr-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border: 1px solid #eee; }
+        .tr-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.10); border: 1.5px solid #d0d0d0; }
         .tr-thumbnail { overflow: hidden; }
         .tr-thumbnail img { width: 100%; height: auto; display: block; }
         .tr-card-body { padding: 10px 12px; }
