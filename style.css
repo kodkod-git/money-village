@@ -1216,7 +1216,7 @@
         .tr-thumbnail { overflow: hidden; }
         .tr-thumbnail img { width: 100%; height: auto; display: block; }
         .tr-card-body { padding: 10px 12px; }
-        .tr-card-title { position: absolute; top: 10px; right: 10px; font-size: 44px; font-weight: 700; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6); max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tr-card-title { position: absolute; top: 10px; left: 10px; font-size: 22px; font-weight: 700; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6); max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tr-print-btn { display: flex; width: 100%; padding: 8px; font-size: 12px; justify-content: center; background: #1565c0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .tr-status-msg { padding: 40px; text-align: center; color: #888; grid-column: 1 / -1; }
         .tr-overlay { position: absolute; color: #333; font-weight: 600; font-size: 1.8vw; line-height: 1; }
