@@ -3,7 +3,14 @@ const SURVEY_SPREADSHEET_ID = '102DrLmocl8IPzU_qWnAUzlA9o5FX34GppEMXoE5hjw0';
 const SURVEY_SHEET_NAME     = 'Smore-JFWXFqyQVv-jrE';
 
 function handleListTestReports_() {
-  const ss = SpreadsheetApp.openById(SURVEY_SPREADSHEET_ID);
+  let ss;
+  try {
+    ss = SpreadsheetApp.openById(SURVEY_SPREADSHEET_ID);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, code: 'SPREADSHEET_ACCESS_ERROR', reports: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   const sh = ss.getSheetByName(SURVEY_SHEET_NAME);
 
   if (!sh) {
