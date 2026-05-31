@@ -161,16 +161,11 @@
             </div>
         </div>
 
-        <div class="no-print" style="display:flex; align-items:center; padding:8px 0;">
-            <div style="flex:1;"></div>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
-                <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
-                <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
-            </div>
-            <div style="flex:1; display:flex; justify-content:flex-end; padding-right:16px;">
-                <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()" style="font-size:12px; padding:5px 12px;">📤 공유하기</button>
-            </div>
+        <div class="no-print" style="position:relative; display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0;">
+            <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
+            <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
+            <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
+            <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()" style="position:absolute; right:16px; font-size:12px; padding:5px 12px;">📤 공유하기</button>
         </div>
 
         <div class="report-paper" id="pdfAreaReport">
