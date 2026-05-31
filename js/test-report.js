@@ -33,7 +33,7 @@ function fetchTestReports() {
             container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}</div>`;
             return;
         }
-        _testReports = data.reports || [];
+        _testReports = (data.reports || []).sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
         renderTestReportCards();
     };
 
