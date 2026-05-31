@@ -1209,6 +1209,7 @@
         .btn-retry:active { background: #333; }
 
         /* [화면 테스트보고서] */
+        #testReportScreen .bank-screen-wrap { max-width: 960px; }
         .tr-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
         @media (max-width: 480px) { .tr-cards-grid { grid-template-columns: 1fr; } }
         .tr-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border: 1px solid #eee; }
