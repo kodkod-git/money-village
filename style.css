@@ -1221,9 +1221,9 @@
         .tr-print-btn { display: flex; width: 100%; padding: 8px; font-size: 12px; justify-content: center; background: #1565c0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .tr-status-msg { padding: 40px; text-align: center; color: #888; grid-column: 1 / -1; }
         .tr-overlay { position: absolute; color: #333; font-weight: 600; font-size: 2.0vw; line-height: 1; }
-        .tr-name { top: 12.62%; left: 22%; }
-        .tr-age  { top: 12.62%; left: 53%; }
-        .tr-date { top: 12.62%; left: 75%; }
+        .tr-name { top: 12.62%; left: 21%; }
+        .tr-age  { top: 12.62%; left: 52.5%; }
+        .tr-date { top: 12.62%; left: 81%; }
         #testReportPrintArea { display: none; }
         @media print {
             body > *:not(#testReportPrintArea) { display: none !important; }
