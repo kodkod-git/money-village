@@ -1210,6 +1210,9 @@
 
         /* [화면 테스트보고서] */
         #testReportScreen .bank-screen-wrap { max-width: 1200px; }
+        .tr-search-wrap { padding: 12px 20px 0; }
+        .tr-search-input { width: 100%; box-sizing: border-box; padding: 10px 16px; font-size: 15px; border: 1.5px solid #c0c0c0; border-radius: 8px; outline: none; }
+        .tr-search-input:focus { border-color: #1565c0; }
         .tr-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; }
         @media (max-width: 480px) { .tr-cards-grid { grid-template-columns: 1fr; } }
         .tr-card { position: relative; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.10); border: 1.5px solid #d0d0d0; }
@@ -1220,13 +1223,14 @@
         .tr-card-title { position: absolute; top: 10px; left: 10px; font-size: 22px; font-weight: 700; color: #fff; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; z-index: 2; }
         .tr-print-btn { display: flex; width: 100%; padding: 8px; font-size: 12px; justify-content: center; background: #1565c0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .tr-status-msg { padding: 40px; text-align: center; color: #888; grid-column: 1 / -1; }
-        .tr-overlay { position: absolute; color: #333; font-weight: 600; font-size: 2.0vw; line-height: 1; }
-        .tr-name { top: 12.62%; left: 21%; }
-        .tr-age  { top: 12.62%; left: 52.5%; }
-        .tr-date { top: 12.62%; left: 81%; }
+        .tr-overlay { position: absolute; color: #333; font-weight: 700; font-size: 2.0vw; line-height: 1; }
+        .tr-name { top: 11.9%; left: 21%; }
+        .tr-age  { top: 11.9%; left: 47.5%; }
+        .tr-date { top: 11.9%; left: 78.5%; }
         #testReportPrintArea { display: none; }
         @media print {
-            body > *:not(#testReportPrintArea) { display: none !important; }
-            #testReportPrintArea { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+            body.printing-test-report > *:not(#testReportPrintArea) { display: none !important; }
+            body.printing-test-report #testReportPrintArea { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+            body.printing-test-report { margin: 0; }
             @page { size: A4 portrait; margin: 0; }
         }

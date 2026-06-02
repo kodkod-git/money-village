@@ -1012,6 +1012,9 @@
                 <div class="bank-screen-title">📋 경제적 잠재력 테스트 보고서</div>
                 <button class="btn btn-primary" style="margin-left:auto; padding:8px 14px; font-size:13px;" onclick="fetchTestReports()">🔄 새로고침</button>
             </div>
+            <div class="tr-search-wrap">
+                <input id="trSearchInput" class="tr-search-input" type="text" placeholder="🔍 이름 혹은 날짜로 검색 (ex. 20260602, 홍길동 ...)" oninput="filterTestReportCards(this.value)">
+            </div>
             <div id="testReportCards" class="tr-cards-grid"></div>
         </div>
     </div>

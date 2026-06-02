@@ -34,6 +34,8 @@ function fetchTestReports() {
             return;
         }
         _testReports = (data.reports || []).sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+        const searchEl = document.getElementById('trSearchInput');
+        if (searchEl) searchEl.value = '';
         renderTestReportCards();
     };
 
@@ -47,15 +49,29 @@ function fetchTestReports() {
     document.body.appendChild(script);
 }
 
-function renderTestReportCards() {
-    const container = document.getElementById('testReportCards');
+function filterTestReportCards(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q
+        ? _testReports.filter(r => {
+            const dateStr = (r.createdAt || '').replace(/-/g, '');
+            const title = `${dateStr}_${r.name}_테스트결과보고서`.toLowerCase();
+            return title.includes(q);
+        })
+        : _testReports;
+    renderTestReportCards(filtered);
+}
 
-    if (!_testReports.length) {
+function renderTestReportCards(reports) {
+    const container = document.getElementById('testReportCards');
+    const list = reports !== undefined ? reports : _testReports;
+
+    if (!list.length) {
         container.innerHTML = '<div class="tr-status-msg">결과가 없습니다.</div>';
         return;
     }
 
-    container.innerHTML = _testReports.map((r, i) => {
+    container.innerHTML = list.map((r, i) => {
+        const originalIdx = _testReports.indexOf(r);
         const color   = REPORT_IMAGES[r.result];
         const dateStr = (r.createdAt || '').replace(/-/g, '');
         const title   = `${dateStr}_${r.name}_테스트결과보고서`;
@@ -71,7 +87,7 @@ function renderTestReportCards() {
                 </div>
                 <div class="tr-card-body">
                     <div class="tr-card-title" title="${title}">${title}</div>
-                    <button class="tr-print-btn" onclick="printTestReport(${i})">🖨️ 출력하기</button>
+                    <button class="tr-print-btn" onclick="printTestReport(${originalIdx})">🖨️ 출력하기</button>
                 </div>
             </div>
         `;
@@ -101,6 +117,8 @@ function printTestReport(idx) {
         </div>
     `;
 
+    document.body.classList.add('printing-test-report');
     window.print();
+    document.body.classList.remove('printing-test-report');
     area.innerHTML = '';
 }
