@@ -26,23 +26,33 @@ function fetchTestReports() {
     const cbName = '_trCb_' + Date.now();
     const script = document.createElement('script');
 
+    const timeout = setTimeout(() => {
+        delete window[cbName];
+        if (document.body.contains(script)) document.body.removeChild(script);
+        container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 응답 시간 초과<br><small style="color:#aaa">GAS 배포 URL을 확인하거나 잠시 후 재시도해 주세요.</small><br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>';
+    }, 12000);
+
     window[cbName] = function(data) {
+        clearTimeout(timeout);
         delete window[cbName];
         document.body.removeChild(script);
         if (!data.success) {
-            container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}</div>`;
+            container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>`;
             return;
         }
-        _testReports = (data.reports || []).sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+        _testReports = (data.reports || [])
+            .filter(r => r.name && String(r.name).trim() && r.age && String(r.age).trim())
+            .sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
         const searchEl = document.getElementById('trSearchInput');
         if (searchEl) searchEl.value = '';
         renderTestReportCards();
     };
 
     script.onerror = function() {
+        clearTimeout(timeout);
         delete window[cbName];
         document.body.removeChild(script);
-        container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 네트워크 오류</div>';
+        container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 네트워크 오류<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>';
     };
 
     script.src = `${SURVEY_SCRIPT_URL}?action=listTestReports&callback=${cbName}`;
@@ -79,16 +89,13 @@ function renderTestReportCards(reports) {
 
         return `
             <div class="tr-card">
-                <div class="tr-thumbnail">
+                <div class="tr-thumbnail" onclick="printTestReport(${originalIdx})">
                     ${imgSrc
-                        ? `<img src="${imgSrc}" alt="${r.result}" onerror="this.parentElement.style.background='#f0f0f0'">`
+                        ? `<img src="${imgSrc}" alt="${r.result}" onerror="this.parentElement.style.background='#f0f0f0'"><div class="tr-thumbnail-overlay">🖨️ 출력하기</div>`
                         : `<div style="height:100%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">이미지 없음</div>`
                     }
                 </div>
-                <div class="tr-card-body">
-                    <div class="tr-card-title" title="${title}">${title}</div>
-                    <button class="tr-print-btn" onclick="printTestReport(${originalIdx})">🖨️ 출력하기</button>
-                </div>
+                <div class="tr-card-title" title="${title}">${title}</div>
             </div>
         `;
     }).join('');
