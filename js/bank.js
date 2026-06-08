@@ -303,6 +303,20 @@ function _bankRenderPlayerList() {
         titleEl.textContent = _ROUND_TITLE[_bank.currentRound] || '예금 신청 종료';
     }
 
+    // 이자배율 뱃지 업데이트
+    const ratioBadgeEl = document.getElementById('bankRatioBadge');
+    if (ratioBadgeEl) {
+        const type = _ROUND_TYPE[_bank.currentRound];
+        if (type) {
+            const isTeamView = _bank.gameType === 'team' && _bank.viewMode === 'team';
+            const rate = isTeamView ? _bank.teamSettings[type] : _bank.settings[type];
+            ratioBadgeEl.textContent = `보상: ${rate}배`;
+            ratioBadgeEl.style.display = 'inline-block';
+        } else {
+            ratioBadgeEl.style.display = 'none';
+        }
+    }
+
     // 이전/다음 라운드 버튼 상태 업데이트
     const backBtn = document.getElementById('bankGoBackRoundBtn');
     if (backBtn) {

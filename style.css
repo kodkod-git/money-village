@@ -833,8 +833,8 @@
         .team-group.team-done { background: #f0f7f0; border-color: #b2dfb2; }
         .team-group.team-in-progress { background: #FFFDE7; border-color: #FB8C00; }
         .team-group-header {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 15px; font-weight: 900; color: #3949AB;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 22px; font-weight: 900; color: #3949AB;
             margin-bottom: 10px; padding-bottom: 8px;
             border-bottom: 1.5px solid #C5CAE9;
         }
@@ -842,12 +842,12 @@
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
         .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
-        .bank-status-type  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
-        .bank-status-done  { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
-        .bank-status-pending { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 5px; background: #f0f0f0; color: #999; }
+        .bank-status-type  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
+        .bank-status-done  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
+        .bank-status-pending { font-size: 15px; font-weight: 600; padding: 3px 10px; border-radius: 5px; background: #f0f0f0; color: #999; }
         .bank-team-progress-badge {
             background: #e8edf2; color: #555;
-            padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700;
+            padding: 3px 12px; border-radius: 10px; font-size: 17px; font-weight: 700;
         }
         .bank-team-pending-msg {
             text-align: center; font-size: 13px; color: #888;
@@ -1049,13 +1049,19 @@
         }
         .quiz-reward-badge {
             background: #FFF8E1; color: #F57F17;
-            font-weight: 700; padding: 6px 18px;
-            border-radius: 20px; font-size: 17px;
-            display: inline-block;
+            font-weight: 700; padding: 8px 24px;
+            border-radius: 20px; font-size: 26px;
+            display: inline-block; white-space: nowrap;
+        }
+        .bank-ratio-header-badge {
+            background: #FFF8E1; color: #F57F17;
+            font-weight: 700; padding: 8px 24px;
+            border-radius: 20px; font-size: 26px;
+            white-space: nowrap;
         }
         .quiz-progress-badge {
-            font-size: 12px; font-weight: 700;
-            padding: 2px 8px; border-radius: 10px;
+            font-size: 17px; font-weight: 700;
+            padding: 3px 12px; border-radius: 10px;
             background: #e8edf2; color: #555;
         }
         .quiz-progress-badge.quiz-in-progress {
@@ -1066,8 +1072,8 @@
         }
         .quiz-progress-badge.quiz-cooldown { background: #fce4ec; color: #c62828; }
         .quiz-cooldown-badge {
-            font-size: 12px; font-weight: 700;
-            padding: 2px 8px; border-radius: 10px;
+            font-size: 17px; font-weight: 700;
+            padding: 3px 12px; border-radius: 10px;
             background: #fdecea; color: #c62828;
         }
 
@@ -1197,7 +1203,7 @@
         .result-msg.correct { color: #2980B9; }
         .result-msg.wrong   { color: #E74C3C; }
         .quiz-result-reward {
-            font-size: 20px; font-weight: 700;
+            font-size: 30px; font-weight: 700;
             color: #2e7d32; margin-top: 12px;
         }
         .btn-retry {
