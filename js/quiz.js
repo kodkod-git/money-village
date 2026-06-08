@@ -339,7 +339,7 @@ function _quizRenderPlayerList() {
 
     // 팀전 개인 뷰: 그룹 없이 팀 상태 기준으로 플레이어 카드 나열
     const isTeamIndivView = isTeam && _quiz.viewMode === 'individual';
-    grid.classList.toggle('is-team', isTeam && _quiz.viewMode === 'team');
+    grid.classList.toggle('is-team', true);
 
     if (!isTeam) {
         const sortedIndiv = _quiz.players
@@ -359,21 +359,32 @@ function _quizRenderPlayerList() {
             }
 
             const isClickable   = !_quiz.isClosed && !done && !onCooldown;
-            const badgeClass    = done ? ' quiz-done' : '';
-            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
+            const inProgress = count === 1;
+            const groupBadgeClass = onCooldown ? ' quiz-cooldown'
+                : done ? ' quiz-done'
+                : inProgress ? ' quiz-in-progress' : '';
+            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : `[${count}/2]`;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
+            groupEl.innerHTML = `<div class="team-group-header">
+                <span>${p.team_name || p.nickname}</span>
+                <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
+            </div>`;
+
+            const playersEl = document.createElement('div');
+            playersEl.className = 'team-group-players';
+            playersEl.style.gridTemplateColumns = '1fr';
 
             const card = document.createElement('div');
             card.className = 'bank-player-card' + (done ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
-            card.innerHTML = `
-                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
-                <div class="bank-player-status">
-                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                    <span class="quiz-progress-badge${badgeClass}">[${count}/2]</span>
-                    ${cooldownBadge}
-                </div>`;
+            card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
             if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
-            grid.appendChild(card);
+
+            playersEl.appendChild(card);
+            groupEl.appendChild(playersEl);
+            grid.appendChild(groupEl);
         });
         _quizManageCooldownTimer();
         return;
@@ -402,21 +413,32 @@ function _quizRenderPlayerList() {
             }
 
             const isClickable   = !_quiz.isClosed && !done && !onCooldown;
-            const badgeClass    = done ? ' quiz-done' : '';
-            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
+            const inProgress = count === 1;
+            const groupBadgeClass = onCooldown ? ' quiz-cooldown'
+                : done ? ' quiz-done'
+                : inProgress ? ' quiz-in-progress' : '';
+            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : `[${count}/2]`;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
+            groupEl.innerHTML = `<div class="team-group-header">
+                <span>${p.team_name || p.nickname}</span>
+                <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
+            </div>`;
+
+            const playersEl = document.createElement('div');
+            playersEl.className = 'team-group-players';
+            playersEl.style.gridTemplateColumns = '1fr';
 
             const card = document.createElement('div');
             card.className = 'bank-player-card' + (done ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
-            card.innerHTML = `
-                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
-                <div class="bank-player-status">
-                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                    <span class="quiz-progress-badge${badgeClass}">[${count}/2]</span>
-                    ${cooldownBadge}
-                </div>`;
+            card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
             if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
-            grid.appendChild(card);
+
+            playersEl.appendChild(card);
+            groupEl.appendChild(playersEl);
+            grid.appendChild(groupEl);
         });
         _quizManageCooldownTimer();
         return;
@@ -438,14 +460,29 @@ function _quizRenderPlayerList() {
         const inProgress = count === 1;
 
         const groupEl = document.createElement('div');
-        groupEl.className = 'team-group';
+        let teamOnCooldown = false, teamRemaining = 0;
+        if (!done) {
+            members.forEach(({ idx }) => {
+                const start = _quiz.teamPlayerCooldowns[idx];
+                if (start) {
+                    const rem = Math.ceil((start + _QUIZ_COOLDOWN_MS - now) / 1000);
+                    if (rem > 0) { teamOnCooldown = true; teamRemaining = Math.max(teamRemaining, rem); }
+                }
+            });
+        }
+        const teamBadgeClass = teamOnCooldown ? ' quiz-cooldown'
+            : done ? ' quiz-done'
+            : inProgress ? ' quiz-in-progress' : '';
+        const teamBadgeText = teamOnCooldown ? `⏱ ${teamRemaining}초` : `[${count}/2]`;
+        groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
         groupEl.innerHTML = `<div class="team-group-header">
             <span>${teamKey || '무소속'}</span>
-            <span class="quiz-progress-badge">[${count}/2]</span>
+            <span class="quiz-progress-badge${teamBadgeClass}">${teamBadgeText}</span>
         </div>`;
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
+        playersEl.style.gridTemplateColumns = '1fr';
 
         members.forEach(({ p, idx }) => {
             const playerAlreadyDone = !!(_quiz.teamPlayers[teamKey]?.has(idx));
@@ -460,18 +497,10 @@ function _quizRenderPlayerList() {
             }
 
             const isClickable   = !_quiz.isClosed && !done && !playerAlreadyDone && !onCooldown;
-            const cooldownBadge = onCooldown ? `<span class="quiz-cooldown-badge">⏱ ${remaining}초</span>` : '';
-
             const card = document.createElement('div');
             card.className = 'bank-player-card' + (playerAlreadyDone ? ' completed' : '');
             if (!isClickable) card.style.opacity = '0.55';
-            card.innerHTML = `
-                <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
-                <div class="bank-player-status">
-                    <span class="bank-player-efti">${p.default_efti || 'FAEN'}</span>
-                    ${playerAlreadyDone ? '<span class="bank-status-done">정답</span>' : ''}
-                    ${cooldownBadge}
-                </div>`;
+            card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
             if (isClickable) card.onclick = () => _quizSelectPlayer(idx);
             playersEl.appendChild(card);
         });
@@ -644,9 +673,15 @@ function _quizShowResult() {
         btnRetry.style.display = 'block';
 
         const p = _quiz.players[_quiz.currentPlayerIdx];
-        if (isTeamMode) {
-            _quiz.teamPlayerCooldowns[_quiz.currentPlayerIdx] = Date.now();
-            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { team_failed_at: new Date().toISOString() });
+        if (isTeamMode && p.team_name) {
+            const failTime = Date.now();
+            const failIso = new Date(failTime).toISOString();
+            _quiz.players.forEach((pl, i) => {
+                if (pl.team_name && pl.team_name === p.team_name) {
+                    _quiz.teamPlayerCooldowns[i] = failTime;
+                    sbUpsertQuizHistory(_quiz.gameId, pl.nickname, { team_failed_at: failIso });
+                }
+            });
         } else {
             _quiz.cooldowns[_quiz.currentPlayerIdx] = Date.now();
             sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_failed_at: new Date().toISOString() });

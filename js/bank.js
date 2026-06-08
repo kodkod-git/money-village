@@ -328,7 +328,7 @@ function _bankRenderPlayerList() {
         document.getElementById('bankTabIndiv').classList.toggle('active', _bank.viewMode === 'individual');
     }
 
-    grid.classList.toggle('is-team', isTeam && _bank.viewMode === 'team');
+    grid.classList.toggle('is-team', true);
 
     const isTeamTab = isTeam && _bank.viewMode === 'team';
 
@@ -340,29 +340,10 @@ function _bankRenderPlayerList() {
         return _bank.indivCompleted[idx] || null;
     }
 
-    function _bankMakePlayerCard(p, idx) {
-        const done     = _getPlayerDone(p, idx);
-        const card     = document.createElement('div');
+    function _bankMakePlayerCard(p, idx, done) {
+        const card = document.createElement('div');
         card.className = 'bank-player-card' + (done ? ' completed' : '');
-
-        // 개인 탭 / 개인전: 누적 타입 태그 표시 (팀 탭 플레이어 카드에는 표시 안 함)
-        const typeTags = !isTeamTab
-            ? (_bank.playerTypeTags[p.nickname] || [])
-                .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
-                .join('')
-            : '';
-
-        const statusTag = done
-            ? `<span class="bank-status-done">신청 완료</span>`
-            : `<span class="bank-status-pending">신청 전</span>`;
-
-        card.innerHTML = `
-            <div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span><span class="bank-player-realname">${p.real_name}</span></div>
-            <div class="bank-player-status">
-                ${typeTags}
-                ${statusTag}
-            </div>`;
-
+        card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
         card.onclick = () => {
             if (_bank.currentRound >= 4) return;
             bankSelectPlayer(idx);
@@ -380,7 +361,29 @@ function _bankRenderPlayerList() {
                 }
                 return (a.p.nickname || '').localeCompare(b.p.nickname || '', 'ko');
             });
-        sorted.forEach(({ p, idx }) => grid.appendChild(_bankMakePlayerCard(p, idx)));
+        sorted.forEach(({ p, idx }) => {
+            const done = _getPlayerDone(p, idx);
+            const typeTags = (_bank.playerTypeTags[p.nickname] || [])
+                .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+                .join('');
+            const statusTag = done ? '' : `<span class="bank-status-pending">신청 전</span>`;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'team-group' + (done ? ' team-done' : '');
+
+            const header = document.createElement('div');
+            header.className = 'team-group-header';
+            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${typeTags}${statusTag}`;
+            groupEl.appendChild(header);
+
+            const playersEl = document.createElement('div');
+            playersEl.className = 'team-group-players';
+            playersEl.style.gridTemplateColumns = '1fr';
+            playersEl.appendChild(_bankMakePlayerCard(p, idx, done));
+
+            groupEl.appendChild(playersEl);
+            grid.appendChild(groupEl);
+        });
         return;
     }
 
@@ -400,7 +403,7 @@ function _bankRenderPlayerList() {
         const allDone      = completedCnt === teamSize;
 
         const groupEl = document.createElement('div');
-        groupEl.className = 'team-group';
+        groupEl.className = 'team-group' + (allDone ? ' team-done' : '');
 
         const header = document.createElement('div');
         header.className = 'team-group-header';
@@ -412,7 +415,11 @@ function _bankRenderPlayerList() {
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
-        members.forEach(({ p, idx }) => playersEl.appendChild(_bankMakePlayerCard(p, idx)));
+        playersEl.style.gridTemplateColumns = '1fr';
+        members.forEach(({ p, idx }) => {
+            const done = _getPlayerDone(p, idx);
+            playersEl.appendChild(_bankMakePlayerCard(p, idx, done));
+        });
 
         groupEl.appendChild(playersEl);
         grid.appendChild(groupEl);
