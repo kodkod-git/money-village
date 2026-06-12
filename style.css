@@ -63,6 +63,37 @@
         .player-list-input { text-align: center; max-height: 250px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
         .p-input-group { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
         .p-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+
+        /* 시민권자 검색 콤보박스 */
+        .citizen-combo-wrap { position: relative; flex: 1; min-width: 180px; }
+        .citizen-combo-input { width: 100%; box-sizing: border-box; }
+        .citizen-combo-dropdown {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0; right: 0;
+            background: #fff;
+            border: 1px solid #d6dbe3;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+            z-index: 2000;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .citizen-combo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 8px;
+        }
+        .citizen-combo-item:last-child { border-bottom: none; }
+        .citizen-combo-item:hover { background: #eef4ff; }
+        .citizen-combo-empty { color: #aaa; cursor: default; justify-content: center; }
+        .combo-nickname { font-weight: 700; color: #1e293b; }
+        .combo-realname { color: #888; font-size: 12px; white-space: nowrap; }
         .team-header { font-weight: bold; color: var(--mv-blue-deep); margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
 
         /* [화면 2] 계수 */
@@ -962,6 +993,11 @@
             border-color: var(--mv-blue-light);
             background: #eef4ff;
             box-shadow: 0 3px 12px rgba(0,114,206,0.12);
+        }
+        .past-game-card.selected{
+            border-color: var(--mv-blue-light);
+            background: #ddeeff;
+            box-shadow: 0 3px 12px rgba(0,114,206,0.22);
         }
         .past-game-card-title{
             font-size: 15px;

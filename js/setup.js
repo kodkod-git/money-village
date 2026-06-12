@@ -108,14 +108,57 @@
         if (area) area.style.display = 'block';
         nameInputsVisible = true;
     }
-    function buildCitizenOptions() {
-        let opts = `<option value="">시민권자 선택</option>`;
-        citizenListData.forEach((c, idx) => {
-            const label = `${c.nickname || '-'} / ${c.real_name || '-'}`;
-            opts += `<option value="${idx}">${label}</option>`;
-        });
-        return opts;
+    function _renderCitizenComboItems(inp, dropdown, keyword) {
+        const kw = (keyword || '').trim().toLowerCase();
+        const sorted = [...citizenListData].sort((a, b) =>
+            (a.nickname || '').localeCompare(b.nickname || '', 'ko')
+        );
+        const list = kw
+            ? sorted.filter(c =>
+                (c.nickname  || '').toLowerCase().includes(kw) ||
+                (c.real_name || '').toLowerCase().includes(kw))
+            : sorted;
+
+        if (list.length === 0) {
+            dropdown.innerHTML = '<div class="citizen-combo-item citizen-combo-empty">검색 결과 없음</div>';
+        } else {
+            dropdown.innerHTML = list.map(c => `
+                <div class="citizen-combo-item" data-nickname="${c.nickname || ''}"
+                     onmousedown="event.preventDefault(); selectCitizenComboItem(this)">
+                    <span class="combo-nickname">${c.nickname || ''}</span>
+                    <span class="combo-realname">${c.real_name || ''}</span>
+                </div>`).join('');
+        }
+        dropdown.style.display = 'block';
     }
+
+    function openCitizenCombo(inp) {
+        document.querySelectorAll('.citizen-combo-dropdown').forEach(d => {
+            if (d !== inp.closest('.citizen-combo-wrap').querySelector('.citizen-combo-dropdown'))
+                d.style.display = 'none';
+        });
+        const wrap = inp.closest('.citizen-combo-wrap');
+        _renderCitizenComboItems(inp, wrap.querySelector('.citizen-combo-dropdown'), inp.value);
+    }
+
+    function filterCitizenCombo(inp) {
+        const wrap = inp.closest('.citizen-combo-wrap');
+        _renderCitizenComboItems(inp, wrap.querySelector('.citizen-combo-dropdown'), inp.value);
+    }
+
+    function selectCitizenComboItem(item) {
+        const wrap = item.closest('.citizen-combo-wrap');
+        wrap.querySelector('.citizen-select').value = item.dataset.nickname || '';
+        wrap.querySelector('.citizen-combo-dropdown').style.display = 'none';
+    }
+
+    function closeCitizenCombo(inp) {
+        setTimeout(() => {
+            const wrap = inp.closest && inp.closest('.citizen-combo-wrap');
+            if (wrap) wrap.querySelector('.citizen-combo-dropdown').style.display = 'none';
+        }, 150);
+    }
+
     function makeInp(lbl, realName = '', nickname = '', team='') {
         return `
         <div class="p-input-group citizen-row" style="align-items:flex-start; flex-direction:column; gap:6px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
@@ -126,10 +169,15 @@
                 <input type="text" class="nickname-input" placeholder="닉네임" value="${nickname}" data-team="${team}">
             </div>
 
-            <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
-                <select class="citizen-select" style="flex:1; min-width:180px;">
-                    ${buildCitizenOptions()}
-                </select>
+            <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap; align-items:flex-start;">
+                <div class="citizen-combo-wrap">
+                    <input type="text" class="citizen-select citizen-combo-input" placeholder="시민권자 검색"
+                        autocomplete="off"
+                        onfocus="openCitizenCombo(this)"
+                        oninput="filterCitizenCombo(this)"
+                        onblur="closeCitizenCombo(this)">
+                    <div class="citizen-combo-dropdown" style="display:none;"></div>
+                </div>
                 <button type="button" class="btn btn-primary btn-mini" onclick="applyCitizenToRow(this)">불러오기</button>
             </div>
 
@@ -138,19 +186,23 @@
             </div>
         </div>`;
     }
+
     function applyCitizenToRow(btn) {
         const row = btn.closest('.citizen-row');
         if (!row) return;
 
-        const sel = row.querySelector('.citizen-select');
-        const idx = sel.value;
-        if (idx === '') {
+        const inp = row.querySelector('.citizen-select');
+        const searchVal = (inp.value || '').trim();
+        if (!searchVal) {
             alert("불러올 시민권자를 선택하세요.");
             return;
         }
 
-        const citizen = citizenListData[Number(idx)];
-        if (!citizen) return;
+        const citizen = citizenListData.find(c => c.nickname === searchVal);
+        if (!citizen) {
+            alert("일치하는 시민권자를 찾을 수 없습니다.\n목록에서 선택해주세요.");
+            return;
+        }
 
         const realNameInput = row.querySelector('.realname-input');
         const nicknameInput = row.querySelector('.nickname-input');
@@ -773,13 +825,8 @@
         refreshCitizenSelectOptions();
     }
     function refreshCitizenSelectOptions() {
-        document.querySelectorAll('.citizen-select').forEach(sel => {
-            const current = sel.value;
-            sel.innerHTML = buildCitizenOptions();
-            if (current && sel.querySelector(`option[value="${current}"]`)) {
-                sel.value = current;
-            }
-        });
+        // 드롭다운은 열릴 때 citizenListData에서 동적으로 렌더링되므로 열린 목록만 닫으면 됨
+        document.querySelectorAll('.citizen-combo-dropdown').forEach(d => { d.style.display = 'none'; });
     }
     function filterCitizenTable() {
         const keyword = (document.getElementById('citizenSearchInput').value || '').trim().toLowerCase();

@@ -30,7 +30,9 @@ function _text(raw, maxLen = 5) {
 // =========================================================
 
 async function sbListCitizens() {
-    const { data, error } = await _sb.from('users').select('*').order('nickname');
+    const { data, error } = await _sb.from('users').select('*')
+        .eq('is_citizen', true)
+        .order('nickname');
     if (error) return { users: [] };
     return { users: (data || []).map(u => ({ ...u, default_EFTI: u.default_efti })) };
 }
@@ -707,4 +709,28 @@ async function sbUpsertQuizHistory(gameId, nickname, fields) {
         { onConflict: 'game_id,nickname' }
     );
     if (error) console.error('[sbUpsertQuizHistory]', error);
+}
+
+// =========================================================
+// 게임 기록 전체 삭제
+// =========================================================
+
+async function sbDeleteGame(gameId) {
+    const gid = String(gameId || '').trim();
+    if (!gid) throw new Error('game_id가 없습니다.');
+
+    const tables = [
+        'bank_history', 'bank_state',
+        'quiz_history', 'quiz_state',
+        'cash_balance', 'stock_balance', 'stock_price',
+        'estate_balance', 'estate_price',
+        'traits', 'success_factors',
+        'game_individual', 'game_team',
+        'game_info'
+    ];
+
+    for (const table of tables) {
+        const { error } = await _sb.from(table).delete().eq('game_id', gid);
+        if (error) throw new Error(`[${table}] 삭제 실패: ${error.message}`);
+    }
 }

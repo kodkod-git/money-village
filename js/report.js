@@ -892,12 +892,21 @@
         if (e.target === document.getElementById('pastGameModal')) closePastGameModal();
     }
 
+    let _selectedPastGame = null;
+
+    function _setPastGameActionButtons(visible) {
+        document.getElementById('btnPastGameLoad').style.display = visible ? 'inline-flex' : 'none';
+        document.getElementById('btnPastGameDelete').style.display = visible ? 'inline-flex' : 'none';
+    }
+
     async function onPastGameDateChange() {
         const date = document.getElementById('pastGameDateSelect').value;
         const grid = document.getElementById('pastGameCardsGrid');
         const loading = document.getElementById('pastGameLoading');
 
         grid.innerHTML = '';
+        _selectedPastGame = null;
+        _setPastGameActionButtons(false);
         if (!date) return;
 
         loading.style.display = 'block';
@@ -926,12 +935,44 @@
                         <span class="${typeTag}">${typeLabel}</span>
                         <span class="${variantTag}">${variantLabel}</span>
                     </div>`;
-                card.onclick = () => _loadPastGame(g.game_id, g.date, g.game_variant || 'basic');
+                card.onclick = () => {
+                    document.querySelectorAll('#pastGameCardsGrid .past-game-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    _selectedPastGame = { gameId: g.game_id, date: g.date, gameVariant: g.game_variant || 'basic' };
+                    _setPastGameActionButtons(true);
+                };
                 grid.appendChild(card);
             });
         } catch(e) {
             loading.style.display = 'none';
             grid.innerHTML = '<p style="color:#d32f2f; font-size:13px; text-align:center;">불러오기 실패: ' + e.message + '</p>';
+        }
+    }
+
+    function confirmLoadPastGame() {
+        if (!_selectedPastGame) return;
+        _loadPastGame(_selectedPastGame.gameId, _selectedPastGame.date, _selectedPastGame.gameVariant);
+    }
+
+    async function confirmDeletePastGame() {
+        if (!_selectedPastGame) return;
+        const { gameId, date } = _selectedPastGame;
+        if (!confirm(`이 게임 기록을 삭제하시겠습니까?\n(${date} / game_id: ${gameId})\n\n삭제된 데이터는 복구할 수 없습니다.`)) return;
+
+        const btn = document.getElementById('btnPastGameDelete');
+        btn.disabled = true;
+        btn.textContent = '삭제 중...';
+        try {
+            await sbDeleteGame(gameId);
+            alert('✅ 게임 기록이 삭제되었습니다.');
+            _selectedPastGame = null;
+            _setPastGameActionButtons(false);
+            onPastGameDateChange();
+        } catch(e) {
+            alert('❌ 삭제 실패: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '삭제하기';
         }
     }
 
