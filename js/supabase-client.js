@@ -177,7 +177,6 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         const row = {
             nickname:     nick,
             real_name:    name,
-            join_date:    today,
             default_efti: efti,
             status:       'active'
         };
