@@ -774,7 +774,7 @@
                 el.textContent = _citizenSortAsc ? '▲' : '▼';
                 el.style.color = '#1565c0';
             } else {
-                el.textContent = '↕';
+                el.textContent = '-';
                 el.style.color = '#bbb';
             }
         });
