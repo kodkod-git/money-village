@@ -752,6 +752,34 @@
             if (loadingEl) loadingEl.style.display = 'none';
         }
     }
+    let _citizenSortKey = 'real_name';
+    let _citizenSortAsc = true;
+
+    function sortCitizenTable(key) {
+        if (_citizenSortKey === key) {
+            _citizenSortAsc = !_citizenSortAsc;
+        } else {
+            _citizenSortKey = key;
+            _citizenSortAsc = true;
+        }
+        _updateCitizenSortIcons();
+        filterCitizenTable();
+    }
+
+    function _updateCitizenSortIcons() {
+        ['real_name', 'nickname', 'default_EFTI', 'join_date'].forEach(key => {
+            const el = document.getElementById(`citizenSortIcon_${key}`);
+            if (!el) return;
+            if (key === _citizenSortKey) {
+                el.textContent = _citizenSortAsc ? '▲' : '▼';
+                el.style.color = '#1565c0';
+            } else {
+                el.textContent = '↕';
+                el.style.color = '#bbb';
+            }
+        });
+    }
+
     function renderCitizenTable(rows) {
         const tbody = document.getElementById('citizenTableBody');
         const checkAll = document.getElementById('citizenCheckAll');
@@ -762,9 +790,12 @@
             return;
         }
 
-        const sorted = [...rows].sort((a, b) =>
-            (a.real_name || '').localeCompare(b.real_name || '', 'ko')
-        );
+        const sorted = [...rows].sort((a, b) => {
+            const av = (a[_citizenSortKey] || '').toLowerCase();
+            const bv = (b[_citizenSortKey] || '').toLowerCase();
+            const cmp = av.localeCompare(bv, 'ko');
+            return _citizenSortAsc ? cmp : -cmp;
+        });
         tbody.innerHTML = sorted.map(row => `
             <tr data-original-nickname="${row.nickname || ''}"
                 data-original-realname="${row.real_name || ''}"
