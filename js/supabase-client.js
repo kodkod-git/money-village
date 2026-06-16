@@ -178,7 +178,6 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
             nickname:     nick,
             real_name:    name,
             join_date:    today,
-            is_citizen:   false,
             default_efti: efti,
             status:       'active'
         };
