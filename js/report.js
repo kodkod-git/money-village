@@ -1,4 +1,5 @@
     let _driveFileUrls = {};
+    let _fameDriveFileUrls = {};
 
     function renderPlayStyleReport(p) {
         const badgeWrap = document.getElementById('rptTraitBadges');
@@ -708,6 +709,106 @@
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
+    }
+
+    async function uploadCurrentReportToDrive() {
+        const btn = document.getElementById('btnSaveDriveReportSingle');
+        if (!players || players.length === 0) { alert("저장할 참가자가 없습니다."); return; }
+        if (isSampleMode) { alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다."); return; }
+        if (isSavingDrive) return;
+        isSavingDrive = true;
+
+        const i = viewingPlayerIndex;
+        const p = players[i];
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '☁️ 저장 중...';
+
+        try {
+            const rawDateText = (document.getElementById('rptDateInput')?.value || '').trim();
+            const gameDate = rawDateText || formatFolderDate(new Date());
+            const nickname = (p.nickname || p.name || `참가자${i + 1}`).trim();
+            const realName = (p.realName || p.name || '').trim();
+            const fileName = buildReportPdfFileName(p, i);
+            const pdfBase64 = await getPdfBase64FromElement('pdfAreaReport', fileName);
+
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "uploadPDF", pdfBase64, fileName, category: "asset_report", gameDate, nickname, real_name: realName })
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json?.message || '업로드 실패');
+
+            const fileUrl = json.fileUrl || (json.fileId ? `https://drive.google.com/file/d/${json.fileId}/view` : null);
+            if (fileUrl) { _driveFileUrls[i] = fileUrl; players[i].reportFileUrl = fileUrl; }
+
+            alert(`✅ ${nickname}의 자산 리포트가 드라이브에 저장됐습니다.`);
+        } catch (err) {
+            console.error("[uploadCurrentReportToDrive] ERROR", err);
+            alert("❌ 드라이브 저장 실패:\n" + (err?.message || String(err)));
+        } finally {
+            isSavingDrive = false;
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function uploadCurrentFamePdfToDrive() {
+        const btn = document.getElementById('btnSaveFameDriveSingle');
+        if (!btn) return;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '☁️ 저장 중...';
+
+        const variantLabels = { basic: '기본', advanced: '심화', rich_vessel: '부자의그릇' };
+        const key = currentFameVariant || 'basic';
+        const label = variantLabels[key] || key;
+
+        try {
+            const gameDate = formatFolderDate(new Date());
+            const dateCompact = gameDate.replace(/-/g, '');
+            const fileName = `${dateCompact}_${label}_명예의전당.pdf`;
+            const pdfBase64 = await getPdfBase64FromElement('pdfAreaFame', fileName);
+
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "uploadPDF", pdfBase64, fileName, category: "hall_of_fame", gameDate, nickname: "hall_of_fame", real_name: "" })
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json?.message || '업로드 실패');
+
+            const fileUrl = json.fileUrl || (json.fileId ? `https://drive.google.com/file/d/${json.fileId}/view` : null);
+            if (fileUrl) _fameDriveFileUrls[key] = fileUrl;
+
+            alert(`✅ [${label}] 명예의 전당 PDF가 드라이브에 저장됐습니다.`);
+        } catch (err) {
+            console.error("[uploadCurrentFamePdfToDrive] ERROR", err);
+            alert("❌ 드라이브 저장 실패:\n" + (err?.message || String(err)));
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    function shareFame() {
+        const key = currentFameVariant || 'basic';
+        const url = _fameDriveFileUrls[key];
+        const modal = document.getElementById('shareModal');
+        const urlRow = document.getElementById('shareUrlRow');
+        const urlInput = document.getElementById('shareUrlInput');
+        const noUrlMsg = document.getElementById('shareNoUrlMsg');
+
+        if (url) {
+            urlRow.style.display = 'flex';
+            urlInput.value = url;
+            noUrlMsg.style.display = 'none';
+        } else {
+            urlRow.style.display = 'none';
+            noUrlMsg.style.display = 'block';
+        }
+        modal.classList.add('show');
     }
 
     function printReport() { window.print(); }

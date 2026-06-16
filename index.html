@@ -157,7 +157,7 @@
             <div style="font-size:18px; font-weight:bold; white-space:nowrap; margin-right:10px;">🎓 자산 성적표</div>
             <div style="display:flex; align-items:center; gap:8px;">
                 <button class="btn btn-dark" style="background:#607d8b;" id="btnEditPrev" onclick="switchScreen('countingScreen')">✏️ 수정(이전으로)</button>
-                <button class="btn btn-drive" id="btnSaveDriveReport" onclick="uploadPdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-drive" id="btnSaveDriveReport" onclick="uploadPdfToDrive()">☁️ 드라이브 일괄 저장</button>
                 <button class="btn btn-danger" id="btnUploadPdf" onclick="downloadPDF('report')">📄 PDF 저장</button>
                 <button class="btn btn-success" onclick="printReport()">🖨️ 출력</button>
                 <button class="btn btn-primary" onclick="confirmResetSession()">🔄 처음으로</button>
@@ -168,7 +168,10 @@
             <button class="btn btn-dark" onclick="prevPlayer()">◀ 이전</button>
             <span id="pageIndicator" style="font-size:14px; white-space:nowrap; color:#555; font-weight:600;"></span>
             <button class="btn btn-dark" onclick="nextPlayer()">다음 ▶</button>
-            <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()" style="position:absolute; right:64px;">📤 공유하기</button>
+            <div style="position:absolute; right:8px; display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-drive" id="btnSaveDriveReportSingle" onclick="uploadCurrentReportToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-kakao" id="btnKakaoShare" onclick="shareReport()">📤 공유하기</button>
+            </div>
         </div>
 
         <div class="report-paper" id="pdfAreaReport">
@@ -322,17 +325,22 @@
             <div class="controls-title" style="font-size:18px; font-weight:bold;">🏆 명예의 전당</div>
             <div class="controls-actions" style="gap:8px;">
                 <button class="btn btn-primary" onclick="switchScreen('setupScreen')">🏠 처음으로</button>
-                <button class="btn btn-drive" id="btnSaveFameDrive" onclick="uploadFamePdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-drive" id="btnSaveFameDrive" onclick="uploadFamePdfToDrive()">☁️ 드라이브 일괄 저장</button>
                 <button class="btn btn-danger" id="btnUploadFamePdf" onclick="downloadPDF('fame')">📄 PDF 저장</button>
                 <button class="btn btn-success" onclick="printFame()">🖨️ 출력</button>
             </div>
         </div>
 
-        <div class="no-print" style="display:flex; align-items:center; justify-content:center; padding:2px 0 14px;">
+        <div class="no-print" style="display:flex; align-items:center; justify-content:space-between; padding:2px 16px 14px;">
+            <div style="flex:1;"></div>
             <div class="fame-tabs">
                 <button class="fame-tab-btn active" data-variant="basic"       onclick="switchFameTab('basic')">기본</button>
                 <button class="fame-tab-btn"        data-variant="advanced"    onclick="switchFameTab('advanced')">심화</button>
                 <button class="fame-tab-btn"        data-variant="rich_vessel" onclick="switchFameTab('rich_vessel')">부자의그릇</button>
+            </div>
+            <div style="flex:1; display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+                <button class="btn btn-drive" id="btnSaveFameDriveSingle" onclick="uploadCurrentFamePdfToDrive()">☁️ 드라이브 저장</button>
+                <button class="btn btn-kakao" onclick="shareFame()">📤 공유하기</button>
             </div>
         </div>
 
