@@ -111,7 +111,7 @@
     function _renderCitizenComboItems(inp, dropdown, keyword) {
         const kw = (keyword || '').trim().toLowerCase();
         const sorted = [...citizenListData].sort((a, b) =>
-            (a.nickname || '').localeCompare(b.nickname || '', 'ko')
+            (a.real_name || '').localeCompare(b.real_name || '', 'ko')
         );
         const list = kw
             ? sorted.filter(c =>
@@ -125,8 +125,8 @@
             dropdown.innerHTML = list.map(c => `
                 <div class="citizen-combo-item" data-nickname="${c.nickname || ''}"
                      onmousedown="event.preventDefault(); selectCitizenComboItem(this)">
-                    <span class="combo-nickname">${c.nickname || ''}</span>
-                    <span class="combo-realname">${c.real_name || ''}</span>
+                    <span class="combo-nickname">${c.real_name || ''}</span>
+                    <span class="combo-realname">${c.nickname || ''}</span>
                 </div>`).join('');
         }
         dropdown.style.display = 'block';
@@ -762,15 +762,18 @@
             return;
         }
 
-        tbody.innerHTML = rows.map(row => `
+        const sorted = [...rows].sort((a, b) =>
+            (a.real_name || '').localeCompare(b.real_name || '', 'ko')
+        );
+        tbody.innerHTML = sorted.map(row => `
             <tr data-original-nickname="${row.nickname || ''}"
                 data-original-realname="${row.real_name || ''}"
                 data-original-efti="${row.default_EFTI || '-'}">
                 <td class="citizen-check-cell" style="padding:10px; border-bottom:1px solid #eee; text-align:center;">
                     <input type="checkbox" class="citizen-row-check" data-nickname="${row.nickname || ''}">
                 </td>
-                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.nickname || '-'}</td>
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.real_name || '-'}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.nickname || '-'}</td>
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.default_EFTI || '-'}</td>
                 <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${row.join_date || '-'}</td>
             </tr>
