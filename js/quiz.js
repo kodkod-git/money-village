@@ -367,9 +367,11 @@ function _quizRenderPlayerList() {
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
+            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})">초기화</button>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
                 <span>${p.team_name || p.nickname}</span>
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
+                ${quizEntryResetBtn}
             </div>`;
 
             const playersEl = document.createElement('div');
@@ -421,9 +423,11 @@ function _quizRenderPlayerList() {
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
+            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})">초기화</button>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
                 <span>${p.team_name || p.nickname}</span>
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
+                ${quizEntryResetBtn}
             </div>`;
 
             const playersEl = document.createElement('div');
@@ -475,9 +479,11 @@ function _quizRenderPlayerList() {
             : inProgress ? ' quiz-in-progress' : '';
         const teamBadgeText = teamOnCooldown ? `⏱ ${teamRemaining}초` : `[${count}/2]`;
         groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
+        const teamQuizResetBtn = (_quiz.teamPlayers[teamKey]?.size || 0) > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${members[0].idx})">초기화</button>` : '';
         groupEl.innerHTML = `<div class="team-group-header">
             <span>${teamKey || '무소속'}</span>
             <span class="quiz-progress-badge${teamBadgeClass}">${teamBadgeText}</span>
+            ${teamQuizResetBtn}
         </div>`;
 
         const playersEl = document.createElement('div');
@@ -728,6 +734,32 @@ async function quizReset() {
 
     await sbUpsertQuizState(_quiz.gameId, { is_closed: false });
     _quizRenderPlayerList();
+}
+
+// ── 개별 카드 초기화 ────────────────────────────────────────────────
+async function quizResetEntry(playerIdx) {
+    const p = _quiz.players[playerIdx];
+    if (!p || !_quiz.gameId) return;
+    const isTeamTab = _quiz.gameType === 'team' && _quiz.viewMode === 'team' && !!p.team_name;
+
+    if (!confirm('이 항목의 퀴즈 내역을 삭제하시겠습니까?')) return;
+
+    let nicknames;
+    if (isTeamTab) {
+        const teamMembers = _quiz.players.filter(pl => pl.team_name === p.team_name);
+        nicknames = teamMembers.map(pl => pl.nickname);
+    } else {
+        nicknames = [p.nickname];
+    }
+
+    const result = await sbDeleteQuizHistoryEntries(_quiz.gameId, nicknames);
+    if (!result.success) { alert('초기화에 실패했습니다.'); return; }
+
+    await _quizPollAndMerge();
+
+    for (const nick of nicknames) {
+        sbSaveQuestReward(_quiz.gameId, nick, _quiz.earnedRewards[nick] || 0).catch(console.error);
+    }
 }
 
 // ── 멀티-태블릿 동기화 폴링 ────────────────────────────────────────

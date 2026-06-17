@@ -889,6 +889,8 @@
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
         .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .card-reset-btn { margin-left: auto; background: #e74c3c; color: white; border: none; border-radius: 5px; padding: 3px 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .card-reset-btn:hover { opacity: 0.85; }
         .bank-status-type  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
         .bank-status-done  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
         .bank-status-pending { font-size: 15px; font-weight: 600; padding: 3px 10px; border-radius: 5px; background: #f0f0f0; color: #999; }

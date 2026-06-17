@@ -743,11 +743,33 @@ async function sbDeleteBankHistory(gameId) {
     return { success: true };
 }
 
+async function sbDeleteBankHistoryEntries(gameId, nicknames, roundNum, isTeam) {
+    const gid = String(gameId || '').trim();
+    if (!gid || !nicknames.length) return { success: false };
+    const { error } = await _sb.from('bank_history').delete()
+        .eq('game_id', gid)
+        .in('nickname', nicknames)
+        .eq('round_num', roundNum)
+        .eq('is_team', !!isTeam);
+    if (error) { console.error('[sbDeleteBankHistoryEntries]', error); return { success: false }; }
+    return { success: true };
+}
+
 async function sbDeleteQuizHistory(gameId) {
     const gid = String(gameId || '').trim();
     if (!gid) return { success: false };
     const { error } = await _sb.from('quiz_history').delete().eq('game_id', gid);
     if (error) { console.error('[sbDeleteQuizHistory]', error); return { success: false }; }
+    return { success: true };
+}
+
+async function sbDeleteQuizHistoryEntries(gameId, nicknames) {
+    const gid = String(gameId || '').trim();
+    if (!gid || !nicknames.length) return { success: false };
+    const { error } = await _sb.from('quiz_history').delete()
+        .eq('game_id', gid)
+        .in('nickname', nicknames);
+    if (error) { console.error('[sbDeleteQuizHistoryEntries]', error); return { success: false }; }
     return { success: true };
 }
 

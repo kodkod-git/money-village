@@ -387,7 +387,8 @@ function _bankRenderPlayerList() {
 
             const header = document.createElement('div');
             header.className = 'team-group-header';
-            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${typeTags}${statusTag}`;
+            const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})">초기화</button>` : '';
+            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${typeTags}${statusTag}${entryResetBtn}`;
             groupEl.appendChild(header);
 
             const playersEl = document.createElement('div');
@@ -424,7 +425,8 @@ function _bankRenderPlayerList() {
         const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
             .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
             .join('');
-        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}`;
+        const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})">초기화</button>` : '';
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}${teamEntryResetBtn}`;
         groupEl.appendChild(header);
 
         const playersEl = document.createElement('div');
@@ -713,6 +715,37 @@ async function bankReset() {
 
     await sbUpsertBankState(_bank.gameId, { current_round: 1 });
     _bankRenderPlayerList();
+}
+
+// ── 개별 카드 초기화 ────────────────────────────────────────────────
+async function bankResetEntry(playerIdx) {
+    const p = _bank.players[playerIdx];
+    if (!p || !_bank.gameId) return;
+    const isTeamTab = _bank.viewMode === 'team' && !!p.team_name;
+
+    if (!confirm('이 항목의 예금 신청 내역을 삭제하시겠습니까?')) return;
+
+    let nicknames, isTeam;
+    if (isTeamTab) {
+        const teamMembers = _bank.players.filter(pl => pl.team_name === p.team_name);
+        nicknames = teamMembers.map(pl => pl.nickname);
+        isTeam = true;
+    } else {
+        nicknames = [p.nickname];
+        isTeam = false;
+    }
+
+    const result = await sbDeleteBankHistoryEntries(_bank.gameId, nicknames, _bank.currentRound, isTeam);
+    if (!result.success) { alert('초기화에 실패했습니다.'); return; }
+
+    await _bankPollAndMerge();
+
+    for (const nick of nicknames) {
+        const total = (_bank.prevRoundsTotal[nick] || 0)
+                    + (_bank.teamRewards[nick]   || 0)
+                    + (_bank.indivRewards[nick]  || 0);
+        sbSaveDepositReward(_bank.gameId, nick, total).catch(console.error);
+    }
 }
 
 // ── Util ───────────────────────────────────────────────────────────
