@@ -559,8 +559,9 @@ function _quizStartGame() {
     _quiz.selections = new Array(4).fill(null);
 
     document.getElementById('quizGameImg').src = imgSrc;
+    const isTeamMode = _quiz.gameType === 'team' && _quiz.viewMode === 'team';
     document.getElementById('quizGameRewardText').textContent =
-        _quiz.reward.toLocaleString() + '원';
+        (isTeamMode ? _quiz.teamReward : _quiz.reward).toLocaleString() + '원';
     document.getElementById('quizGamePlayerName').textContent =
         `${p.nickname} (${p.real_name})`;
 
