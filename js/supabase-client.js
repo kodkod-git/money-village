@@ -171,21 +171,43 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         p
     })).filter(r => r.nick);
 
-    // users (upsert — 없으면 생성, 있으면 기본정보 갱신)
-    // rich_vessel이면 user_type='adult' 명시, 나머지는 컬럼 포함 안 해서 기존값 보존
-    const userRows = nicks.map(({ nick, name, efti }) => {
-        const row = {
-            nickname:     nick,
-            real_name:    name,
-            default_efti: efti,
-            status:       'active'
-        };
-        if (gameVariant === 'rich_vessel') row.user_type = 'adult';
-        return row;
-    });
-    if (userRows.length > 0) {
-        const { error } = await _sb.from('users').upsert(userRows, { onConflict: 'nickname' });
-        if (error) console.error('[sbInitGame] users', error);
+    // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date·is_citizen:false 포함 insert
+    const { data: existingUsers } = await _sb.from('users').select('nickname');
+    const existingNicks = new Set((existingUsers || []).map(u => u.nickname));
+
+    const newNicks     = nicks.filter(({ nick }) => !existingNicks.has(nick));
+    const existingRows = nicks.filter(({ nick }) =>  existingNicks.has(nick));
+
+    if (newNicks.length > 0) {
+        const insertRows = newNicks.map(({ nick, name, efti }) => {
+            const row = {
+                nickname:     nick,
+                real_name:    name,
+                default_efti: efti,
+                status:       'active',
+                join_date:    today,
+                is_citizen:   false
+            };
+            if (gameVariant === 'rich_vessel') row.user_type = 'adult';
+            return row;
+        });
+        const { error } = await _sb.from('users').insert(insertRows);
+        if (error) console.error('[sbInitGame] users insert', error);
+    }
+
+    if (existingRows.length > 0) {
+        const upsertRows = existingRows.map(({ nick, name, efti }) => {
+            const row = {
+                nickname:     nick,
+                real_name:    name,
+                default_efti: efti,
+                status:       'active'
+            };
+            if (gameVariant === 'rich_vessel') row.user_type = 'adult';
+            return row;
+        });
+        const { error } = await _sb.from('users').upsert(upsertRows, { onConflict: 'nickname' });
+        if (error) console.error('[sbInitGame] users upsert', error);
     }
 
     // cash_balance (전체 0 init)
@@ -358,7 +380,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
                 nickname:     finalNickname,
                 real_name:    realName || '',
                 join_date:    date,
-                is_citizen:   true,
+                is_citizen:   false,
                 default_efti: p.efti_type || 'FAEN',
                 status:       'active'
             });
