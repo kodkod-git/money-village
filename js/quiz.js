@@ -706,6 +706,30 @@ function quizBackToList() {
     document.getElementById('quizGameView').style.display = 'none';
 }
 
+// ── 초기화 ─────────────────────────────────────────────────────────
+async function quizReset() {
+    if (!_quiz.gameId) return;
+    if (!confirm('이전에 기록되었던 모든 데이터가 삭제됩니다.\n초기화 하시겠습니까?')) return;
+
+    const result = await sbDeleteQuizHistory(_quiz.gameId);
+    if (!result.success) { alert('초기화에 실패했습니다. 다시 시도해주세요.'); return; }
+
+    _quiz.progress         = {};
+    _quiz.teamProgress     = {};
+    _quiz.teamPlayers      = {};
+    _quiz.cooldowns        = {};
+    _quiz.teamPlayerCooldowns = {};
+    _quiz.earnedRewards    = {};
+    _quiz.isClosed         = false;
+    if (_quiz.cooldownTimer) {
+        clearInterval(_quiz.cooldownTimer);
+        _quiz.cooldownTimer = null;
+    }
+
+    await sbUpsertQuizState(_quiz.gameId, { is_closed: false });
+    _quizRenderPlayerList();
+}
+
 // ── 멀티-태블릿 동기화 폴링 ────────────────────────────────────────
 let _quizSyncTimer = null;
 

@@ -693,6 +693,28 @@ function bankNextStudent() {
     _bankShowView(2);
 }
 
+// ── 초기화 ─────────────────────────────────────────────────────────
+async function bankReset() {
+    if (!_bank.gameId) return;
+    if (!confirm('이전에 기록되었던 모든 데이터가 삭제됩니다.\n초기화 하시겠습니까?')) return;
+
+    const result = await sbDeleteBankHistory(_bank.gameId);
+    if (!result.success) { alert('초기화에 실패했습니다. 다시 시도해주세요.'); return; }
+
+    _bank.indivCompleted  = {};
+    _bank.teamDeposits    = {};
+    _bank.teamRewards     = {};
+    _bank.indivRewards    = {};
+    _bank.prevRoundsTotal = {};
+    _bank.playerTypeTags  = {};
+    _bank.teamTypeTags    = {};
+    _bank.roundSnapshots  = [];
+    _bank.currentRound    = 1;
+
+    await sbUpsertBankState(_bank.gameId, { current_round: 1 });
+    _bankRenderPlayerList();
+}
+
 // ── Util ───────────────────────────────────────────────────────────
 function _bankCap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 

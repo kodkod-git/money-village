@@ -732,6 +732,26 @@ async function sbUpsertQuizHistory(gameId, nickname, fields) {
 }
 
 // =========================================================
+// bank_history / quiz_history 초기화
+// =========================================================
+
+async function sbDeleteBankHistory(gameId) {
+    const gid = String(gameId || '').trim();
+    if (!gid) return { success: false };
+    const { error } = await _sb.from('bank_history').delete().eq('game_id', gid);
+    if (error) { console.error('[sbDeleteBankHistory]', error); return { success: false }; }
+    return { success: true };
+}
+
+async function sbDeleteQuizHistory(gameId) {
+    const gid = String(gameId || '').trim();
+    if (!gid) return { success: false };
+    const { error } = await _sb.from('quiz_history').delete().eq('game_id', gid);
+    if (error) { console.error('[sbDeleteQuizHistory]', error); return { success: false }; }
+    return { success: true };
+}
+
+// =========================================================
 // 게임 기록 전체 삭제
 // =========================================================
 
