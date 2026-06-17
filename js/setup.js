@@ -918,10 +918,10 @@
                     <input type="checkbox" class="citizen-row-check" data-nickname="${nickname}" checked disabled>
                 </td>
                 <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                    <input type="text" class="citizen-edit-nickname" value="${nickname}" style="${inputStyle}">
+                    <input type="text" class="citizen-edit-realname" value="${realName}" style="${inputStyle}">
                 </td>
                 <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
-                    <input type="text" class="citizen-edit-realname" value="${realName}" style="${inputStyle}">
+                    <input type="text" class="citizen-edit-nickname" value="${nickname}" style="${inputStyle}">
                 </td>
                 <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">
                     <select class="citizen-edit-efti" style="${selectStyle}">${eftiOptions}</select>
