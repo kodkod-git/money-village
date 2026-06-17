@@ -1,5 +1,6 @@
     let _driveFileUrls = {};
     let _fameDriveFileUrls = {};
+    let _summaryDriveFileUrl = null;
 
     function renderPlayStyleReport(p) {
         const badgeWrap = document.getElementById('rptTraitBadges');
@@ -93,8 +94,9 @@
         recalculateAllRankings();
         switchScreen('reportScreen');
         initAssetGrid('rptStockGrid', false, false);
-        viewingPlayerIndex = 0;
+        viewingPlayerIndex = -1;
         _driveFileUrls = {};
+        _summaryDriveFileUrl = null;
 
         const gameId = players[0]?.gameId;
         if (gameId) {
@@ -111,13 +113,27 @@
             }
         }
 
-        showReport(0);
+        showReport(-1);
         saveToDrive(true).catch(e => console.error('[finishGame] saveToDrive 실패', e));
     }
     function _finishGameCancel() {
         document.getElementById('finishConfirmModal').classList.remove('show');
     }
     function showReport(idx) {
+        const summaryArea = document.getElementById('pdfAreaRankingSummary');
+        const reportArea  = document.getElementById('pdfAreaReport');
+
+        if (idx === -1) {
+            summaryArea.style.display = 'block';
+            reportArea.style.display  = 'none';
+            document.getElementById('pageIndicator').innerText = '결과 요약';
+            renderSummaryPage();
+            return;
+        }
+
+        summaryArea.style.display = 'none';
+        reportArea.style.display  = '';
+
         const p = players[idx];
         document.getElementById('pageIndicator').innerText = `${idx+1} / ${players.length}`;
         let dateStr;
@@ -141,7 +157,6 @@
         }
         document.getElementById('rptNicknameInput').value = p.nickname || '';
         document.getElementById('rptRealNameInput').value = p.realName || p.name || '';
-        const reportArea = document.getElementById('pdfAreaReport');
 
         if (currentMode === 'team') {
             document.getElementById('rptTeamWrapper').style.display = 'inline-flex';
@@ -407,12 +422,90 @@
         _seg(depositCircle,   depositPercent,   cashPercent + assetPercent + diligencePercent);
         _seg(questCircle,     questPercent,     cashPercent + assetPercent + diligencePercent + depositPercent);
     }
-    function prevPlayer() { if(viewingPlayerIndex>0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); } }
-    function nextPlayer() { if(viewingPlayerIndex<players.length-1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); } }
+    function renderSummaryPage() {
+        if (customLogoData) {
+            document.getElementById('summaryLogoImg').src = customLogoData;
+            document.getElementById('summaryLogoImg').style.display = 'block';
+            document.getElementById('summaryLogoText').style.display = 'none';
+        } else {
+            document.getElementById('summaryLogoImg').style.display = 'none';
+            document.getElementById('summaryLogoText').style.display = 'block';
+        }
+
+        const summaryDateEl = document.getElementById('summaryDateText');
+        if (summaryDateEl) summaryDateEl.textContent = loadedDate ? loadedDate.trim() : formatFolderDate();
+        document.getElementById('summaryAssetHeader').textContent = currentGameVariant !== 'basic' ? '부동산' : '주식';
+
+        const sorted = [...players].sort((a, b) => b.total - a.total);
+        const tbody = document.getElementById('summaryIndivTableBody');
+        tbody.innerHTML = '';
+        sorted.forEach((p, i) => {
+            const rank = i + 1;
+            let icon = '', rowBg = '';
+            if      (rank === 1) { icon = '🥇'; rowBg = 'background:#fffbe6;'; }
+            else if (rank === 2) { icon = '🥈'; }
+            else if (rank === 3) { icon = '🥉'; }
+            const rankCell  = icon ? `<span class="rank-icon">${icon}</span>` : String(rank);
+            const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+            const cash     = Number(p.manualCash      || 0);
+            const assetVal = Number(calcActiveAsset(p.assets || {}) || 0);
+            const etc      = Number(p.diligenceReward || 0) + Number(p.depositReward || 0) + Number(p.questReward || 0);
+            tbody.innerHTML += `<tr style="${rowBg}">
+                <td class="rank-col ${rankClass}">${rankCell}</td>
+                <td class="name-col">${p.nickname || p.name || '-'}</td>
+                <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(p.total).toLocaleString()}</td>
+                <td class="sub-asset-col">${cash.toLocaleString()}</td>
+                <td class="sub-asset-col">${assetVal.toLocaleString()}</td>
+                <td class="sub-asset-col">${etc.toLocaleString()}</td>
+            </tr>`;
+        });
+
+        const teamSection = document.getElementById('summaryTeamSection');
+        if (currentMode === 'team') {
+            teamSection.style.display = 'block';
+            const teamMap = {};
+            players.forEach(p => {
+                if (!teamMap[p.team]) teamMap[p.team] = { total: 0, members: [] };
+                teamMap[p.team].total += p.total;
+                teamMap[p.team].members.push(p.nickname || p.name || '');
+            });
+            const teamRanked = Object.entries(teamMap)
+                .map(([name, data]) => ({ name, total: data.total, members: data.members.join(', ') }))
+                .sort((a, b) => b.total - a.total);
+            const teamTbody = document.getElementById('summaryTeamTableBody');
+            teamTbody.innerHTML = '';
+            teamRanked.forEach((t, i) => {
+                const rank = i + 1;
+                let icon = '', rowBg = '';
+                if (rank === 1) { icon = '🏆'; rowBg = 'background:#fffbe6;'; }
+                const rankCell  = icon ? `<span class="rank-icon">${icon}</span>` : String(rank);
+                const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+                teamTbody.innerHTML += `<tr style="${rowBg}">
+                    <td class="rank-col ${rankClass}">${rankCell}</td>
+                    <td class="name-col">${t.name}</td>
+                    <td class="asset-col ${rank === 1 ? 'top' : ''}">${t.total.toLocaleString()}</td>
+                    <td class="member-col">${t.members}</td>
+                </tr>`;
+            });
+        } else {
+            teamSection.style.display = 'none';
+        }
+    }
+
+    function prevPlayer() {
+        if (viewingPlayerIndex > 0) { viewingPlayerIndex--; showReport(viewingPlayerIndex); }
+        else if (viewingPlayerIndex === 0) { viewingPlayerIndex = -1; showReport(-1); }
+    }
+    function nextPlayer() {
+        if (viewingPlayerIndex === -1) { viewingPlayerIndex = 0; showReport(0); }
+        else if (viewingPlayerIndex < players.length - 1) { viewingPlayerIndex++; showReport(viewingPlayerIndex); }
+    }
 
     // ✅ [수정] downloadPDF 함수 (문법/옵션 구조 정상화)
     async function downloadPDF(type) {
-        const areaId = type === 'report' ? 'pdfAreaReport' : 'pdfAreaFame';
+        const areaId = type === 'report'
+            ? (viewingPlayerIndex === -1 ? 'pdfAreaRankingSummary' : 'pdfAreaReport')
+            : 'pdfAreaFame';
         const target = document.getElementById(areaId);
 
         if (!target) {
@@ -427,7 +520,9 @@
         const opt = {
             margin: 0,
             filename: type === 'report'
-                ? buildReportPdfFileName(players[viewingPlayerIndex], viewingPlayerIndex)
+                ? (viewingPlayerIndex === -1
+                    ? `${(loadedDate ? loadedDate.trim() : formatFolderDate(new Date())).replace(/-/g, '')}_최종순위.pdf`
+                    : buildReportPdfFileName(players[viewingPlayerIndex], viewingPlayerIndex))
                 : `${formatFolderDate(new Date()).replace(/-/g, '')}_명예의전당.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
@@ -547,12 +642,19 @@
     }
 
     function shareReport() {
-        const p = players[viewingPlayerIndex];
-        const url = (p && p.reportFileUrl) || _driveFileUrls[viewingPlayerIndex];
-        const modal = document.getElementById('shareModal');
-        const urlRow = document.getElementById('shareUrlRow');
+        const modal    = document.getElementById('shareModal');
+        const urlRow   = document.getElementById('shareUrlRow');
         const urlInput = document.getElementById('shareUrlInput');
         const noUrlMsg = document.getElementById('shareNoUrlMsg');
+
+        let url;
+        if (viewingPlayerIndex === -1) {
+            url = _summaryDriveFileUrl;
+        } else {
+            const p = players[viewingPlayerIndex];
+            url = (p && p.reportFileUrl) || _driveFileUrls[viewingPlayerIndex];
+        }
+
         if (url) {
             urlInput.value = url;
             urlRow.style.display = 'flex';
@@ -603,8 +705,24 @@
         btn.innerHTML = `📄 PDF 일괄 저장 중...`;
 
         try {
-            const rawDateText = (document.getElementById('rptDateInput')?.value || '').trim();
-            const gameDate = rawDateText || formatFolderDate(new Date());
+            const gameDate = loadedDate ? loadedDate.trim()
+                : ((document.getElementById('rptDateInput')?.value || '').trim() || formatFolderDate(new Date()));
+
+            // 결과 요약 페이지 먼저 저장
+            viewingPlayerIndex = -1;
+            showReport(-1);
+            await waitForRenderFrame();
+            const summaryFileName = `${gameDate.replace(/-/g, '')}_최종순위.pdf`;
+            const summaryPdfBase64 = await getPdfBase64FromElement('pdfAreaRankingSummary', summaryFileName);
+            const summaryRes = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "uploadPDF", pdfBase64: summaryPdfBase64, fileName: summaryFileName, category: "asset_report", gameDate, nickname: "summary", real_name: "" })
+            });
+            const summaryJson = await summaryRes.json();
+            if (!summaryJson.success) throw new Error(`요약 업로드 실패\n${summaryJson?.message || ''}`);
+            const summaryFileUrl = summaryJson.fileUrl || (summaryJson.fileId ? `https://drive.google.com/file/d/${summaryJson.fileId}/view` : null);
+            if (summaryFileUrl) _summaryDriveFileUrl = summaryFileUrl;
 
             for (let i = 0; i < players.length; i++) {
                 viewingPlayerIndex = i;
@@ -644,13 +762,13 @@
                 }
             }
 
-            alert(`✅ 현재 세션 참가자 ${players.length}명의 PDF를 모두 드라이브에 저장했습니다.`);
+            alert(`✅ 결과 요약 1개 + 참가자 ${players.length}명의 PDF를 모두 드라이브에 저장했습니다.`);
         } catch (err) {
             console.error("[uploadPdfToDrive] ERROR", err);
             alert("❌ PDF 일괄 저장 실패:\n" + (err?.message || String(err)));
         } finally {
             viewingPlayerIndex = originalIndex;
-            if (players[originalIndex]) showReport(originalIndex);
+            if (originalIndex === -1 || players[originalIndex]) showReport(originalIndex);
 
             isSavingDrive = false;
             btn.disabled = false;
@@ -713,20 +831,38 @@
 
     async function uploadCurrentReportToDrive() {
         const btn = document.getElementById('btnSaveDriveReportSingle');
-        if (!players || players.length === 0) { alert("저장할 참가자가 없습니다."); return; }
         if (isSampleMode) { alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다."); return; }
         if (isSavingDrive) return;
         isSavingDrive = true;
 
-        const i = viewingPlayerIndex;
-        const p = players[i];
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '☁️ 저장 중...';
 
         try {
-            const rawDateText = (document.getElementById('rptDateInput')?.value || '').trim();
-            const gameDate = rawDateText || formatFolderDate(new Date());
+            const gameDate = loadedDate ? loadedDate.trim()
+                : ((document.getElementById('rptDateInput')?.value || '').trim() || formatFolderDate(new Date()));
+
+            if (viewingPlayerIndex === -1) {
+                const dateCompact = gameDate.replace(/-/g, '');
+                const fileName = `${dateCompact}_최종순위.pdf`;
+                const pdfBase64 = await getPdfBase64FromElement('pdfAreaRankingSummary', fileName);
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "uploadPDF", pdfBase64, fileName, category: "asset_report", gameDate, nickname: "summary", real_name: "" })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json?.message || '업로드 실패');
+                const fileUrl = json.fileUrl || (json.fileId ? `https://drive.google.com/file/d/${json.fileId}/view` : null);
+                if (fileUrl) _summaryDriveFileUrl = fileUrl;
+                alert('✅ 결과 요약 PDF가 드라이브에 저장됐습니다.');
+                return;
+            }
+
+            if (!players || players.length === 0) throw new Error('저장할 참가자가 없습니다.');
+            const i = viewingPlayerIndex;
+            const p = players[i];
             const nickname = (p.nickname || p.name || `참가자${i + 1}`).trim();
             const realName = (p.realName || p.name || '').trim();
             const fileName = buildReportPdfFileName(p, i);

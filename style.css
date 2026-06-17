@@ -676,6 +676,22 @@
         #teamTableBody  tr:not(:first-child) td.rank-col {
         font-size: 19px !important; /* rank-col 기본 20 -> 19 */
         }
+        /* 요약 페이지 테이블 - 2등 이하 압축 */
+        #summaryIndivTableBody tr:not(:first-child) td,
+        #summaryTeamTableBody  tr:not(:first-child) td {
+            padding: 9px 6px !important;
+            font-size: 17px !important;
+            line-height: 1.15 !important;
+        }
+        #summaryIndivTableBody tr:not(:first-child) td.name-col,
+        #summaryTeamTableBody  tr:not(:first-child) td.name-col { font-size: 19px !important; }
+        #summaryIndivTableBody tr:not(:first-child) td.asset-col,
+        #summaryTeamTableBody  tr:not(:first-child) td.asset-col { font-size: 19px !important; }
+        #summaryIndivTableBody tr:not(:first-child) td.sub-asset-col { font-size: 19px !important; }
+        #summaryIndivTableBody tr:not(:first-child) td.rank-col,
+        #summaryTeamTableBody  tr:not(:first-child) td.rank-col { font-size: 19px !important; }
+        #summaryTeamTableBody tr:not(:first-child) td.member-col { font-size: 15px !important; }
+
         /* [시민권자 신규 등록 모달] */
         .modal-backdrop{
             position: fixed;

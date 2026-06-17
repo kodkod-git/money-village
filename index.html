@@ -174,6 +174,58 @@
             </div>
         </div>
 
+        <div class="report-paper" id="pdfAreaRankingSummary" style="display:none;">
+            <div class="report-header">
+                <div class="header-left">
+                    <div class="header-title">
+                        <h1>🏆 최종 순위</h1>
+                        <p>Money Village Final Rankings</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <img id="summaryLogoImg" src="" alt="로고" class="logo-img" style="display:none;">
+                    <div id="summaryLogoText" style="font-size:20px; font-weight:900; color:var(--mv-blue-deep); margin-bottom:5px;"></div>
+                </div>
+            </div>
+
+            <div style="font-size:20px; font-weight:800; color:var(--mv-blue-deep); border-left:7px solid var(--mv-yellow); padding-left:9px; margin:16px 0 8px 0; display:flex; align-items:center; gap:8px;">👤 개인 최종 순위</div>
+            <table class="ranking-table">
+                <colgroup>
+                    <col style="width:7%">
+                    <col style="width:20%">
+                    <col style="width:20%">
+                    <col style="width:15%">
+                    <col style="width:15%">
+                    <col style="width:13%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>닉네임</th>
+                        <th>총 자산</th>
+                        <th>현금</th>
+                        <th id="summaryAssetHeader">주식</th>
+                        <th>기타</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryIndivTableBody"></tbody>
+            </table>
+
+            <div id="summaryTeamSection" style="display:none; margin-top:30px;">
+                <div style="font-size:20px; font-weight:800; color:var(--mv-blue-deep); border-left:7px solid var(--mv-yellow); padding-left:9px; margin:8px 0 5px 0; display:flex; align-items:center; gap:8px;">👥 팀 최종 순위</div>
+                <table class="ranking-table">
+                    <colgroup><col style="width:8%"><col style="width:25%"><col style="width:25%"><col style="width:42%"></colgroup>
+                    <thead><tr><th>순위</th><th>팀명</th><th>팀 총 자산</th><th>팀원</th></tr></thead>
+                    <tbody id="summaryTeamTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="fame-footer" style="margin-top:30px;">
+                <div style="font-size:15px; color:var(--mv-blue-deep); font-weight:900; margin-bottom:5px;">"투자는 오늘의 씨앗을 심고, 열매가 맺힐 때까지 기다릴 줄 아는 거예요"</div>
+                ✨ 다음 전설의 주인공은 바로 당신입니다! 머니빌리지에 도전하세요! ✨
+            </div>
+        </div>
+
         <div class="report-paper" id="pdfAreaReport">
             <div class="report-header">
                 <div class="header-left">

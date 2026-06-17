@@ -37,7 +37,8 @@ function fetchTestReports() {
         delete window[cbName];
         document.body.removeChild(script);
         if (!data.success) {
-            container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>`;
+            const detail = data.message ? `<br><small style="color:#aaa">${data.message}</small>` : '';
+            container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}${detail}<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>`;
             return;
         }
         _testReports = (data.reports || [])
