@@ -519,25 +519,23 @@
                         <div class="bank-screen-title" id="bankRoundTitle">1라운드 장기 예금 신청</div>
                         <div id="bankGameInfo" class="bank-screen-subtitle"></div>
                     </div>
-                    <span id="bankRatioBadge" class="bank-ratio-header-badge" style="margin-left:auto;"></span>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <span id="bankRatioBadge" class="bank-ratio-header-badge"></span>
+                        <button class="bank-reset-btn" onclick="bankReset()" title="초기화">↻</button>
+                    </div>
                 </div>
                 <div id="bankTabBar" style="display:none;" class="player-tab-bar">
                     <button id="bankTabTeam"  class="player-tab active" onclick="bankSetViewMode('team')">팀</button>
                     <button id="bankTabIndiv" class="player-tab"        onclick="bankSetViewMode('individual')">개인</button>
                 </div>
                 <div id="bankPlayerGrid" class="bank-player-grid"></div>
-                <div style="padding: 16px 0 8px; display:flex; gap:8px;">
+                <div style="padding: 16px 0 16px; display:flex; gap:8px;">
                     <button id="bankGoBackRoundBtn" class="btn btn-dark"
                         style="flex:1; padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankGoBackRound()">← 이전 라운드</button>
                     <button id="bankAdvanceRoundBtn" class="btn btn-purple"
                         style="flex:1; padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankAdvanceRound()">다음 라운드 →</button>
-                </div>
-                <div style="padding: 0 0 16px;">
-                    <button class="btn btn-danger"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
-                        onclick="bankReset()">초기화</button>
                 </div>
             </div>
 
@@ -619,22 +617,20 @@
                         <div class="bank-screen-title">🧩 퀴즈 퀘스트</div>
                         <div id="quizGameInfo" class="bank-screen-subtitle"></div>
                     </div>
-                    <span class="quiz-reward-badge" style="margin-left:auto;">보상: <span id="quizRewardBadge">1,000원</span></span>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <span class="quiz-reward-badge">보상: <span id="quizRewardBadge">1,000원</span></span>
+                        <button class="quiz-reset-btn" onclick="quizReset()" title="초기화">↻</button>
+                    </div>
                 </div>
                 <div id="quizTabBar" style="display:none;" class="player-tab-bar">
                     <button id="quizTabTeam"  class="player-tab active" onclick="quizSetViewMode('team')">팀</button>
                     <button id="quizTabIndiv" class="player-tab"        onclick="quizSetViewMode('individual')">개인</button>
                 </div>
                 <div id="quizPlayerGrid" class="bank-player-grid"></div>
-                <div style="padding: 16px 0 8px;">
-                    <button id="quizCloseBtn" class="btn btn-purple"
+                <div style="padding: 16px 0 16px;">
+                    <button id="quizCloseBtn" class="btn btn-quiz"
                         style="width:100%; padding:14px; font-size:15px; justify-content:center;"
                         onclick="quizClose()">마감</button>
-                </div>
-                <div style="padding: 0 0 16px;">
-                    <button class="btn btn-danger"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
-                        onclick="quizReset()">초기화</button>
                 </div>
             </div>
         </div>
@@ -666,7 +662,7 @@
                 <div class="result-msg" id="quizResultMsg"></div>
                 <div class="quiz-result-reward" id="quizResultReward" style="display:none;"></div>
                 <button class="btn-retry" id="quizBtnConfirm" style="background:#2e7d32;" onclick="quizResultNext()">확인</button>
-                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#1565C0;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
+                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#00897b;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
                 <button class="btn-retry" id="quizBtnRetry" style="display:none; background:#E74C3C;" onclick="quizResultNext()">돌아가기</button>
             </div>
         </div>

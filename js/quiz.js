@@ -22,6 +22,7 @@ const _quiz = {
     currentPlayerIdx: null,
     currentQuizNum:   null, // team only: 0=quiz2.png, 1=quiz3.png
     selections:       [],
+    expandedGroups:   new Set(),
 };
 
 let _quizRewardDebounceTimer = null;
@@ -261,6 +262,7 @@ async function quizStep1Complete() {
         _quizUpdateRewardBadge();
 
         _quiz.isClosed      = false;
+        _quiz.expandedGroups  = new Set();
         _quiz.progress      = {};
         _quiz.teamProgress  = {};
         _quiz.teamPlayers   = {};
@@ -367,12 +369,23 @@ function _quizRenderPlayerList() {
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
-            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})">초기화</button>` : '';
+            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})" title="초기화">↻</button>` : '';
+            const quizPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
-                <span>${p.team_name || p.nickname}</span>
+                <span>${p.team_name || p.nickname}</span>${quizPlayerBadge}
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
                 ${quizEntryResetBtn}
             </div>`;
+            groupEl.querySelector('.team-group-header').addEventListener('click', e => {
+                if (e.target.closest('button')) return;
+                if (done || onCooldown) return;
+                const key = 'q_' + idx;
+                groupEl.classList.toggle('collapsed');
+                if (!groupEl.classList.contains('collapsed')) _quiz.expandedGroups.add(key);
+                else _quiz.expandedGroups.delete(key);
+            });
+            if (done || onCooldown) _quiz.expandedGroups.delete('q_' + idx);
+            if (!_quiz.expandedGroups.has('q_' + idx)) groupEl.classList.add('collapsed');
 
             const playersEl = document.createElement('div');
             playersEl.className = 'team-group-players';
@@ -423,12 +436,23 @@ function _quizRenderPlayerList() {
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
-            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})">초기화</button>` : '';
+            const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})" title="초기화">↻</button>` : '';
+            const quizPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
-                <span>${p.team_name || p.nickname}</span>
+                <span>${p.team_name || p.nickname}</span>${quizPlayerBadge}
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
                 ${quizEntryResetBtn}
             </div>`;
+            groupEl.querySelector('.team-group-header').addEventListener('click', e => {
+                if (e.target.closest('button')) return;
+                if (done || onCooldown) return;
+                const key = 'q_' + idx;
+                groupEl.classList.toggle('collapsed');
+                if (!groupEl.classList.contains('collapsed')) _quiz.expandedGroups.add(key);
+                else _quiz.expandedGroups.delete(key);
+            });
+            if (done || onCooldown) _quiz.expandedGroups.delete('q_' + idx);
+            if (!_quiz.expandedGroups.has('q_' + idx)) groupEl.classList.add('collapsed');
 
             const playersEl = document.createElement('div');
             playersEl.className = 'team-group-players';
@@ -479,12 +503,22 @@ function _quizRenderPlayerList() {
             : inProgress ? ' quiz-in-progress' : '';
         const teamBadgeText = teamOnCooldown ? `⏱ ${teamRemaining}초` : `[${count}/2]`;
         groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
-        const teamQuizResetBtn = (_quiz.teamPlayers[teamKey]?.size || 0) > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${members[0].idx})">초기화</button>` : '';
+        const teamQuizResetBtn = (_quiz.teamPlayers[teamKey]?.size || 0) > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
         groupEl.innerHTML = `<div class="team-group-header">
             <span>${teamKey || '무소속'}</span>
             <span class="quiz-progress-badge${teamBadgeClass}">${teamBadgeText}</span>
             ${teamQuizResetBtn}
         </div>`;
+        groupEl.querySelector('.team-group-header').addEventListener('click', e => {
+            if (e.target.closest('button')) return;
+            if (done || teamOnCooldown) return;
+            const key = 'qt_' + teamKey;
+            groupEl.classList.toggle('collapsed');
+            if (!groupEl.classList.contains('collapsed')) _quiz.expandedGroups.add(key);
+            else _quiz.expandedGroups.delete(key);
+        });
+        if (done || teamOnCooldown) _quiz.expandedGroups.delete('qt_' + teamKey);
+        if (!_quiz.expandedGroups.has('qt_' + teamKey)) groupEl.classList.add('collapsed');
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
@@ -722,6 +756,7 @@ async function quizReset() {
     if (!result.success) { alert('초기화에 실패했습니다. 다시 시도해주세요.'); return; }
 
     _quiz.progress         = {};
+    _quiz.expandedGroups   = new Set();
     _quiz.teamProgress     = {};
     _quiz.teamPlayers      = {};
     _quiz.cooldowns        = {};

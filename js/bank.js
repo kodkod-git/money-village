@@ -18,7 +18,8 @@ const _bank = {
     playerTypeTags:  {},
     teamTypeTags:    {},
     roundSnapshots:  [],
-    viewMode:  'team'
+    viewMode:  'team',
+    expandedGroups: new Set(),
 };
 
 let _bankRatioDebounceTimer = null;
@@ -264,6 +265,7 @@ async function bankStep1Complete() {
             }
         }
         _bank.indivCompleted  = {};
+        _bank.expandedGroups  = new Set();
         _bank.teamDeposits    = {};
         _bank.teamRewards     = {};
         _bank.indivRewards    = {};
@@ -387,9 +389,20 @@ function _bankRenderPlayerList() {
 
             const header = document.createElement('div');
             header.className = 'team-group-header';
-            const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})">초기화</button>` : '';
-            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${typeTags}${statusTag}${entryResetBtn}`;
+            const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})" title="초기화">↻</button>` : '';
+            const bankPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
+            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${bankPlayerBadge}${typeTags}${statusTag}${entryResetBtn}`;
             groupEl.appendChild(header);
+            header.addEventListener('click', e => {
+                if (e.target.closest('button')) return;
+                if (done) return;
+                const key = 'i_' + idx;
+                groupEl.classList.toggle('collapsed');
+                if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
+                else _bank.expandedGroups.delete(key);
+            });
+            if (done) _bank.expandedGroups.delete('i_' + idx);
+            if (!_bank.expandedGroups.has('i_' + idx)) groupEl.classList.add('collapsed');
 
             const playersEl = document.createElement('div');
             playersEl.className = 'team-group-players';
@@ -425,9 +438,19 @@ function _bankRenderPlayerList() {
         const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
             .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
             .join('');
-        const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})">초기화</button>` : '';
+        const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
         header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}${teamEntryResetBtn}`;
         groupEl.appendChild(header);
+        header.addEventListener('click', e => {
+            if (e.target.closest('button')) return;
+            if (allDone) return;
+            const key = 't_' + teamKey;
+            groupEl.classList.toggle('collapsed');
+            if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
+            else _bank.expandedGroups.delete(key);
+        });
+        if (allDone) _bank.expandedGroups.delete('t_' + teamKey);
+        if (!_bank.expandedGroups.has('t_' + teamKey)) groupEl.classList.add('collapsed');
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
@@ -681,6 +704,7 @@ function bankAdvanceRound() {
     _bank.teamRewards    = {};
     _bank.indivRewards   = {};
     _bank.indivCompleted = {};
+    _bank.expandedGroups  = new Set();
     _bank.teamDeposits   = {};
     _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
     sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
