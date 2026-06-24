@@ -4,6 +4,8 @@
 
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const _TEST_GAME_ID = '6a132594';
+
 function _toStorageKey(fileName) {
     if (!/[^\x00-\x7F]/.test(fileName)) return fileName;
     let h = 0;
@@ -452,7 +454,7 @@ async function sbLoadAssetsByDate(date) {
 
 // 과거 게임 날짜 목록 (dropdown용)
 async function sbGetGameDates() {
-    const { data } = await _sb.from('game_info').select('date').order('date', { ascending: false });
+    const { data } = await _sb.from('game_info').select('date').neq('game_id', _TEST_GAME_ID).order('date', { ascending: false });
     if (!data) return [];
     const seen = new Set();
     return data.map(r => r.date).filter(d => { if (seen.has(d)) return false; seen.add(d); return true; });
@@ -460,7 +462,7 @@ async function sbGetGameDates() {
 
 // 특정 날짜의 게임 목록 + 참가자 미리보기 (카드용)
 async function sbGetGamesByDate(date) {
-    const { data: games } = await _sb.from('game_info').select('*').eq('date', date).order('section_num');
+    const { data: games } = await _sb.from('game_info').select('*').eq('date', date).neq('game_id', _TEST_GAME_ID).order('section_num');
     if (!games || games.length === 0) return [];
     return Promise.all(games.map(async game => {
         const { data: rows } = await _sb.from('game_individual')
@@ -628,9 +630,9 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 
 async function sbLoadHallOfFame() {
     const [{ data: gameInfoList }, { data: indiv }, { data: team }] = await Promise.all([
-        _sb.from('game_info').select('game_id, game_variant'),
-        _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
-        _sb.from('game_team').select('*').order('team_total_asset', { ascending: false }).limit(200)
+        _sb.from('game_info').select('game_id, game_variant').neq('game_id', _TEST_GAME_ID),
+        _sb.from('game_individual').select('*').neq('game_id', _TEST_GAME_ID).order('total_asset', { ascending: false }).limit(200),
+        _sb.from('game_team').select('*').neq('game_id', _TEST_GAME_ID).order('team_total_asset', { ascending: false }).limit(200)
     ]);
     const variantMap = Object.fromEntries(
         (gameInfoList || []).map(r => [r.game_id, r.game_variant || 'basic'])
@@ -795,4 +797,69 @@ async function sbDeleteGame(gameId) {
         const { error } = await _sb.from(table).delete().eq('game_id', gid);
         if (error) throw new Error(`[${table}] 삭제 실패: ${error.message}`);
     }
+}
+
+// =========================================================
+// 테스트 데이터 (game_id: 6a132594) — 드롭다운/명예의전당에서 제외됨
+// =========================================================
+
+async function sbEnsureTestData() {
+    const { data: existing } = await _sb.from('game_info')
+        .select('game_id').eq('game_id', _TEST_GAME_ID).maybeSingle();
+    if (existing) return;
+
+    const T = _TEST_GAME_ID;
+    const TA = T + '_ta';
+    const TB = T + '_tb';
+
+    await _sb.from('game_info').insert({
+        game_id: T, date: '2099-12-31', section_num: 99,
+        game_type: 'team', game_variant: 'basic', player_count: 4
+    });
+
+    await _sb.from('game_team').upsert([
+        { team_id: TA, game_id: T, team_name: '팀A', team_total_asset: 104800, members: '테스트갑, 테스트을' },
+        { team_id: TB, game_id: T, team_name: '팀B', team_total_asset: 125400, members: '테스트병, 테스트정' }
+    ], { onConflict: 'team_id' });
+
+    await _sb.from('game_individual').insert([
+        { game_id: T, nickname: '테스트갑', real_name: '테스트갑', team_id: TA, cash: 47000, stock: 15300, total_asset: 67300, diligence_reward: 5000, quest_reward: 0, deposit_reward: 0 },
+        { game_id: T, nickname: '테스트을', real_name: '테스트을', team_id: TA, cash: 20700, stock: 11800, total_asset: 37500, diligence_reward: 0, quest_reward: 5000, deposit_reward: 0 },
+        { game_id: T, nickname: '테스트병', real_name: '테스트병', team_id: TB, cash: 73300, stock: 23000, total_asset: 101300, diligence_reward: 0, quest_reward: 0, deposit_reward: 5000 },
+        { game_id: T, nickname: '테스트정', real_name: '테스트정', team_id: TB, cash: 9100,  stock: 15000, total_asset: 24100, diligence_reward: 0, quest_reward: 0, deposit_reward: 0 }
+    ]);
+
+    await _sb.from('stock_price').upsert({
+        game_id: T, sasung: 1500, lgi: 600, skei: 1600, cacao: 4000, hyunde: 6000, naber: 7000
+    }, { onConflict: 'game_id' });
+
+    await _sb.from('stock_balance').upsert([
+        { game_id: T, nickname: '테스트갑', sasung: 5, lgi: 3, skei: 0, cacao: 0, hyunde: 1, naber: 0 },
+        { game_id: T, nickname: '테스트을', sasung: 0, lgi: 5, skei: 3, cacao: 1, hyunde: 0, naber: 0 },
+        { game_id: T, nickname: '테스트병', sasung: 2, lgi: 0, skei: 5, cacao: 0, hyunde: 2, naber: 0 },
+        { game_id: T, nickname: '테스트정', sasung: 0, lgi: 0, skei: 0, cacao: 2, hyunde: 0, naber: 1 }
+    ], { onConflict: 'game_id,nickname' });
+
+    await _sb.from('cash_balance').upsert([
+        { game_id: T, nickname: '테스트갑', bill_100: 5,  bill_500: 3, bill_1000: 10, bill_5000: 3, bill_10000: 2, bill_50000: 0 },
+        { game_id: T, nickname: '테스트을', bill_100: 2,  bill_500: 1, bill_1000: 5,  bill_5000: 1, bill_10000: 1, bill_50000: 0 },
+        { game_id: T, nickname: '테스트병', bill_100: 8,  bill_500: 5, bill_1000: 15, bill_5000: 5, bill_10000: 3, bill_50000: 0 },
+        { game_id: T, nickname: '테스트정', bill_100: 1,  bill_500: 2, bill_1000: 3,  bill_5000: 1, bill_10000: 0, bill_50000: 0 }
+    ], { onConflict: 'game_id,nickname' });
+
+    await _sb.from('traits').upsert([
+        { game_id: T, nickname: '테스트갑', diligent: true,  saving: false, invest: false, career: false, luck: false, adventure: false },
+        { game_id: T, nickname: '테스트을', diligent: false, saving: true,  invest: false, career: false, luck: false, adventure: false },
+        { game_id: T, nickname: '테스트병', diligent: false, saving: false, invest: true,  career: false, luck: true,  adventure: false },
+        { game_id: T, nickname: '테스트정', diligent: false, saving: false, invest: false, career: true,  luck: false, adventure: false }
+    ], { onConflict: 'game_id,nickname' });
+
+    await _sb.from('bank_state').upsert({
+        game_id: T, long_ratio: 2.0, mid_ratio: 1.5, short_ratio: 1.2,
+        team_long_ratio: 2.5, team_mid_ratio: 2.0, team_short_ratio: 1.5
+    }, { onConflict: 'game_id' });
+
+    await _sb.from('quiz_state').upsert({
+        game_id: T, indiv_reward: 5000, team_reward: 10000, is_closed: false
+    }, { onConflict: 'game_id' });
 }

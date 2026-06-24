@@ -970,3 +970,33 @@ function _bankMergeRemoteState(state, history) {
 }
 
 _bankLoad();
+
+// ── 테스트 데이터 불러오기 ──────────────────────────────────────────
+async function loadTestDataForBank(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
+    try {
+        await sbEnsureTestData();
+    } catch(e) {
+        alert('테스트 데이터 준비 실패: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
+        return;
+    }
+    _bankLoad();
+    _bankResetModal();
+    _bank.gameId     = _TEST_GAME_ID;
+    _bank.gameDate   = '[테스트]';
+    _bank.sectionNum = 99;
+    _bank.gameType   = 'team';
+    _bank._dbSettings = null;
+    const saved = await sbGetBankState(_TEST_GAME_ID).catch(() => null);
+    if (saved) {
+        _bank.settings.long  = saved.long_ratio  || _bank.settings.long;
+        _bank.settings.mid   = saved.mid_ratio   || _bank.settings.mid;
+        _bank.settings.short = saved.short_ratio || _bank.settings.short;
+        _bank.teamSettings.long  = saved.team_long_ratio  || _bank.teamSettings.long;
+        _bank.teamSettings.mid   = saved.team_mid_ratio   || _bank.teamSettings.mid;
+        _bank.teamSettings.short = saved.team_short_ratio || _bank.teamSettings.short;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
+    await bankStep1Complete();
+}

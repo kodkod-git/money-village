@@ -745,6 +745,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-danger" onclick="closeBankModal()">닫기</button>
+                    <button class="btn" id="bankTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForBank(this)">🧪 테스트 데이터</button>
                     <button class="btn btn-success" id="bankStep1Btn" onclick="bankStep1Complete()" disabled>설정 완료</button>
                 </div>
             </div>
@@ -797,6 +798,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger" onclick="closeQuizModal()">닫기</button>
+                <button class="btn" id="quizTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForQuiz(this)">🧪 테스트 데이터</button>
                 <button class="btn btn-success" id="quizStep1Btn" onclick="quizStep1Complete()" disabled>설정 완료</button>
             </div>
         </div>
@@ -989,6 +991,7 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnPastGameLoad" style="display:none;" onclick="confirmLoadPastGame()">불러오기</button>
                 <button class="btn btn-danger" id="btnPastGameDelete" style="display:none;" onclick="confirmDeletePastGame()">삭제하기</button>
+                <button class="btn" id="reportTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForReport(this)">🧪 테스트 데이터</button>
                 <button class="btn btn-dark" onclick="closePastGameModal()">닫기</button>
             </div>
         </div>

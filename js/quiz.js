@@ -908,3 +908,30 @@ function _quizMergeRemoteState(state, history) {
     // 보상 뱃지 UI 반영
     _quizUpdateRewardBadge();
 }
+
+// ── 테스트 데이터 불러오기 ──────────────────────────────────────────
+async function loadTestDataForQuiz(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
+    try {
+        await sbEnsureTestData();
+    } catch(e) {
+        alert('테스트 데이터 준비 실패: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
+        return;
+    }
+    _quizResetModal();
+    _quiz.gameId      = _TEST_GAME_ID;
+    _quiz.gameDate    = '[테스트]';
+    _quiz.sectionNum  = 99;
+    _quiz.gameType    = 'team';
+    _quiz.gameVariant = 'basic';
+    _quiz._dbReward     = null;
+    _quiz._dbTeamReward = null;
+    const saved = await sbGetQuizState(_TEST_GAME_ID).catch(() => null);
+    if (saved && saved.indiv_reward !== null && saved.indiv_reward !== undefined) {
+        _quiz.reward     = saved.indiv_reward || 0;
+        _quiz.teamReward = saved.team_reward  || 0;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
+    await quizStep1Complete();
+}

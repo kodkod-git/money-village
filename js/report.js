@@ -1348,3 +1348,16 @@
             alert("❌ 불러오기 실패: " + error.message);
         }
     }
+
+    // ── 테스트 데이터 불러오기 ────────────────────────────────────────
+    async function loadTestDataForReport(btn) {
+        if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
+        try {
+            await sbEnsureTestData();
+            await _loadPastGame(_TEST_GAME_ID, '[테스트]', 'basic');
+        } catch(e) {
+            alert('테스트 데이터 불러오기 실패: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
+        }
+    }
