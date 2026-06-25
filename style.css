@@ -776,8 +776,8 @@
             padding: 16px 22px 22px;
         }
         /* 은행 예금 버튼 (보라) / 퀴즈 버튼 (초록) */
-        .btn-bank { background: #7B3F99; color: #fff; }
-        .btn-quiz { background: #00897b; color: #fff; }
+        .btn-bank { background: #00897b; color: #fff; }
+        .btn-quiz { background: #7B3F99; color: #fff; }
 
         /* 은행 예금 모달 */
         .bank-modal-card { max-width: 580px; }
@@ -905,6 +905,7 @@
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
         .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .bank-player-indiv-tags { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; padding: 4px 0; }
         .card-reset-btn { margin-left: auto; background: #e74c3c; color: white; border: none; border-radius: 5px; padding: 3px 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
         .card-reset-btn:hover { opacity: 0.85; }
         .bank-status-type  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
@@ -1056,6 +1057,7 @@
         .past-game-card-meta .tag-basic{ background: #e8f5e9; color: #2e7d32; }
         .past-game-card-meta .tag-advanced{ background: #f3e5f5; color: #7b1fa2; }
         .past-game-card-meta .tag-rich{ background: #fff3e0; color: #e65100; }
+        .tag-test{ background: #fff9c4; color: #f57f17; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; vertical-align: middle; }
 
         .btn[disabled]{
             opacity: 0.65;
@@ -1080,125 +1082,137 @@
 
         /* 탭바 */
         #quizView2 .player-tab-bar {
-            border-color: #a5d6a7;
+            border-color: #D1C4E9;
             margin-bottom: 12px;
             position: relative;
             z-index: 1;
         }
         #quizView2 .player-tab {
-            background: #f4fbf4;
-            color: #00897b;
+            background: #F3F4FC;
+            color: #5E35B1;
         }
         #quizView2 .player-tab + .player-tab {
-            border-left-color: #a5d6a7;
+            border-left-color: #D1C4E9;
         }
         #quizView2 .player-tab.active {
-            background: #00897b;
+            background: #7B3F99;
             color: #fff;
         }
 
         /* 플레이어 카드 */
         #quizView2 .bank-player-card {
+            background: #F3F4FC;
+            border-color: #D1C4E9;
+        }
+        #quizView2 .bank-player-card:hover {
+            border-color: #7B3F99;
+            background: #EDE7F6;
+            box-shadow: 0 3px 12px rgba(94,53,177,0.15);
+        }
+        #quizView2 .bank-player-card.completed {
+            background: #EDE7F6;
+            border: 3px solid #7B3F99;
+        }
+        #quizView2 .bank-player-nickname {
+            color: #4A148C;
+        }
+        #quizView2 .bank-player-efti {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+        #quizView2 .bank-player-team {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+
+        /* 은행 화면: 카드 초록 테마 */
+        #bankView2 .bank-player-card {
             background: #f4fbf4;
             border-color: #c8e6c9;
         }
-        #quizView2 .bank-player-card:hover {
+        #bankView2 .bank-player-card:hover {
             border-color: #00897b;
             background: #e8f5e9;
             box-shadow: 0 3px 12px rgba(0,137,123,0.15);
         }
-        #quizView2 .bank-player-card.completed {
-            background: #dcedc8;
-            border-color: #aed581;
-        }
-        #quizView2 .bank-player-nickname {
-            color: #1b5e20;
-        }
-        #quizView2 .bank-player-efti {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-        #quizView2 .bank-player-team {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
 
-        /* 은행 화면: 완료 시 카드 전체 진한 보라 */
+        /* 은행 화면: 완료 시 카드 전체 초록 */
         #bankView2 .bank-player-card.completed {
-            background: #EDE7F6;
-            border-color: #B39DDB;
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
         }
         #bankView2 .bank-player-card.completed .bank-player-nickname {
-            color: #4A148C;
+            color: #1b5e20;
         }
         #bankView2 .team-group.team-done {
-            background: #EDE7F6;
-            border-color: #B39DDB;
+            background: #dcedc8;
+            border: 3px solid #2e7d32;
         }
         #bankView2 .team-group.team-done .team-group-header {
-            color: #4A148C;
-            border-bottom-color: #B39DDB;
+            color: #1b5e20;
+            border-bottom-color: #aed581;
         }
 
-        /* 은행 화면: 보라 테마 */
+        /* 은행 화면: 초록 테마 */
         #bankView2 .bank-screen-title {
-            color: #5E35B1;
+            color: #2e7d32;
         }
         #bankView2 .bank-ratio-header-badge {
-            background: #EDE7F6;
-            color: #5E35B1;
+            background: #e8f5e9;
+            color: #2e7d32;
         }
         #bankView2 .bank-player-nickname {
-            color: #4A148C;
+            color: #1b5e20;
+        }
+        #bankView2 .bank-player-team {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-player-efti {
+            background: #e8f5e9;
+            color: #2e7d32;
         }
         #bankView2 .bank-team-progress-badge {
-            background: #EDE7F6;
-            color: #5E35B1;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-team-progress-badge.in-progress {
+            background: #FFF8C5;
+            color: #E65100;
+        }
+        #bankView2 .bank-team-progress-badge.all-done {
+            background: #ffebee;
+            color: #c62828;
         }
         #bankView2 .card-reset-btn {
-            background: #D1C4E9;
-            color: #4A148C;
-            font-size: 16px;
-        }
-        #bankView2 .card-reset-btn:hover {
-            background: #B39DDB;
-            opacity: 1;
-        }
-        #quizView2 .card-reset-btn {
             background: #c8e6c9;
             color: #1b5e20;
             font-size: 16px;
         }
-        #quizView2 .card-reset-btn:hover {
+        #bankView2 .card-reset-btn:hover {
             background: #a5d6a7;
             opacity: 1;
         }
+        #quizView2 .card-reset-btn {
+            background: #D1C4E9;
+            color: #4A148C;
+            font-size: 16px;
+        }
+        #quizView2 .card-reset-btn:hover {
+            background: #B39DDB;
+            opacity: 1;
+        }
+        #bankView2 .team-group {
+            background: #f4fbf4;
+            border-color: #c8e6c9;
+        }
         #bankView2 .team-group-header {
-            color: #5E35B1;
+            color: #2e7d32;
+            border-bottom-color: #c8e6c9;
         }
 
         /* 은행 헤더 새로고침 초기화 버튼 */
         .bank-reset-btn {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            border: 1.5px solid #C5CAE9;
-            background: #F3F4FC;
-            color: #5E35B1;
-            font-size: 22px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            transition: background 0.15s, border-color 0.15s;
-        }
-        .bank-reset-btn:hover {
-            background: #EDE7F6;
-            border-color: #7B3F99;
-            color: #7B3F99;
-        }
-
-        /* 헤더 새로고침 초기화 버튼 */
-        .quiz-reset-btn {
             width: 38px; height: 38px;
             border-radius: 50%;
             border: 1.5px solid #a5d6a7;
@@ -1211,18 +1225,38 @@
             flex-shrink: 0;
             transition: background 0.15s, border-color 0.15s;
         }
-        .quiz-reset-btn:hover {
+        .bank-reset-btn:hover {
             background: #e8f5e9;
             border-color: #00897b;
             color: #00897b;
         }
 
+        /* 헤더 새로고침 초기화 버튼 */
+        .quiz-reset-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid #C5CAE9;
+            background: #F3F4FC;
+            color: #5E35B1;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .quiz-reset-btn:hover {
+            background: #EDE7F6;
+            border-color: #7B3F99;
+            color: #7B3F99;
+        }
+
         /* 개인뷰 헤더 플레이어 이름 뱃지 */
         #quizView2 .player-name-badge {
             font-size: 17px;
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
+            background: #ede7f6;
+            color: #4A148C;
+            border: 1px solid #ce93d8;
             border-radius: 10px;
             padding: 3px 12px;
             font-weight: 700;
@@ -1230,9 +1264,9 @@
         }
         #bankView2 .player-name-badge {
             font-size: 17px;
-            background: #ede7f6;
-            color: #4A148C;
-            border: 1px solid #ce93d8;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #a5d6a7;
             border-radius: 10px;
             padding: 3px 12px;
             font-weight: 700;
@@ -1245,35 +1279,47 @@
         }
         #bankPlayerGrid::-webkit-scrollbar { display: none; }
         #bankView2 .player-tab-bar {
+            border-color: #a5d6a7;
             position: relative;
             z-index: 1;
+        }
+        #bankView2 .player-tab {
+            background: #f4fbf4;
+            color: #2e7d32;
+        }
+        #bankView2 .player-tab + .player-tab {
+            border-left-color: #a5d6a7;
+        }
+        #bankView2 .player-tab.active {
+            background: #00897b;
+            color: #fff;
         }
 
         /* 헤더 타이틀 & 보상 뱃지 */
         #quizView2 .bank-screen-title {
-            color: #1b5e20;
+            color: #4A148C;
         }
         #quizView2 .quiz-reward-badge {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: #EDE7F6;
+            color: #5E35B1;
         }
 
         /* 팀 그룹 카드 */
         #quizView2 .team-group {
-            background: #f4fbf4;
-            border-color: #c8e6c9;
+            background: #F3F4FC;
+            border-color: #D1C4E9;
         }
         #quizView2 .team-group.team-done {
-            background: #dcedc8;
-            border-color: #aed581;
+            background: #EDE7F6;
+            border: 3px solid #7B3F99;
         }
         #quizView2 .team-group-header {
-            color: #2e7d32;
-            border-bottom-color: #c8e6c9;
+            color: #5E35B1;
+            border-bottom-color: #D1C4E9;
         }
         #quizView2 .team-group.team-done .team-group-header {
-            color: #1b5e20;
-            border-bottom-color: #aed581;
+            color: #4A148C;
+            border-bottom-color: #B39DDB;
         }
 
         #quizScreen {
@@ -1359,7 +1405,15 @@
             background: #FFF8C5; color: #E65100;
         }
         .quiz-progress-badge.quiz-done {
-            background: #e0f2e9; color: #2e7d32;
+            background: #ffebee; color: #c62828;
+        }
+        .bank-team-progress-badge.all-done {
+            background: #ffebee; color: #c62828;
+        }
+        .bank-indiv-done-badge {
+            font-size: 17px; font-weight: 700;
+            padding: 3px 12px; border-radius: 10px;
+            background: #ffebee; color: #c62828;
         }
         .quiz-progress-badge.quiz-cooldown { background: #fce4ec; color: #c62828; }
         .quiz-cooldown-badge {
@@ -1495,7 +1549,7 @@
         .result-msg.wrong   { color: #E74C3C; }
         .quiz-result-reward {
             font-size: 30px; font-weight: 700;
-            color: #2e7d32; margin-top: 12px;
+            color: #5E35B1; margin-top: 12px;
         }
         .btn-retry {
             margin-top: 32px;

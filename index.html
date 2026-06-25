@@ -533,7 +533,7 @@
                     <button id="bankGoBackRoundBtn" class="btn btn-dark"
                         style="flex:1; padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankGoBackRound()">← 이전 라운드</button>
-                    <button id="bankAdvanceRoundBtn" class="btn btn-purple"
+                    <button id="bankAdvanceRoundBtn" class="btn btn-bank"
                         style="flex:1; padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankAdvanceRound()">다음 라운드 →</button>
                 </div>
@@ -661,8 +661,8 @@
             <div class="result-box">
                 <div class="result-msg" id="quizResultMsg"></div>
                 <div class="quiz-result-reward" id="quizResultReward" style="display:none;"></div>
-                <button class="btn-retry" id="quizBtnConfirm" style="background:#2e7d32;" onclick="quizResultNext()">확인</button>
-                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#00897b;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
+                <button class="btn-retry" id="quizBtnConfirm" style="background:#7B3F99;" onclick="quizResultNext()">확인</button>
+                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#7B3F99;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
                 <button class="btn-retry" id="quizBtnRetry" style="display:none; background:#E74C3C;" onclick="quizResultNext()">돌아가기</button>
             </div>
         </div>
@@ -745,7 +745,6 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-danger" onclick="closeBankModal()">닫기</button>
-                    <button class="btn" id="bankTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForBank(this)">🧪 테스트 데이터</button>
                     <button class="btn btn-success" id="bankStep1Btn" onclick="bankStep1Complete()" disabled>설정 완료</button>
                 </div>
             </div>
@@ -798,7 +797,6 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger" onclick="closeQuizModal()">닫기</button>
-                <button class="btn" id="quizTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForQuiz(this)">🧪 테스트 데이터</button>
                 <button class="btn btn-success" id="quizStep1Btn" onclick="quizStep1Complete()" disabled>설정 완료</button>
             </div>
         </div>
@@ -907,6 +905,18 @@
                     <div style="margin-bottom:16px;">
                         <input type="date" id="gameDate" style="width:100%; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; font-weight:600; color:#1e293b; cursor:pointer; box-sizing:border-box; font-family:inherit;">
                     </div>
+                    <!-- 테스트 데이터 -->
+                    <div class="gs-section-label">테스트 데이터</div>
+                    <div class="gs-card-row" style="margin-bottom:16px;">
+                        <div class="gs-card" onclick="selectTestMode(true)" id="btnTestModeO">
+                            <span class="gs-card-ico">🟢</span>
+                            <span class="gs-card-title">테스트</span>
+                        </div>
+                        <div class="gs-card selected" onclick="selectTestMode(false)" id="btnTestModeX">
+                            <span class="gs-card-ico">❌</span>
+                            <span class="gs-card-title">실제</span>
+                        </div>
+                    </div>
                     <!-- 게임 버전 -->
                     <div class="gs-section-label">게임 버전</div>
                     <div class="gs-card-row">
@@ -991,7 +1001,6 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnPastGameLoad" style="display:none;" onclick="confirmLoadPastGame()">불러오기</button>
                 <button class="btn btn-danger" id="btnPastGameDelete" style="display:none;" onclick="confirmDeletePastGame()">삭제하기</button>
-                <button class="btn" id="reportTestDataBtn" style="background:#6c757d;color:#fff;font-size:12px;" onclick="loadTestDataForReport(this)">🧪 테스트 데이터</button>
                 <button class="btn btn-dark" onclick="closePastGameModal()">닫기</button>
             </div>
         </div>

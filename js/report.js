@@ -690,11 +690,6 @@
             return;
         }
 
-        if (isSampleMode) {
-            alert("⚠️ 견본(샘플) 데이터는 출력 폴더로 업로드할 수 없습니다.\n실제 게임 결과만 업로드해주세요.");
-            return;
-        }
-
         if (isSavingDrive) return;
         isSavingDrive = true;
 
@@ -831,7 +826,6 @@
 
     async function uploadCurrentReportToDrive() {
         const btn = document.getElementById('btnSaveDriveReportSingle');
-        if (isSampleMode) { alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다."); return; }
         if (isSavingDrive) return;
         isSavingDrive = true;
 
@@ -963,11 +957,6 @@
         const originalHtml = '';
 
         try {
-            if (isSampleMode) {
-                alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다.\n실제 게임을 진행한 후 저장해주세요.");
-                console.warn("[saveToDrive] blocked: sample mode");
-                return;
-            }
 
             if (!_fromFinish) {
                 const ok = confirm("현재 게임 결과를 [명예의 전당] 데이터베이스에 저장하시겠습니까?");
@@ -1162,10 +1151,11 @@
                 const _rv = g.game_variant || 'basic';
                 const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
                 const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
+                const isTestGame   = g.game_id === _TEST_GAME_ID;
                 const card = document.createElement('div');
                 card.className = 'past-game-card';
                 card.innerHTML = `
-                    <div class="past-game-card-title">${sectionLabel}</div>
+                    <div class="past-game-card-title">${sectionLabel}${isTestGame ? ' <span class="tag-test">🧪 테스트</span>' : ''}</div>
                     <div class="past-game-card-meta">
                         <span>${names || '참가자 정보 없음'}</span>
                         <span>참여인원: ${g.player_count}명</span>
@@ -1346,18 +1336,5 @@
         } catch(error) {
             console.error("_loadPastGame 오류:", error);
             alert("❌ 불러오기 실패: " + error.message);
-        }
-    }
-
-    // ── 테스트 데이터 불러오기 ────────────────────────────────────────
-    async function loadTestDataForReport(btn) {
-        if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
-        try {
-            await sbEnsureTestData();
-            await _loadPastGame(_TEST_GAME_ID, '[테스트]', 'basic');
-        } catch(e) {
-            alert('테스트 데이터 불러오기 실패: ' + e.message);
-        } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
         }
     }

@@ -173,43 +173,45 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         p
     })).filter(r => r.nick);
 
-    // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date·is_citizen:false 포함 insert
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicks = new Set((existingUsers || []).map(u => u.nickname));
+    // users — 테스트 게임은 users 삽입 생략
+    if (gameId !== _TEST_GAME_ID) {
+        const { data: existingUsers } = await _sb.from('users').select('nickname');
+        const existingNicks = new Set((existingUsers || []).map(u => u.nickname));
 
-    const newNicks     = nicks.filter(({ nick }) => !existingNicks.has(nick));
-    const existingRows = nicks.filter(({ nick }) =>  existingNicks.has(nick));
+        const newNicks     = nicks.filter(({ nick }) => !existingNicks.has(nick));
+        const existingRows = nicks.filter(({ nick }) =>  existingNicks.has(nick));
 
-    if (newNicks.length > 0) {
-        const insertRows = newNicks.map(({ nick, name, efti }) => {
-            const row = {
-                nickname:     nick,
-                real_name:    name,
-                default_efti: efti,
-                status:       'active',
-                join_date:    today,
-                is_citizen:   false
-            };
-            if (gameVariant === 'rich_vessel') row.user_type = 'adult';
-            return row;
-        });
-        const { error } = await _sb.from('users').insert(insertRows);
-        if (error) console.error('[sbInitGame] users insert', error);
-    }
+        if (newNicks.length > 0) {
+            const insertRows = newNicks.map(({ nick, name, efti }) => {
+                const row = {
+                    nickname:     nick,
+                    real_name:    name,
+                    default_efti: efti,
+                    status:       'active',
+                    join_date:    today,
+                    is_citizen:   false
+                };
+                if (gameVariant === 'rich_vessel') row.user_type = 'adult';
+                return row;
+            });
+            const { error } = await _sb.from('users').insert(insertRows);
+            if (error) console.error('[sbInitGame] users insert', error);
+        }
 
-    if (existingRows.length > 0) {
-        const upsertRows = existingRows.map(({ nick, name, efti }) => {
-            const row = {
-                nickname:     nick,
-                real_name:    name,
-                default_efti: efti,
-                status:       'active'
-            };
-            if (gameVariant === 'rich_vessel') row.user_type = 'adult';
-            return row;
-        });
-        const { error } = await _sb.from('users').upsert(upsertRows, { onConflict: 'nickname' });
-        if (error) console.error('[sbInitGame] users upsert', error);
+        if (existingRows.length > 0) {
+            const upsertRows = existingRows.map(({ nick, name, efti }) => {
+                const row = {
+                    nickname:     nick,
+                    real_name:    name,
+                    default_efti: efti,
+                    status:       'active'
+                };
+                if (gameVariant === 'rich_vessel') row.user_type = 'adult';
+                return row;
+            });
+            const { error } = await _sb.from('users').upsert(upsertRows, { onConflict: 'nickname' });
+            if (error) console.error('[sbInitGame] users upsert', error);
+        }
     }
 
     // cash_balance (전체 0 init)
@@ -368,8 +370,13 @@ async function sbSaveTraits(gameId, players) {
 }
 
 async function sbSaveGameResult({ mode, date, game_variant = 'basic', individuals = [], teams = [] }) {
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicknames = new Set((existingUsers || []).map(u => u.nickname));
+    const isTestGame = individuals[0]?.game_id === _TEST_GAME_ID;
+
+    let existingNicknames = new Set();
+    if (!isTestGame) {
+        const { data: existingUsers } = await _sb.from('users').select('nickname');
+        existingNicknames = new Set((existingUsers || []).map(u => u.nickname));
+    }
 
     for (const p of individuals) {
         const nickname = _nick(p.nickname ?? '');
@@ -377,7 +384,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
         if (!nickname && !realName) continue;
         const finalNickname = nickname || realName;
 
-        if (!existingNicknames.has(finalNickname)) {
+        if (!isTestGame && !existingNicknames.has(finalNickname)) {
             await _sb.from('users').insert({
                 nickname:     finalNickname,
                 real_name:    realName || '',
@@ -454,7 +461,7 @@ async function sbLoadAssetsByDate(date) {
 
 // 과거 게임 날짜 목록 (dropdown용)
 async function sbGetGameDates() {
-    const { data } = await _sb.from('game_info').select('date').neq('game_id', _TEST_GAME_ID).order('date', { ascending: false });
+    const { data } = await _sb.from('game_info').select('date').order('date', { ascending: false });
     if (!data) return [];
     const seen = new Set();
     return data.map(r => r.date).filter(d => { if (seen.has(d)) return false; seen.add(d); return true; });
@@ -462,7 +469,7 @@ async function sbGetGameDates() {
 
 // 특정 날짜의 게임 목록 + 참가자 미리보기 (카드용)
 async function sbGetGamesByDate(date) {
-    const { data: games } = await _sb.from('game_info').select('*').eq('date', date).neq('game_id', _TEST_GAME_ID).order('section_num');
+    const { data: games } = await _sb.from('game_info').select('*').eq('date', date).order('section_num');
     if (!games || games.length === 0) return [];
     return Promise.all(games.map(async game => {
         const { data: rows } = await _sb.from('game_individual')

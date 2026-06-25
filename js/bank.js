@@ -163,10 +163,11 @@ async function onBankDateChange() {
             const _rv = g.game_variant || 'basic';
             const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
             const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
+            const isTestGame   = g.game_id === _TEST_GAME_ID;
             const card = document.createElement('div');
             card.className = 'past-game-card';
             card.innerHTML = `
-                <div class="past-game-card-title">${sectionLabel}</div>
+                <div class="past-game-card-title">${sectionLabel}${isTestGame ? ' <span class="tag-test">🧪 테스트</span>' : ''}</div>
                 <div class="past-game-card-meta">
                     <span>${names || '참가자 정보 없음'}</span>
                     <span>참여인원: ${g.player_count}명</span>
@@ -344,9 +345,8 @@ function _bankRenderPlayerList() {
         document.getElementById('bankTabIndiv').classList.toggle('active', _bank.viewMode === 'individual');
     }
 
-    grid.classList.toggle('is-team', true);
-
     const isTeamTab = isTeam && _bank.viewMode === 'team';
+    grid.classList.toggle('is-team', isTeamTab);
 
     function _getPlayerDone(p, idx) {
         if (isTeamTab) {
@@ -390,24 +390,28 @@ function _bankRenderPlayerList() {
             const header = document.createElement('div');
             header.className = 'team-group-header';
             const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})" title="초기화">↻</button>` : '';
-            const bankPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
-            header.innerHTML = `<span>${p.team_name || p.nickname}</span>${bankPlayerBadge}${typeTags}${statusTag}${entryResetBtn}`;
+            const doneBadge = done ? `<span class="bank-indiv-done-badge">완료 🎉</span>` : '';
+            header.innerHTML = `<span>${p.nickname}</span>${doneBadge}${statusTag}${entryResetBtn}`;
             groupEl.appendChild(header);
             header.addEventListener('click', e => {
                 if (e.target.closest('button')) return;
-                if (done) return;
                 const key = 'i_' + idx;
                 groupEl.classList.toggle('collapsed');
                 if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
                 else _bank.expandedGroups.delete(key);
             });
-            if (done) _bank.expandedGroups.delete('i_' + idx);
             if (!_bank.expandedGroups.has('i_' + idx)) groupEl.classList.add('collapsed');
 
             const playersEl = document.createElement('div');
             playersEl.className = 'team-group-players';
             playersEl.style.gridTemplateColumns = '1fr';
             playersEl.appendChild(_bankMakePlayerCard(p, idx, done));
+            if (typeTags) {
+                const tagsEl = document.createElement('div');
+                tagsEl.className = 'bank-player-indiv-tags';
+                tagsEl.innerHTML = typeTags;
+                playersEl.appendChild(tagsEl);
+            }
 
             groupEl.appendChild(playersEl);
             grid.appendChild(groupEl);
@@ -439,17 +443,17 @@ function _bankRenderPlayerList() {
             .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
             .join('');
         const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
-        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge">[${completedCnt}/${teamSize}]</span>${teamTypeTagsHtml}${teamEntryResetBtn}`;
+        const teamProgressText = allDone ? '완료 🎉' : `[${completedCnt}/${teamSize}]`;
+        const bankProgressClass = allDone ? ' all-done' : (completedCnt > 0 ? ' in-progress' : '');
+        header.innerHTML = `${teamKey || '무소속'} <span class="bank-team-progress-badge${bankProgressClass}">${teamProgressText}</span>${teamTypeTagsHtml}${teamEntryResetBtn}`;
         groupEl.appendChild(header);
         header.addEventListener('click', e => {
             if (e.target.closest('button')) return;
-            if (allDone) return;
             const key = 't_' + teamKey;
             groupEl.classList.toggle('collapsed');
             if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
             else _bank.expandedGroups.delete(key);
         });
-        if (allDone) _bank.expandedGroups.delete('t_' + teamKey);
         if (!_bank.expandedGroups.has('t_' + teamKey)) groupEl.classList.add('collapsed');
 
         const playersEl = document.createElement('div');
@@ -970,33 +974,3 @@ function _bankMergeRemoteState(state, history) {
 }
 
 _bankLoad();
-
-// ── 테스트 데이터 불러오기 ──────────────────────────────────────────
-async function loadTestDataForBank(btn) {
-    if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
-    try {
-        await sbEnsureTestData();
-    } catch(e) {
-        alert('테스트 데이터 준비 실패: ' + e.message);
-        if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
-        return;
-    }
-    _bankLoad();
-    _bankResetModal();
-    _bank.gameId     = _TEST_GAME_ID;
-    _bank.gameDate   = '[테스트]';
-    _bank.sectionNum = 99;
-    _bank.gameType   = 'team';
-    _bank._dbSettings = null;
-    const saved = await sbGetBankState(_TEST_GAME_ID).catch(() => null);
-    if (saved) {
-        _bank.settings.long  = saved.long_ratio  || _bank.settings.long;
-        _bank.settings.mid   = saved.mid_ratio   || _bank.settings.mid;
-        _bank.settings.short = saved.short_ratio || _bank.settings.short;
-        _bank.teamSettings.long  = saved.team_long_ratio  || _bank.teamSettings.long;
-        _bank.teamSettings.mid   = saved.team_mid_ratio   || _bank.teamSettings.mid;
-        _bank.teamSettings.short = saved.team_short_ratio || _bank.teamSettings.short;
-    }
-    if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
-    await bankStep1Complete();
-}

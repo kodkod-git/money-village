@@ -228,7 +228,8 @@
             return;
         }
 
-        isSampleMode = false;
+        const isTestMode = document.getElementById('btnTestModeO')?.classList.contains('selected') ?? false;
+        isSampleMode = isTestMode;
         document.getElementById('gameStartModal')?.classList.remove('show');
         document.getElementById('btnEditPrev').style.display = 'inline-flex';
 
@@ -243,7 +244,7 @@
                 if (v) stockInfo[k].price = parseInt(v);
             }
         }
-        const gameId = crypto.randomUUID().split('-')[0];
+        const gameId = isTestMode ? _TEST_GAME_ID : crypto.randomUUID().split('-')[0];
 
         players = [];
         if (currentMode === 'individual') {
@@ -374,15 +375,16 @@
     function addMember(teamSection, focus = true) {
         if (!teamSection) return;
         const members = teamSection.querySelector('.team-members');
-        const count = members.querySelectorAll('.citizen-row').length;
+        const totalCount = document.getElementById('nameInputArea')
+            .querySelectorAll('.citizen-row').length;
 
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = makeInp(`참가자 ${count + 1}`, `참가자${count + 1}`, '');
+        wrapper.innerHTML = makeInp(`참가자 ${totalCount + 1}`, `참가자${totalCount + 1}`, '');
         const row = wrapper.firstElementChild;
 
         members.appendChild(row);
 
-        renumberMembers(teamSection);
+        renumberMembers();
         if (focus) row.querySelector('.realname-input')?.focus();
     }
 
@@ -395,13 +397,13 @@
             return;
         }
         rows[rows.length - 1].remove();
-        renumberMembers(teamSection);
+        renumberMembers();
     }
 
-    function renumberMembers(teamSection) {
-        if (!teamSection) return;
-        const rows = teamSection.querySelectorAll('.team-members .citizen-row');
-        rows.forEach((row, i) => {
+    function renumberMembers() {
+        const allRows = document.getElementById('nameInputArea')
+            ?.querySelectorAll('.citizen-row') || [];
+        allRows.forEach((row, i) => {
             const label = row.querySelector('div');
             if (label) label.innerText = `참가자${i + 1}`;
         });
@@ -447,7 +449,13 @@
         currentGameStep = 1;
         gsGoToStep(1);
         document.getElementById('gameDate').value = new Date().toISOString().slice(0, 10);
+        selectTestMode(false);
         document.getElementById('gameStartModal').classList.add('show');
+    }
+
+    function selectTestMode(isTest) {
+        document.getElementById('btnTestModeO').classList.toggle('selected', isTest);
+        document.getElementById('btnTestModeX').classList.toggle('selected', !isTest);
     }
 
     function closeGameStartModal(force = false) {

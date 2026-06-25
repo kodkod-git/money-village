@@ -408,7 +408,6 @@
     }
 
     async function _syncPlayerEditsToDb(oldPlayers, newPlayers) {
-        if (isSampleMode) return;
         const gameId = (newPlayers[0] || oldPlayers[0])?.gameId;
         if (!gameId) return;
 
@@ -551,7 +550,7 @@
         updateDash();
 
         const gameId = players[0]?.gameId;
-        if (gameId && !isSampleMode) {
+        if (gameId) {
             if (currentGameVariant === 'basic') {
                 await sbUpdateStockPrice(gameId, prices);
             } else {

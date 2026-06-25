@@ -166,10 +166,11 @@ async function onQuizDateChange() {
             const _rv = g.game_variant || 'basic';
             const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
             const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
+            const isTestGame   = g.game_id === _TEST_GAME_ID;
             const card = document.createElement('div');
             card.className = 'past-game-card';
             card.innerHTML = `
-                <div class="past-game-card-title">${sectionLabel}</div>
+                <div class="past-game-card-title">${sectionLabel}${isTestGame ? ' <span class="tag-test">🧪 테스트</span>' : ''}</div>
                 <div class="past-game-card-meta">
                     <span>${names || '참가자 정보 없음'}</span>
                     <span>참여인원: ${g.player_count}명</span>
@@ -341,7 +342,7 @@ function _quizRenderPlayerList() {
 
     // 팀전 개인 뷰: 그룹 없이 팀 상태 기준으로 플레이어 카드 나열
     const isTeamIndivView = isTeam && _quiz.viewMode === 'individual';
-    grid.classList.toggle('is-team', true);
+    grid.classList.toggle('is-team', isTeam && _quiz.viewMode === 'team');
 
     if (!isTeam) {
         const sortedIndiv = _quiz.players
@@ -365,14 +366,13 @@ function _quizRenderPlayerList() {
             const groupBadgeClass = onCooldown ? ' quiz-cooldown'
                 : done ? ' quiz-done'
                 : inProgress ? ' quiz-in-progress' : '';
-            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : `[${count}/2]`;
+            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : done ? '완료 🎉' : `[${count}/2]`;
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
             const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})" title="초기화">↻</button>` : '';
-            const quizPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
-                <span>${p.team_name || p.nickname}</span>${quizPlayerBadge}
+                <span>${p.nickname}</span>
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
                 ${quizEntryResetBtn}
             </div>`;
@@ -432,14 +432,13 @@ function _quizRenderPlayerList() {
             const groupBadgeClass = onCooldown ? ' quiz-cooldown'
                 : done ? ' quiz-done'
                 : inProgress ? ' quiz-in-progress' : '';
-            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : `[${count}/2]`;
+            const groupBadgeText = onCooldown ? `⏱ ${remaining}초` : done ? '완료 🎉' : `[${count}/2]`;
 
             const groupEl = document.createElement('div');
             groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
             const quizEntryResetBtn = count > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${idx})" title="초기화">↻</button>` : '';
-            const quizPlayerBadge = p.team_name ? `<span class="player-name-badge">${p.nickname}</span>` : '';
             groupEl.innerHTML = `<div class="team-group-header">
-                <span>${p.team_name || p.nickname}</span>${quizPlayerBadge}
+                <span>${p.nickname}</span>
                 <span class="quiz-progress-badge${groupBadgeClass}">${groupBadgeText}</span>
                 ${quizEntryResetBtn}
             </div>`;
@@ -501,7 +500,7 @@ function _quizRenderPlayerList() {
         const teamBadgeClass = teamOnCooldown ? ' quiz-cooldown'
             : done ? ' quiz-done'
             : inProgress ? ' quiz-in-progress' : '';
-        const teamBadgeText = teamOnCooldown ? `⏱ ${teamRemaining}초` : `[${count}/2]`;
+        const teamBadgeText = teamOnCooldown ? `⏱ ${teamRemaining}초` : done ? '완료 🎉' : `[${count}/2]`;
         groupEl.className = 'team-group' + (done ? ' team-done' : inProgress ? ' team-in-progress' : '');
         const teamQuizResetBtn = (_quiz.teamPlayers[teamKey]?.size || 0) > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); quizResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
         groupEl.innerHTML = `<div class="team-group-header">
@@ -907,31 +906,4 @@ function _quizMergeRemoteState(state, history) {
 
     // 보상 뱃지 UI 반영
     _quizUpdateRewardBadge();
-}
-
-// ── 테스트 데이터 불러오기 ──────────────────────────────────────────
-async function loadTestDataForQuiz(btn) {
-    if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
-    try {
-        await sbEnsureTestData();
-    } catch(e) {
-        alert('테스트 데이터 준비 실패: ' + e.message);
-        if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
-        return;
-    }
-    _quizResetModal();
-    _quiz.gameId      = _TEST_GAME_ID;
-    _quiz.gameDate    = '[테스트]';
-    _quiz.sectionNum  = 99;
-    _quiz.gameType    = 'team';
-    _quiz.gameVariant = 'basic';
-    _quiz._dbReward     = null;
-    _quiz._dbTeamReward = null;
-    const saved = await sbGetQuizState(_TEST_GAME_ID).catch(() => null);
-    if (saved && saved.indiv_reward !== null && saved.indiv_reward !== undefined) {
-        _quiz.reward     = saved.indiv_reward || 0;
-        _quiz.teamReward = saved.team_reward  || 0;
-    }
-    if (btn) { btn.disabled = false; btn.textContent = '🧪 테스트 데이터'; }
-    await quizStep1Complete();
 }
