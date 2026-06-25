@@ -1008,6 +1008,7 @@
                 mode: currentMode,
                 date: dateStr,
                 game_variant: currentGameVariant,
+                is_test: isSampleMode,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     nickname: p.nickname || '',
@@ -1151,7 +1152,7 @@
                 const _rv = g.game_variant || 'basic';
                 const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
                 const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
-                const isTestGame   = g.game_id === _TEST_GAME_ID;
+                const isTestGame   = !!g.is_test;
                 const card = document.createElement('div');
                 card.className = 'past-game-card';
                 card.innerHTML = `

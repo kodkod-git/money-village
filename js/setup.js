@@ -244,7 +244,7 @@
                 if (v) stockInfo[k].price = parseInt(v);
             }
         }
-        const gameId = isTestMode ? _TEST_GAME_ID : crypto.randomUUID().split('-')[0];
+        const gameId = crypto.randomUUID().split('-')[0];
 
         players = [];
         if (currentMode === 'individual') {
@@ -317,12 +317,12 @@
             const estateValues = Object.fromEntries(
                 Object.entries(estateInfo).map(([k, v]) => [k, v.price])
             );
-            sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate)
+            sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate, isTestMode)
                 .then(() => sbSaveEstatePrice(gameId, estateValues))
                 .catch(e => console.error('[sbInitGame/sbSaveEstatePrice]', e));
         } else {
             const stockValues = Object.values(stockInfo).map(s => s.price);
-            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate)
+            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate, isTestMode)
                 .catch(e => console.error('[sbInitGame]', e));
         }
 
