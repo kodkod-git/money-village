@@ -75,7 +75,7 @@ function _bankSave() {
 function _bankShowView(n) {
     [2, 3, 4].forEach(i => {
         const el = document.getElementById('bankView' + i);
-        if (el) el.style.display = i === n ? 'block' : 'none';
+        if (el) el.style.display = i === n ? (i === 2 ? 'flex' : 'block') : 'none';
     });
 }
 
