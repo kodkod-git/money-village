@@ -916,7 +916,7 @@
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            min-height: 54px;
+            min-height: 68px;
             padding: 12px 8px;
             min-width: 0;
             overflow: hidden;
@@ -924,13 +924,6 @@
         .bank-player-grid.is-team .bank-player-name-row {
             min-width: 0;
             margin-bottom: 0;
-        }
-        .bank-player-grid.is-team .bank-player-nickname {
-            font-size: 30px;
-            line-height: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
