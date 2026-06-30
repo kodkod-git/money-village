@@ -146,21 +146,28 @@
         document.getElementById('awardStockLabel').innerText = isEstateVariant ? '부동산 평가액' : '주식 평가액';
 
         if (data.length === 0) {
-            document.getElementById('awardCashName').innerText = '데이터 없음';
-            document.getElementById('awardCashVal').innerText = '-';
-            document.getElementById('awardStockName').innerText = '데이터 없음';
-            document.getElementById('awardStockVal').innerText = '-';
+            setAwardDisplay('awardCashName', 'awardCashVal');
+            setAwardDisplay('awardDiligenceName', 'awardDiligenceVal');
+            setAwardDisplay('awardStockName', 'awardStockVal');
             return;
         }
-        const cashKing  = [...data].sort((a, b) => b.cash  - a.cash)[0];
-        const stockKing = [...data].sort((a, b) => b.stock - a.stock)[0];
+        const cashKing = findPositiveAwardWinner(data, 'cash');
+        const diligenceKing = findPositiveAwardWinner(data, 'diligence_reward');
+        const stockKing = findPositiveAwardWinner(data, 'stock');
 
-        if (cashKing) {
-            document.getElementById('awardCashName').innerText = cashKing.nickname || cashKing.name || '-';
-            document.getElementById('awardCashVal').innerText  = cashKing.cash.toLocaleString();
-        }
-        if (stockKing) {
-            document.getElementById('awardStockName').innerText = stockKing.nickname || stockKing.name || '-';
-            document.getElementById('awardStockVal').innerText  = stockKing.stock.toLocaleString();
-        }
+        setAwardDisplay('awardCashName', 'awardCashVal', cashKing, 'cash');
+        setAwardDisplay('awardDiligenceName', 'awardDiligenceVal', diligenceKing, 'diligence_reward');
+        setAwardDisplay('awardStockName', 'awardStockVal', stockKing, 'stock');
+    }
+
+    function findPositiveAwardWinner(data, field) {
+        return [...data]
+            .filter(item => Number(item?.[field] || 0) > 0)
+            .sort((a, b) => Number(b?.[field] || 0) - Number(a?.[field] || 0))[0] || null;
+    }
+
+    function setAwardDisplay(nameId, valueId, winner = null, field = '') {
+        const value = Number(winner?.[field] || 0);
+        document.getElementById(nameId).innerText = value > 0 ? (winner.nickname || winner.name || '-') : '-';
+        document.getElementById(valueId).innerText = value > 0 ? value.toLocaleString() : '-';
     }
