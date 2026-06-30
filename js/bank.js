@@ -73,6 +73,8 @@ function _bankSave() {
 
 // ── 뷰 전환 (bankScreen 내 View 2/3/4) ───────────────────────────
 function _bankShowView(n) {
+    const wrap = document.querySelector('#bankScreen .bank-screen-wrap');
+    if (wrap) wrap.classList.toggle('is-list-view', n === 2);
     [2, 3, 4].forEach(i => {
         const el = document.getElementById('bankView' + i);
         if (el) el.style.display = i === n ? (i === 2 ? 'flex' : 'block') : 'none';
