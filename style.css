@@ -886,26 +886,17 @@
             font-size: 22px; font-weight: 900; color: #3949AB;
             margin-bottom: 10px; padding-bottom: 8px;
             border-bottom: 1.5px solid #C5CAE9;
-            cursor: pointer; user-select: none;
+            cursor: default; user-select: none;
         }
         .team-group-header > span:first-child {
             flex-shrink: 1; min-width: 0;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .bank-done-badge { background: #ffebee; color: #c62828; border-radius: 8px; padding: 2px 10px; font-size: 13px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
-        .team-group-header::before {
-            content: '▼';
-            font-size: 11px; color: #aaa;
-            margin-right: 2px;
-            display: inline-block;
-            transition: transform 0.2s;
-            line-height: 1;
-        }
-        .team-group.collapsed .team-group-header::before {
-            transform: rotate(-90deg);
-        }
-        .team-group.collapsed .team-group-players {
-            display: none;
+        .bank-player-card.is-disabled {
+            cursor: default;
+            opacity: 0.55;
+            pointer-events: none;
         }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }

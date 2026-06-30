@@ -19,7 +19,6 @@ const _bank = {
     teamTypeTags:    {},
     roundSnapshots:  [],
     viewMode:  'team',
-    expandedGroups: new Set(),
 };
 
 let _bankRatioDebounceTimer = null;
@@ -266,7 +265,6 @@ async function bankStep1Complete() {
             }
         }
         _bank.indivCompleted  = {};
-        _bank.expandedGroups  = new Set();
         _bank.teamDeposits    = {};
         _bank.teamRewards     = {};
         _bank.indivRewards    = {};
@@ -357,13 +355,13 @@ function _bankRenderPlayerList() {
     }
 
     function _bankMakePlayerCard(p, idx, done) {
+        const disabled = !!done || _bank.currentRound >= 4;
         const card = document.createElement('div');
-        card.className = 'bank-player-card' + (done ? ' completed' : '');
+        card.className = 'bank-player-card'
+            + (done ? ' completed' : '')
+            + (disabled ? ' is-disabled' : '');
         card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
-        card.onclick = () => {
-            if (_bank.currentRound >= 4) return;
-            bankSelectPlayer(idx);
-        };
+        if (!disabled) card.onclick = () => bankSelectPlayer(idx);
         return card;
     }
 
@@ -391,17 +389,8 @@ function _bankRenderPlayerList() {
             header.className = 'team-group-header';
             const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})" title="초기화">↻</button>` : '';
             const doneBadge = done ? `<span class="bank-done-badge">신청완료</span>` : '';
-            header.innerHTML = `<span>${p.nickname}</span>${doneBadge}${statusTag}${entryResetBtn}`;
+            header.innerHTML = `${doneBadge}${statusTag}${entryResetBtn}`;
             groupEl.appendChild(header);
-            header.addEventListener('click', e => {
-                if (e.target.closest('button')) return;
-                if (done) return;
-                const key = 'i_' + idx;
-                groupEl.classList.toggle('collapsed');
-                if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
-                else _bank.expandedGroups.delete(key);
-            });
-            if (!_bank.expandedGroups.has('i_' + idx)) groupEl.classList.add('collapsed');
 
             const playersEl = document.createElement('div');
             playersEl.className = 'team-group-players';
@@ -448,15 +437,6 @@ function _bankRenderPlayerList() {
         const progressBadge = allDone ? `<span class="bank-done-badge">신청완료</span>` : `<span class="bank-team-progress-badge${bankProgressClass}">[${completedCnt}/${teamSize}]</span>`;
         header.innerHTML = `<span>${teamKey || '무소속'}</span>${progressBadge}${teamTypeTagsHtml}${teamEntryResetBtn}`;
         groupEl.appendChild(header);
-        header.addEventListener('click', e => {
-            if (e.target.closest('button')) return;
-            if (allDone) return;
-            const key = 't_' + teamKey;
-            groupEl.classList.toggle('collapsed');
-            if (!groupEl.classList.contains('collapsed')) _bank.expandedGroups.add(key);
-            else _bank.expandedGroups.delete(key);
-        });
-        if (!_bank.expandedGroups.has('t_' + teamKey)) groupEl.classList.add('collapsed');
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
@@ -559,7 +539,6 @@ function _bankSubmitIndividual(p, type, amount) {
 
     _bankSaveReward(p.nickname, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
-    _bank.expandedGroups.delete('i_' + _bank.currentPlayerIdx);
     sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, false);
 
     // 누적 타입 태그
@@ -601,7 +580,6 @@ function _bankSubmitTeam(p, type, amount) {
 
     let perMemberReward = null;
     if (allDone) {
-        _bank.expandedGroups.delete('t_' + teamName);
         const totalInterest = totalMatured - totalPrincipal;
         perMemberReward = Math.floor(totalInterest / teamSize);
         teamMembers.forEach(pl => {
@@ -712,7 +690,6 @@ function bankAdvanceRound() {
     _bank.teamRewards    = {};
     _bank.indivRewards   = {};
     _bank.indivCompleted = {};
-    _bank.expandedGroups  = new Set();
     _bank.teamDeposits   = {};
     _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
     sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
