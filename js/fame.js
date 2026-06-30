@@ -90,7 +90,7 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            const colSpan = isTeam ? 4 : 6;
+            const colSpan = isTeam ? 4 : 8;
             tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
             return;
         }
@@ -126,10 +126,11 @@
             if (isTeam) {
                 row += `<td class="member-col">${item.members || '-'}</td>`;
             } else {
-                const etc = (Number(item.diligence_reward) || 0) + (Number(item.quest_reward) || 0) + (Number(item.deposit_reward) || 0);
                 row += `<td class="sub-asset-col">${(Number(item.cash) || 0).toLocaleString()}</td>
                         <td class="sub-asset-col">${(Number(item.stock) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${etc.toLocaleString()}</td>`;
+                        <td class="sub-asset-col">${(Number(item.deposit_reward) || 0).toLocaleString()}</td>
+                        <td class="sub-asset-col">${(Number(item.quest_reward) || 0).toLocaleString()}</td>
+                        <td class="sub-asset-col">${(Number(item.diligence_reward) || 0).toLocaleString()}</td>`;
             }
 
             row += `</tr>`;

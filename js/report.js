@@ -449,14 +449,18 @@
             const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
             const cash     = Number(p.manualCash      || 0);
             const assetVal = Number(calcActiveAsset(p.assets || {}) || 0);
-            const etc      = Number(p.diligenceReward || 0) + Number(p.depositReward || 0) + Number(p.questReward || 0);
+            const deposit  = Number(p.depositReward   || 0);
+            const quest    = Number(p.questReward     || 0);
+            const diligence = Number(p.diligenceReward || 0);
             tbody.innerHTML += `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${p.nickname || p.name || '-'}</td>
                 <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(p.total).toLocaleString()}</td>
                 <td class="sub-asset-col">${cash.toLocaleString()}</td>
                 <td class="sub-asset-col">${assetVal.toLocaleString()}</td>
-                <td class="sub-asset-col">${etc.toLocaleString()}</td>
+                <td class="sub-asset-col">${deposit.toLocaleString()}</td>
+                <td class="sub-asset-col">${quest.toLocaleString()}</td>
+                <td class="sub-asset-col">${diligence.toLocaleString()}</td>
             </tr>`;
         });
 
