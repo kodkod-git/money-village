@@ -878,10 +878,16 @@
             grid-auto-rows: minmax(126px, 1fr);
             align-content: stretch;
         }
+        .bank-player-grid:not(.is-team) {
+            grid-auto-rows: max-content;
+            align-content: start;
+        }
         .team-group {
             border: 2px solid #C5CAE9; border-radius: 14px;
             padding: 12px; background: #F3F4FC;
             overflow: hidden;
+        }
+        .bank-player-grid.is-team .team-group {
             display: flex;
             flex-direction: column;
             min-height: 126px;
@@ -932,6 +938,8 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
+        }
+        .bank-player-grid.is-team .team-group-players {
             flex: 1;
             min-height: 0;
         }
