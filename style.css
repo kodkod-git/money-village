@@ -873,21 +873,19 @@
         .player-tab.active { background: #5E35B1; color: #fff; }
 
         /* 팀 그룹 카드 */
-        .bank-player-grid.is-team {
-            grid-template-columns: 1fr;
-            grid-auto-rows: minmax(126px, 1fr);
+        .bank-player-grid {
+            grid-auto-rows: minmax(max-content, 1fr);
             align-content: stretch;
         }
-        .bank-player-grid:not(.is-team) {
-            grid-auto-rows: max-content;
-            align-content: start;
+        .bank-player-grid.is-team {
+            grid-template-columns: 1fr;
         }
         .team-group {
             border: 2px solid #C5CAE9; border-radius: 14px;
             padding: 12px; background: #F3F4FC;
-            overflow: hidden;
+            overflow: visible;
         }
-        .bank-player-grid.is-team .team-group {
+        .bank-player-grid .team-group {
             display: flex;
             flex-direction: column;
             min-height: 126px;
@@ -911,19 +909,26 @@
             opacity: 0.55;
             pointer-events: none;
         }
-        .bank-player-grid.is-team .bank-player-card {
+        .bank-player-grid .bank-player-card {
             display: flex;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            min-height: 68px;
+            min-height: 76px;
             padding: 12px 8px;
             min-width: 0;
-            overflow: hidden;
+            overflow: visible;
         }
-        .bank-player-grid.is-team .bank-player-name-row {
+        .bank-player-grid .bank-player-name-row {
+            width: 100%;
             min-width: 0;
             margin-bottom: 0;
+            align-items: center;
+        }
+        .bank-player-grid .bank-player-nickname {
+            display: block;
+            width: 100%;
+            line-height: 1.1;
         }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
@@ -932,9 +937,9 @@
             grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
-        .bank-player-grid.is-team .team-group-players {
+        .bank-player-grid .team-group-players {
             flex: 1;
-            min-height: 0;
+            min-height: max-content;
         }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
         .bank-player-indiv-tags { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; padding: 4px 0; }
