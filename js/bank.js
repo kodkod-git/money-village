@@ -440,7 +440,7 @@ function _bankRenderPlayerList() {
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
-        playersEl.style.gridTemplateColumns = '1fr';
+        playersEl.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
         members.forEach(({ p, idx }) => {
             const done = _getPlayerDone(p, idx);
             playersEl.appendChild(_bankMakePlayerCard(p, idx, done));

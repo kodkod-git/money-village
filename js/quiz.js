@@ -489,7 +489,7 @@ function _quizRenderPlayerList() {
 
         const playersEl = document.createElement('div');
         playersEl.className = 'team-group-players';
-        playersEl.style.gridTemplateColumns = '1fr';
+        playersEl.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
 
         members.forEach(({ p, idx }) => {
             const playerAlreadyDone = !!(_quiz.teamPlayers[teamKey]?.has(idx));

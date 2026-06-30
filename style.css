@@ -898,6 +898,15 @@
             opacity: 0.55;
             pointer-events: none;
         }
+        .bank-player-grid.is-team .bank-player-card {
+            padding: 12px 8px;
+            min-width: 0;
+        }
+        .bank-player-grid.is-team .bank-player-nickname {
+            font-size: 32px;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
         .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
