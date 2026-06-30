@@ -82,6 +82,7 @@
 
         renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
         renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
+        applyTableNumberScale('indivTableBody');
         setSpecialAwards(indiv);
     }
 
@@ -121,16 +122,16 @@
             let row = `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${item.nickname || item.name || '-'}</td>
-                <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(item.total).toLocaleString()}</td>`;
+                <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(item.total)}</td>`;
 
             if (isTeam) {
                 row += `<td class="member-col">${item.members || '-'}</td>`;
             } else {
-                row += `<td class="sub-asset-col">${(Number(item.cash) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${(Number(item.stock) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${(Number(item.deposit_reward) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${(Number(item.quest_reward) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${(Number(item.diligence_reward) || 0).toLocaleString()}</td>`;
+                row += `<td class="sub-asset-col">${fitNumber(item.cash)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.stock)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.deposit_reward)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.quest_reward)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.diligence_reward)}</td>`;
             }
 
             row += `</tr>`;

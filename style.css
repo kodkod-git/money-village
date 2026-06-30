@@ -330,8 +330,16 @@
         .rank-icon{ display: inline-flex; align-items: center; justify-content: center; line-height: 1; position: relative; top: -1px; }
 
         .name-col { font-weight: 800; color: #333; font-size: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; }
-        .asset-col { text-align: right; font-weight: 900; color: var(--mv-blue-deep); font-size: 20px; padding-right: 10px !important; }
-        .asset-col.top { color: #d4a000; font-size: 24px; } 
+        .asset-col {
+            text-align: right;
+            font-weight: 900;
+            color: var(--mv-blue-deep);
+            font-size: 19px;
+            padding-right: 8px !important;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .asset-col.top { color: #d4a000; font-size: 19px; } 
         
         /* 2. 현금/주식 폰트 크기 수정 */
         .sub-asset-col { 
@@ -341,6 +349,24 @@
             padding-right: 8px !important; 
         }
         .sub-asset-col.stock { color: #d32f2f; font-weight: 800; }
+        .asset-col,
+        .asset-col.top,
+        .sub-asset-col {
+            font-size: 19px !important;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .fit-number {
+            display: block;
+            max-width: 100%;
+            line-height: 1;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .ranking-table--compact-numbers .asset-col .fit-number,
+        .ranking-table--compact-numbers .sub-asset-col .fit-number {
+            font-size: 0.8em;
+        }
         
         /* 3. 날짜 폰트 크기 수정 */
         .date-col { 

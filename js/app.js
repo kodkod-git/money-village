@@ -80,6 +80,23 @@
         el.style.width = Math.max(ph.offsetWidth + 4, 20) + 'px';
         document.body.removeChild(ph);
     }
+
+    function fitNumber(value) {
+        const text = Number(value || 0).toLocaleString();
+        const digitCount = text.replace(/\D/g, '').length;
+
+        return `<span class="fit-number" data-number-digits="${digitCount}">${text}</span>`;
+    }
+
+    function applyTableNumberScale(tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        const table = tbody?.closest('table');
+        if (!table) return;
+
+        const hasLongNumber = [...tbody.querySelectorAll('.fit-number')]
+            .some(el => Number(el.dataset.numberDigits || 0) >= 7);
+        table.classList.toggle('ranking-table--compact-numbers', hasLongNumber);
+    }
     window.onload = function() {
         initStockConfig();
         initCitizenForm();

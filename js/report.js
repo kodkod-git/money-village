@@ -356,6 +356,37 @@
         el.setAttribute('stroke-dasharray', `0 9999`);
         el.setAttribute('stroke-dashoffset', `0`);
     }
+
+    function renderDonutSeparators(segments) {
+        const group = document.getElementById('rptDonutSeparators');
+        if (!group) return;
+        group.innerHTML = '';
+
+        const visibleSegments = segments.filter(percent => percent > 0.01);
+        if (visibleSegments.length < 2) return;
+
+        const center = 50;
+        const innerRadius = 34;
+        const outerRadius = 50;
+        let offsetPercent = 0;
+
+        visibleSegments.forEach(percent => {
+            const angle = ((offsetPercent / 100) * 360 - 90) * Math.PI / 180;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+
+            line.setAttribute('x1', String(center + innerRadius * Math.cos(angle)));
+            line.setAttribute('y1', String(center + innerRadius * Math.sin(angle)));
+            line.setAttribute('x2', String(center + outerRadius * Math.cos(angle)));
+            line.setAttribute('y2', String(center + outerRadius * Math.sin(angle)));
+            line.setAttribute('stroke', '#fff');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-linecap', 'round');
+            group.appendChild(line);
+
+            offsetPercent += percent;
+        });
+    }
+
     function refreshDisplayOnly(p) {
         const cash      = Number(p.manualCash      || 0);
         const assetVal  = Number(calcActiveAsset(p.assets || {}) || 0);
@@ -403,6 +434,7 @@
             clearDonutSegment(diligenceCircle);
             if (depositCircle) clearDonutSegment(depositCircle);
             if (questCircle)   clearDonutSegment(questCircle);
+            renderDonutSeparators([]);
             return;
         }
 
@@ -421,6 +453,13 @@
         _seg(diligenceCircle, diligencePercent, cashPercent + assetPercent);
         _seg(depositCircle,   depositPercent,   cashPercent + assetPercent + diligencePercent);
         _seg(questCircle,     questPercent,     cashPercent + assetPercent + diligencePercent + depositPercent);
+        renderDonutSeparators([
+            cashPercent,
+            assetPercent,
+            diligencePercent,
+            depositPercent,
+            questPercent
+        ]);
     }
     function renderSummaryPage() {
         if (customLogoData) {
@@ -455,14 +494,15 @@
             tbody.innerHTML += `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${p.nickname || p.name || '-'}</td>
-                <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(p.total).toLocaleString()}</td>
-                <td class="sub-asset-col">${cash.toLocaleString()}</td>
-                <td class="sub-asset-col">${assetVal.toLocaleString()}</td>
-                <td class="sub-asset-col">${deposit.toLocaleString()}</td>
-                <td class="sub-asset-col">${quest.toLocaleString()}</td>
-                <td class="sub-asset-col">${diligence.toLocaleString()}</td>
+                <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(p.total)}</td>
+                <td class="sub-asset-col">${fitNumber(cash)}</td>
+                <td class="sub-asset-col">${fitNumber(assetVal)}</td>
+                <td class="sub-asset-col">${fitNumber(deposit)}</td>
+                <td class="sub-asset-col">${fitNumber(quest)}</td>
+                <td class="sub-asset-col">${fitNumber(diligence)}</td>
             </tr>`;
         });
+        applyTableNumberScale('summaryIndivTableBody');
 
         const teamSection = document.getElementById('summaryTeamSection');
         if (currentMode === 'team') {
@@ -487,7 +527,7 @@
                 teamTbody.innerHTML += `<tr style="${rowBg}">
                     <td class="rank-col ${rankClass}">${rankCell}</td>
                     <td class="name-col">${t.name}</td>
-                    <td class="asset-col ${rank === 1 ? 'top' : ''}">${t.total.toLocaleString()}</td>
+                    <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(t.total)}</td>
                     <td class="member-col">${t.members}</td>
                 </tr>`;
             });
