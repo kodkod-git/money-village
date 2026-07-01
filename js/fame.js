@@ -122,7 +122,7 @@
             let row = `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${item.nickname || item.name || '-'}</td>
-                <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(item.total)}</td>`;
+                <td class="asset-col ${isTeam ? 'team-asset-col ' : ''}${rank === 1 ? 'top' : ''}">${fitNumber(item.total)}</td>`;
 
             if (isTeam) {
                 row += `<td class="member-col">${item.members || '-'}</td>`;

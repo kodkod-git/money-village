@@ -363,6 +363,10 @@
             text-align: right;
             white-space: nowrap;
         }
+        .team-asset-col,
+        .team-asset-col .fit-number {
+            text-align: center;
+        }
         .ranking-table--compact-numbers .asset-col .fit-number,
         .ranking-table--compact-numbers .sub-asset-col .fit-number {
             font-size: 0.8em;

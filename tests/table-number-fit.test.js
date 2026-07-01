@@ -71,3 +71,15 @@ assert(
   !reportJs.includes("applyTableNumberScale('summaryTeamTableBody')"),
   'summary team table total asset column should keep the normal number size'
 );
+assert(
+  fameJs.includes('team-asset-col'),
+  'fame team total asset cells should use the centered team-asset-col class'
+);
+assert(
+  reportJs.includes('class="asset-col team-asset-col'),
+  'summary team total asset cells should use the centered team-asset-col class'
+);
+assert(
+  /\.team-asset-col[\s\S]*\.team-asset-col \.fit-number[\s\S]*\{[^}]*text-align:\s*center/.test(css),
+  'team total asset column should be centered'
+);

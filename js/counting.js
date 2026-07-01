@@ -436,7 +436,7 @@
                 nickname:     _nick(p.nickname),
                 real_name:    p.realName || p.name || '',
                 join_date:    today,
-                is_citizen:   false,
+                is_citizen:   !isSampleMode,
                 default_efti: p.efti || 'FAEN',
                 status:       'active'
             }));

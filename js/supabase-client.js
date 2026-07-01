@@ -189,7 +189,7 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
                     default_efti: efti,
                     status:       'active',
                     join_date:    today,
-                    is_citizen:   false
+                    is_citizen:   true
                 };
                 if (gameVariant === 'rich_vessel') row.user_type = 'adult';
                 return row;
@@ -389,7 +389,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
                 nickname:     finalNickname,
                 real_name:    realName || '',
                 join_date:    date,
-                is_citizen:   false,
+                is_citizen:   true,
                 default_efti: p.efti_type || 'FAEN',
                 status:       'active'
             });

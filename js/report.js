@@ -527,7 +527,7 @@
                 teamTbody.innerHTML += `<tr style="${rowBg}">
                     <td class="rank-col ${rankClass}">${rankCell}</td>
                     <td class="name-col">${t.name}</td>
-                    <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(t.total)}</td>
+                    <td class="asset-col team-asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(t.total)}</td>
                     <td class="member-col">${t.members}</td>
                 </tr>`;
             });
