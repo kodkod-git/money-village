@@ -855,7 +855,15 @@
         }
 
         /* 플레이어 그리드 */
-        .bank-player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .bank-player-grid {
+            --main-card-min-width: 280px;
+            --main-card-min-height: 160px;
+            --player-button-min-height: 72px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(var(--main-card-min-width), 1fr));
+            gap: 10px;
+            overflow-x: auto;
+        }
         .bank-player-card {
             position: relative;
             border: 2px solid #e0e6f0; border-radius: 12px;
@@ -884,10 +892,13 @@
         /* 플레이어 목록 탭 (팀전 전용) */
         .player-tab-bar {
             display: flex;
+            flex: 0 0 auto;
             margin-bottom: 12px;
             border-radius: 10px;
             overflow: hidden;
             border: 1.5px solid #C5CAE9;
+            position: relative;
+            z-index: 2;
         }
         .player-tab {
             flex: 1;
@@ -905,36 +916,56 @@
 
         /* 팀 그룹 카드 */
         .bank-player-grid {
-            grid-auto-rows: minmax(max-content, 1fr);
-            align-content: stretch;
+            grid-auto-rows: auto;
+            align-content: start;
         }
         .bank-player-grid.is-team {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(var(--main-card-min-width), 1fr);
         }
-        .team-group {
+        .main-card {
             border: 2px solid #C5CAE9; border-radius: 14px;
             padding: 12px; background: #F3F4FC;
+            box-sizing: border-box;
+            min-width: var(--main-card-min-width);
+            min-height: var(--main-card-min-height);
+            max-width: 100%;
             overflow: visible;
-        }
-        .bank-player-grid .team-group {
-            display: flex;
-            flex-direction: column;
-            min-height: 126px;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            align-content: stretch;
         }
         .team-group.team-done { background: #f0f7f0; border-color: #b2dfb2; }
         .team-group.team-in-progress { background: #FFFDE7; border-color: #FB8C00; }
-        .team-group-header {
+        .main-card-header {
             display: flex; align-items: center; gap: 10px;
             font-size: 22px; font-weight: 900; color: #3949AB;
             margin-bottom: 10px; padding-bottom: 8px;
             border-bottom: 1.5px solid #C5CAE9;
             cursor: default; user-select: none;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            scrollbar-width: none;
         }
+        .main-card-header::-webkit-scrollbar { display: none; }
         .team-group-header > span:first-child {
             flex-shrink: 1; min-width: 0;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .bank-done-badge { background: #ffebee; color: #c62828; border-radius: 8px; padding: 2px 10px; font-size: 13px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
+        .bank-header-tags {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .bank-header-tags::-webkit-scrollbar { display: none; }
+        .bank-done-badge { background: #ffebee; color: #c62828; border-radius: 8px; padding: 2px 10px; font-size: 13px; font-weight: 700; }
         .bank-player-card.is-disabled {
             cursor: default;
             opacity: 0.55;
@@ -950,6 +981,11 @@
             min-width: 0;
             overflow: visible;
         }
+        .player-button {
+            width: 100%;
+            height: 100%;
+            min-height: var(--player-button-min-height);
+        }
         .bank-player-grid .bank-player-name-row {
             width: 100%;
             min-width: 0;
@@ -963,19 +999,31 @@
         }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
-        .team-group-players {
+        .main-card-body {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            grid-auto-rows: minmax(var(--player-button-min-height), 1fr);
             gap: 8px;
         }
-        .bank-player-grid .team-group-players {
-            flex: 1;
-            min-height: max-content;
+        .bank-player-grid .main-card-body {
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
+            min-height: 0;
         }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
         .bank-player-indiv-tags { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; padding: 4px 0; }
         .card-reset-btn { margin-left: auto; background: #e74c3c; color: white; border: none; border-radius: 5px; padding: 3px 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
         .card-reset-btn:hover { opacity: 0.85; }
+        .bank-status-type,
+        .bank-status-pending,
+        .bank-done-badge { flex: 0 0 auto; white-space: nowrap; }
+        .team-group-header > .bank-status-pending:first-child,
+        .team-group-header > .bank-done-badge:first-child {
+            min-width: max-content;
+            overflow: visible;
+            text-overflow: clip;
+        }
         .bank-status-type  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
         .bank-status-done  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
         .bank-status-pending { font-size: 15px; font-weight: 600; padding: 3px 10px; border-radius: 5px; background: #f0f0f0; color: #999; }
@@ -1051,6 +1099,9 @@
         #quizView2 > .bank-screen-wrap {
             width: min(92vw, 720px);
             max-width: 720px;
+            height: calc(100vh - 48px);
+            min-height: calc(100vh - 48px);
+            max-height: calc(100vh - 48px);
             height: calc(100dvh - 48px);
             min-height: calc(100dvh - 48px);
             max-height: calc(100dvh - 48px);
@@ -1062,7 +1113,9 @@
             flex-direction: column;
             overflow: hidden;
         }
-        #bankView2 {
+        #bankView2,
+        #quizView2 {
+            display: flex;
             flex-direction: column;
             flex: 1 1 auto;
             min-height: 0;
@@ -1362,15 +1415,18 @@
             font-weight: 700;
             margin-left: 4px;
         }
-        #bankPlayerGrid {
-            flex: 1;
+        #bankPlayerGrid,
+        #quizPlayerGrid {
+            flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             max-height: none;
-            padding-bottom: 10px;
+            padding: 12px 0 10px;
         }
-        #bankPlayerGrid::-webkit-scrollbar { display: none; }
+        #bankPlayerGrid::-webkit-scrollbar,
+        #quizPlayerGrid::-webkit-scrollbar { display: none; }
         .screen-bottom-actions {
             flex: 0 0 auto;
             box-sizing: border-box;
@@ -1454,15 +1510,8 @@
             overflow: hidden;
         }
         #quizPlayerGrid {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-            scrollbar-width: none;
-            max-height: none;
             padding-top: 2px;
-            padding-bottom: 10px;
         }
-        #quizPlayerGrid::-webkit-scrollbar { display: none; }
         .btn-citizen { background: #1565C0; color: #fff; }
         .btn-game-start { background: #F59E0B; color: #fff; }
 

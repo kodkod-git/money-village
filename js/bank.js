@@ -336,17 +336,16 @@ function _bankRenderPlayerList() {
 
     const grid   = document.getElementById('bankPlayerGrid');
     const isTeam = _bank.players.some(p => p.team_name);
-    grid.innerHTML = '';
 
-    const tabBar = document.getElementById('bankTabBar');
-    tabBar.style.display = isTeam ? 'flex' : 'none';
-    if (isTeam) {
-        document.getElementById('bankTabTeam').classList.toggle('active', _bank.viewMode === 'team');
-        document.getElementById('bankTabIndiv').classList.toggle('active', _bank.viewMode === 'individual');
-    }
+    renderActivityTabs({
+        hasTeamView: isTeam,
+        viewMode: _bank.viewMode,
+        tabBarId: 'bankTabBar',
+        teamTabId: 'bankTabTeam',
+        individualTabId: 'bankTabIndiv',
+    });
 
     const isTeamTab = isTeam && _bank.viewMode === 'team';
-    grid.classList.toggle('is-team', isTeamTab);
 
     function _getPlayerDone(p, idx) {
         if (isTeamTab) {
@@ -356,100 +355,49 @@ function _bankRenderPlayerList() {
         return _bank.indivCompleted[idx] || null;
     }
 
-    function _bankMakePlayerCard(p, idx, done) {
-        const disabled = !!done || _bank.currentRound >= 4;
-        const card = document.createElement('div');
-        card.className = 'bank-player-card'
-            + (done ? ' completed' : '')
-            + (disabled ? ' is-disabled' : '');
-        card.innerHTML = `<div class="bank-player-name-row"><span class="bank-player-nickname">${p.nickname}</span></div>`;
-        if (!disabled) card.onclick = () => bankSelectPlayer(idx);
-        return card;
-    }
-
-    if (!isTeam || _bank.viewMode === 'individual') {
-        const sorted = _bank.players
-            .map((p, idx) => ({ p, idx }))
-            .sort((a, b) => {
-                if (isTeam) {
-                    const teamCmp = (a.p.team_name || '').localeCompare(b.p.team_name || '', 'ko');
-                    if (teamCmp !== 0) return teamCmp;
-                }
-                return (a.p.nickname || '').localeCompare(b.p.nickname || '', 'ko');
-            });
-        sorted.forEach(({ p, idx }) => {
-            const done = _getPlayerDone(p, idx);
-            const typeTags = (_bank.playerTypeTags[p.nickname] || [])
+    renderActivityPlayerList({
+        grid,
+        players: _bank.players,
+        useTeamGroups: isTeamTab,
+        sortIndividualsByTeam: isTeam,
+        getPlayerGroupState: ({ player, index }) => {
+            const done = _getPlayerDone(player, index);
+            const typeTags = (_bank.playerTypeTags[player.nickname] || [])
                 .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
                 .join('');
             const statusTag = done ? '' : `<span class="bank-status-pending">신청 전</span>`;
-
-            const groupEl = document.createElement('div');
-            groupEl.className = 'team-group' + (done ? ' team-done' : '');
-
-            const header = document.createElement('div');
-            header.className = 'team-group-header';
-            const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${idx})" title="초기화">↻</button>` : '';
+            const entryResetBtn = done ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${index})" title="초기화">↻</button>` : '';
             const doneBadge = done ? `<span class="bank-done-badge">신청완료</span>` : '';
-            header.innerHTML = `${doneBadge}${statusTag}${entryResetBtn}`;
-            groupEl.appendChild(header);
-
-            const playersEl = document.createElement('div');
-            playersEl.className = 'team-group-players';
-            playersEl.style.gridTemplateColumns = '1fr';
-            playersEl.appendChild(_bankMakePlayerCard(p, idx, done));
-            if (typeTags) {
-                const tagsEl = document.createElement('div');
-                tagsEl.className = 'bank-player-indiv-tags';
-                tagsEl.innerHTML = typeTags;
-                playersEl.appendChild(tagsEl);
-            }
-
-            groupEl.appendChild(playersEl);
-            grid.appendChild(groupEl);
-        });
-        return;
-    }
-
-    const teams = new Map();
-    _bank.players.forEach((p, idx) => {
-        const key = p.team_name;
-        if (!teams.has(key)) teams.set(key, []);
-        teams.get(key).push({ p, idx });
-    });
-
-    const sortedTeams = [...teams.entries()].sort(([a], [b]) => a.localeCompare(b, 'ko'));
-    sortedTeams.forEach(([teamKey, members]) => {
-        members.sort((a, b) => (a.p.nickname || '').localeCompare(b.p.nickname || '', 'ko'));
-        const teamSize     = members.length;
-        const td           = _bank.teamDeposits[teamKey];
-        const completedCnt = td && td.members ? Object.keys(td.members).length : 0;
-        const allDone      = completedCnt === teamSize;
-
-        const groupEl = document.createElement('div');
-        groupEl.className = 'team-group' + (allDone ? ' team-done' : '');
-
-        const header = document.createElement('div');
-        header.className = 'team-group-header';
-        const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
-            .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
-            .join('');
-        const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
-        const bankProgressClass = completedCnt > 0 ? ' in-progress' : '';
-        const progressBadge = allDone ? `<span class="bank-done-badge">신청완료</span>` : `<span class="bank-team-progress-badge${bankProgressClass}">[${completedCnt}/${teamSize}]</span>`;
-        header.innerHTML = `<span>${teamKey || '무소속'}</span>${progressBadge}${teamTypeTagsHtml}${teamEntryResetBtn}`;
-        groupEl.appendChild(header);
-
-        const playersEl = document.createElement('div');
-        playersEl.className = 'team-group-players';
-        playersEl.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-        members.forEach(({ p, idx }) => {
-            const done = _getPlayerDone(p, idx);
-            playersEl.appendChild(_bankMakePlayerCard(p, idx, done));
-        });
-
-        groupEl.appendChild(playersEl);
-        grid.appendChild(groupEl);
+            return {
+                done: !!done,
+                headerHtml: `${doneBadge}${statusTag}<span class="bank-header-tags">${typeTags}</span>${entryResetBtn}`,
+            };
+        },
+        getTeamGroupState: ({ teamKey, members }) => {
+            const teamSize     = members.length;
+            const td           = _bank.teamDeposits[teamKey];
+            const completedCnt = td && td.members ? Object.keys(td.members).length : 0;
+            const allDone      = completedCnt === teamSize;
+            const teamTypeTagsHtml = (_bank.teamTypeTags[teamKey] || [])
+                .map(t => `<span class="bank-status-type">${_BANK_TYPE[t].label}</span>`)
+                .join('');
+            const teamEntryResetBtn = completedCnt > 0 ? `<button class="card-reset-btn" onclick="event.stopPropagation(); bankResetEntry(${members[0].idx})" title="초기화">↻</button>` : '';
+            const bankProgressClass = completedCnt > 0 ? ' in-progress' : '';
+            const progressBadge = allDone ? `<span class="bank-done-badge">신청완료</span>` : `<span class="bank-team-progress-badge${bankProgressClass}">[${completedCnt}/${teamSize}]</span>`;
+            return {
+                done: allDone,
+                headerHtml: `<span>${teamKey || '무소속'}</span>${progressBadge}${teamTypeTagsHtml}${teamEntryResetBtn}`,
+            };
+        },
+        getPlayerCardState: ({ player, index }) => {
+            const done = _getPlayerDone(player, index);
+            const disabled = !!done || _bank.currentRound >= 4;
+            return {
+                done: !!done,
+                disabled,
+                onClick: () => bankSelectPlayer(index),
+            };
+        },
     });
 }
 

@@ -4,7 +4,10 @@
       "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/USER/AppData/Roaming/npm\")",
       "Bash(clasp push:*)",
       "Bash(git rm *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(npm test *)",
+      "Bash(node tests/table-number-fit.test.js)",
+      "Bash(git restore *)"
     ]
   }
 }
