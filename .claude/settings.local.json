@@ -7,7 +7,8 @@
       "Bash(grep *)",
       "Bash(npm test *)",
       "Bash(node tests/table-number-fit.test.js)",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(node tests/player-edit-nickname-rename.test.js)"
     ]
   }
 }

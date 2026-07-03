@@ -159,9 +159,9 @@
         }, 150);
     }
 
-    function makeInp(lbl, realName = '', nickname = '', team='') {
+    function makeInp(lbl, realName = '', nickname = '', team='', origNickname = '') {
         return `
-        <div class="p-input-group citizen-row" style="align-items:flex-start; flex-direction:column; gap:6px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
+        <div class="p-input-group citizen-row" data-orig-nickname="${origNickname}" style="align-items:flex-start; flex-direction:column; gap:6px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
             <div style="font-weight:bold; color:#555; font-size:14px;">${lbl}</div>
 
             <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">

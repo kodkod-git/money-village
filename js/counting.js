@@ -232,7 +232,7 @@
             document.getElementById('teamEditAddBar').style.display = 'none';
             players.forEach((p, i) => {
                 const wrapper = document.createElement('div');
-                wrapper.innerHTML = makeInp(`참가자 ${i + 1}`, p.realName || p.name || '', p.nickname || '');
+                wrapper.innerHTML = makeInp(`참가자 ${i + 1}`, p.realName || p.name || '', p.nickname || '', '', p.nickname || '');
                 area.appendChild(wrapper.firstElementChild);
             });
         } else {
@@ -264,7 +264,7 @@
                 const membersEl = wrapper.querySelector('.team-members');
                 members.forEach((p, j) => {
                     const rowWrapper = document.createElement('div');
-                    rowWrapper.innerHTML = makeInp(`참가자 ${j + 1}`, p.realName || p.name || '', p.nickname || '');
+                    rowWrapper.innerHTML = makeInp(`참가자 ${j + 1}`, p.realName || p.name || '', p.nickname || '', '', p.nickname || '');
                     membersEl.appendChild(rowWrapper.firstElementChild);
                 });
                 area.appendChild(wrapper);
@@ -348,9 +348,11 @@
                 const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자${i + 1}`;
                 const nickname = row.querySelector('.nickname-input')?.value?.trim() || realName;
                 const efti = row.dataset.efti || '-';
-                const existing = existingMap[nickname];
+                const origNickname = row.dataset.origNickname || '';
+                const existing = existingMap[origNickname] || existingMap[nickname];
                 if (existing) {
                     existing.realName = realName; existing.name = realName; existing.id = i;
+                    existing.nickname = nickname;
                     if (efti !== '-') existing.efti = efti;
                     newPlayers.push(existing);
                 } else {
@@ -374,9 +376,11 @@
                     const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자${idx + 1}`;
                     const nickname = row.querySelector('.nickname-input')?.value?.trim() || realName;
                     const efti = row.dataset.efti || '-';
-                    const existing = existingMap[nickname];
+                    const origNickname = row.dataset.origNickname || '';
+                    const existing = existingMap[origNickname] || existingMap[nickname];
                     if (existing) {
                         existing.realName = realName; existing.name = realName;
+                        existing.nickname = nickname;
                         existing.team = teamName; existing.teamId = teamId; existing.id = idx;
                         if (efti !== '-') existing.efti = efti;
                         newPlayers.push(existing);
