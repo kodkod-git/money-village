@@ -63,16 +63,20 @@ async function sbDeleteCitizen(nickname) {
     const nick = _nick(nickname);
     if (!nick) return { success: false, code: 'EMPTY_NICKNAME' };
 
-    const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
+    const { data: user } = await _sb.from('users').select('user_id, nickname').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    const tables = ['cash_balance', 'game_individual', 'estate_balance', 'success_factors', 'stock_balance', 'traits'];
+    const tables = [
+        'cash_balance', 'game_individual', 'estate_balance',
+        'success_factors', 'stock_balance', 'traits',
+        'bank_history', 'quiz_history'
+    ];
     for (const table of tables) {
-        const { error } = await _sb.from(table).delete().eq('nickname', nick);
+        const { error } = await _sb.from(table).delete().eq('user_id', user.user_id);
         if (error) return { success: false, code: 'DELETE_FAILED', table, message: error.message };
     }
 
-    const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
+    const { error: e5 } = await _sb.from('users').delete().eq('user_id', user.user_id);
     if (e5) return { success: false, code: 'DELETE_FAILED', message: e5.message };
 
     return { success: true, nickname: nick };
