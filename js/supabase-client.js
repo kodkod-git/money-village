@@ -663,16 +663,16 @@ async function sbGetBankHistory(gameId) {
     return data || [];
 }
 
-async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amount, maturedAmount, isTeam) {
+async function sbUpsertBankHistory(gameId, userId, roundNum, depositType, amount, maturedAmount, isTeam) {
     const { error } = await _sb.from('bank_history').upsert({
         game_id:        gameId,
-        nickname:       nickname,
+        user_id:        userId,
         round_num:      roundNum,
         deposit_type:   depositType,
         amount:         amount,
         matured_amount: maturedAmount,
         is_team:        !!isTeam
-    }, { onConflict: 'game_id,nickname,round_num,is_team' });
+    }, { onConflict: 'game_id,user_id,round_num,is_team' });
     if (error) console.error('[sbUpsertBankHistory]', error);
 }
 
@@ -720,12 +720,12 @@ async function sbDeleteBankHistory(gameId) {
     return { success: true };
 }
 
-async function sbDeleteBankHistoryEntries(gameId, nicknames, roundNum, isTeam) {
+async function sbDeleteBankHistoryEntries(gameId, userIds, roundNum, isTeam) {
     const gid = String(gameId || '').trim();
-    if (!gid || !nicknames.length) return { success: false };
+    if (!gid || !userIds.length) return { success: false };
     const { error } = await _sb.from('bank_history').delete()
         .eq('game_id', gid)
-        .in('nickname', nicknames)
+        .in('user_id', userIds)
         .eq('round_num', roundNum)
         .eq('is_team', !!isTeam);
     if (error) { console.error('[sbDeleteBankHistoryEntries]', error); return { success: false }; }
