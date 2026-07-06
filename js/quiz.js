@@ -216,9 +216,9 @@ async function _quizSelectGame(gameId, date, sectionNum, gameType, gameVariant, 
     } catch(e) {}
 }
 
-function _quizSaveReward(nickname, amount) {
+function _quizSaveReward(nickname, userId, amount) {
     _quiz.earnedRewards[nickname] = (_quiz.earnedRewards[nickname] || 0) + amount;
-    sbSaveQuestReward(_quiz.gameId, nickname, _quiz.earnedRewards[nickname]).catch(console.error);
+    sbSaveQuestReward(_quiz.gameId, userId, _quiz.earnedRewards[nickname]).catch(console.error);
 }
 
 function quizAdjustReward(delta) {
@@ -644,13 +644,13 @@ function _quizShowResult() {
             if (!_quiz.teamPlayers[p.team_name]) _quiz.teamPlayers[p.team_name] = new Set();
             _quiz.teamPlayers[p.team_name].add(_quiz.currentPlayerIdx);
             _quiz.teamProgress[p.team_name] = (_quiz.teamProgress[p.team_name] || 0) + 1;
-            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { team_answered: true });
+            sbUpsertQuizHistory(_quiz.gameId, p.user_id, { team_answered: true });
 
             if (_quiz.teamProgress[p.team_name] >= 2) {
                 // 팀 [2/2] 달성 — 팀원 전체에 보상 저장
                 for (const pidx of _quiz.teamPlayers[p.team_name]) {
-                    const nick = _quiz.players[pidx].nickname;
-                    _quizSaveReward(nick, _quiz.teamReward);
+                    const teammate = _quiz.players[pidx];
+                    _quizSaveReward(teammate.nickname, teammate.user_id, _quiz.teamReward);
                 }
                 btnOk.textContent   = `${_quiz.teamReward.toLocaleString()}원 획득`;
                 btnOk.style.display = 'block';
@@ -661,8 +661,8 @@ function _quizShowResult() {
             // 개인 — 문제당 보상
             const prevCount = _quiz.progress[_quiz.currentPlayerIdx] || 0;
             _quiz.progress[_quiz.currentPlayerIdx] = prevCount + 1;
-            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_progress: _quiz.progress[_quiz.currentPlayerIdx], indiv_failed_at: null });
-            _quizSaveReward(p.nickname, _quiz.reward);
+            sbUpsertQuizHistory(_quiz.gameId, p.user_id, { indiv_progress: _quiz.progress[_quiz.currentPlayerIdx], indiv_failed_at: null });
+            _quizSaveReward(p.nickname, p.user_id, _quiz.reward);
 
             if (_quiz.progress[_quiz.currentPlayerIdx] >= 2) {
                 // [2/2] 완료
@@ -686,12 +686,12 @@ function _quizShowResult() {
             _quiz.players.forEach((pl, i) => {
                 if (pl.team_name && pl.team_name === p.team_name) {
                     _quiz.teamPlayerCooldowns[i] = failTime;
-                    sbUpsertQuizHistory(_quiz.gameId, pl.nickname, { team_failed_at: failIso });
+                    sbUpsertQuizHistory(_quiz.gameId, pl.user_id, { team_failed_at: failIso });
                 }
             });
         } else {
             _quiz.cooldowns[_quiz.currentPlayerIdx] = Date.now();
-            sbUpsertQuizHistory(_quiz.gameId, p.nickname, { indiv_failed_at: new Date().toISOString() });
+            sbUpsertQuizHistory(_quiz.gameId, p.user_id, { indiv_failed_at: new Date().toISOString() });
         }
     }
 
@@ -745,21 +745,21 @@ async function quizResetEntry(playerIdx) {
 
     if (!confirm('이 항목의 퀴즈 내역을 삭제하시겠습니까?')) return;
 
-    let nicknames;
+    let members;
     if (isTeamTab) {
-        const teamMembers = _quiz.players.filter(pl => pl.team_name === p.team_name);
-        nicknames = teamMembers.map(pl => pl.nickname);
+        members = _quiz.players.filter(pl => pl.team_name === p.team_name);
     } else {
-        nicknames = [p.nickname];
+        members = [p];
     }
 
-    const result = await sbDeleteQuizHistoryEntries(_quiz.gameId, nicknames);
+    const userIds = members.map(pl => pl.user_id);
+    const result = await sbDeleteQuizHistoryEntries(_quiz.gameId, userIds);
     if (!result.success) { alert('초기화에 실패했습니다.'); return; }
 
     await _quizPollAndMerge();
 
-    for (const nick of nicknames) {
-        sbSaveQuestReward(_quiz.gameId, nick, _quiz.earnedRewards[nick] || 0).catch(console.error);
+    for (const pl of members) {
+        sbSaveQuestReward(_quiz.gameId, pl.user_id, _quiz.earnedRewards[pl.nickname] || 0).catch(console.error);
     }
 }
 
@@ -813,7 +813,7 @@ function _quizMergeRemoteState(state, history) {
     const now = Date.now();
 
     history.forEach(r => {
-        const idx = _quiz.players.findIndex(p => p.nickname === r.nickname);
+        const idx = _quiz.players.findIndex(p => p.user_id === r.user_id);
         if (idx === -1) return;
         const player = _quiz.players[idx];
 
@@ -851,7 +851,7 @@ function _quizMergeRemoteState(state, history) {
 
     // 팀 완료 여부를 모두 집계한 뒤 보상 역산 (팀원 전체 정답 시에만 팀 보상 반영)
     history.forEach(r => {
-        const idx = _quiz.players.findIndex(p => p.nickname === r.nickname);
+        const idx = _quiz.players.findIndex(p => p.user_id === r.user_id);
         if (idx === -1) return;
         const player = _quiz.players[idx];
 
@@ -866,7 +866,7 @@ function _quizMergeRemoteState(state, history) {
             }
         }
         if (earnedIndiv + earnedTeam > 0) {
-            _quiz.earnedRewards[r.nickname] = earnedIndiv + earnedTeam;
+            _quiz.earnedRewards[player.nickname] = earnedIndiv + earnedTeam;
         }
     });
 
