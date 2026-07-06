@@ -280,9 +280,8 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
     }
 
     // game_individual (자산 0)
-    const indivRows = nicks.map(({ name, p }) => ({
+    const indivRows = nicks.map(({ p }) => ({
         user_id:          p.userId,
-        real_name:        name,
         total_asset:      0,
         cash:             0,
         stock:            0,
@@ -377,7 +376,6 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
         if (!p.user_id) { console.error('[sbSaveGameResult] user_id 없는 individual 무시', p); continue; }
         await _sb.from('game_individual').upsert({
             user_id:          p.user_id,
-            real_name:        _text(p.real_name ?? ''),
             total_asset:      Number(p.total ?? 0),
             cash:             Number(p.manualCash ?? 0),
             stock:            Number(p.stockVal ?? 0),
@@ -450,8 +448,15 @@ async function sbGetGamesByDate(date) {
     if (!games || games.length === 0) return [];
     return Promise.all(games.map(async game => {
         const { data: rows } = await _sb.from('game_individual')
-            .select('real_name').eq('game_id', game.game_id).limit(6);
-        return { ...game, preview_names: (rows || []).map(r => r.real_name).filter(Boolean) };
+            .select('user_id').eq('game_id', game.game_id).limit(6);
+        const userIds = (rows || []).map(r => r.user_id).filter(Boolean);
+        let preview_names = [];
+        if (userIds.length > 0) {
+            const { data: users } = await _sb.from('users')
+                .select('real_name').in('user_id', userIds);
+            preview_names = (users || []).map(u => u.real_name).filter(Boolean);
+        }
+        return { ...game, preview_names };
     }));
 }
 
@@ -463,17 +468,21 @@ async function sbLoadAssetsByGameId(gameId) {
 
     const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
     const { data: users } = await _sb.from('users')
-        .select('user_id, nickname').in('user_id', userIds);
-    const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
+        .select('user_id, nickname, real_name').in('user_id', userIds);
+    const userById = Object.fromEntries((users || []).map(u => [u.user_id, u]));
 
-    const history = rows.map(r => ({ ...r, nickname: nickByUserId[r.user_id] || '' }));
+    const history = rows.map(r => ({
+        ...r,
+        nickname:  userById[r.user_id]?.nickname || '',
+        real_name: userById[r.user_id]?.real_name || ''
+    }));
     return { success: true, history };
 }
 
 // game_id 참가자 목록 (user_id, nickname, real_name, default_efti)
 async function sbGetPlayersByGameId(gameId) {
     const { data: rows } = await _sb.from('game_individual')
-        .select('user_id, real_name, team_id').eq('game_id', gameId);
+        .select('user_id, team_id').eq('game_id', gameId);
     if (!rows || rows.length === 0) return [];
 
     const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
@@ -492,7 +501,7 @@ async function sbGetPlayersByGameId(gameId) {
     return rows.map(r => ({
         user_id:      r.user_id,
         nickname:     userMap[r.user_id]?.nickname || '',
-        real_name:    userMap[r.user_id]?.real_name || r.real_name || '',
+        real_name:    userMap[r.user_id]?.real_name || '',
         default_efti: userMap[r.user_id]?.default_efti || 'FAEN',
         team_name:    r.team_id ? (teamMap[r.team_id] || '') : ''
     }));

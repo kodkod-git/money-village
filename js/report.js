@@ -1056,7 +1056,6 @@
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     user_id: p.userId || null,
-                    real_name: p.realName || p.name || '',
                     efti_type: p.efti || '',
                     total: p.total,
                     manualCash: p.manualCash,

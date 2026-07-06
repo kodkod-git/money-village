@@ -517,7 +517,6 @@
 
             const indivRows = addedPlayers.map(p => ({
                 user_id:          p.userId,
-                real_name:        p.realName || p.name || '',
                 total_asset:      0,
                 cash:             0,
                 stock:            0,
@@ -537,9 +536,9 @@
             const realNameChanged = (old.realName || old.name) !== (p.realName || p.name);
             const teamChanged     = old.teamId !== p.teamId;
 
-            if (realNameChanged || teamChanged) {
+            if (teamChanged) {
                 await _sb.from('game_individual')
-                    .update({ real_name: p.realName || p.name || '', team_id: p.teamId || null })
+                    .update({ team_id: p.teamId || null })
                     .eq('game_id', gameId).eq('user_id', p.userId);
             }
             if (nicknameChanged || realNameChanged) {

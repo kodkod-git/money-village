@@ -30,7 +30,11 @@
       "Bash(node _smoke_test_tmp.mjs)",
       "Bash(rm -f ./_smoke_test_tmp.mjs)",
       "Bash(git fetch *)",
-      "Bash(git rev-list *)"
+      "Bash(git rev-list *)",
+      "Bash(echo \"---exit code: $?---\")",
+      "Bash(cp \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-USER-OneDrive-Desktop-Project-money-village\\\\3b507e34-f2b7-43da-b6e3-5a53a782fe02\\\\scratchpad\\\\smoke_realname.mjs\" ./_srn.mjs)",
+      "Bash(node _srn.mjs)",
+      "Bash(rm -f ./_srn.mjs)"
     ]
   }
 }
