@@ -235,6 +235,7 @@
                 wrapper.innerHTML = makeInp(`참가자 ${i + 1}`, p.realName || p.name || '', p.nickname || '');
                 const row = wrapper.firstElementChild;
                 row.dataset.userId = p.userId || '';
+                lockLoadedCitizenNameFields(row);
                 area.appendChild(row);
             });
         } else {
@@ -250,6 +251,7 @@
             teams.forEach((members, teamName) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'team-section';
+                wrapper.dataset.teamId = members.find(p => p.teamId)?.teamId || '';
                 wrapper.innerHTML = `
                     <div class="team-toolbar">
                         <div class="team-name-wrap">
@@ -257,7 +259,7 @@
                             <input class="team-name-input" type="text" value="${teamName}">
                         </div>
                         <div class="team-btns">
-                            <button class="btn btn-primary btn-mini" style="font-size:11px;padding:3px 8px;" onclick="addMember(this.closest('.team-section'))">➕ 팀원</button>
+                            <button class="btn btn-primary btn-mini" style="font-size:11px;padding:3px 8px;" onclick="addEditMember(this.closest('.team-section'))">➕ 팀원</button>
                             <button class="btn btn-dark btn-mini"    style="font-size:11px;padding:3px 8px;" onclick="removeMember(this.closest('.team-section'))">➖ 팀원</button>
                             <button class="btn btn-danger btn-mini"  style="font-size:11px;padding:3px 8px;" onclick="this.closest('.team-section').remove()">🗑️ 삭제</button>
                         </div>
@@ -269,6 +271,7 @@
                     rowWrapper.innerHTML = makeInp(`참가자 ${j + 1}`, p.realName || p.name || '', p.nickname || '');
                     const row = rowWrapper.firstElementChild;
                     row.dataset.userId = p.userId || '';
+                    lockLoadedCitizenNameFields(row);
                     membersEl.appendChild(row);
                 });
                 area.appendChild(wrapper);
@@ -293,7 +296,9 @@
         const count = area.querySelectorAll('.citizen-row').length;
         const wrapper = document.createElement('div');
         wrapper.innerHTML = makeInp(`참가자 ${count + 1}`, `참가자${count + 1}`, '');
-        area.appendChild(wrapper.firstElementChild);
+        const row = wrapper.firstElementChild;
+        lockLoadedCitizenNameFields(row);
+        area.appendChild(row);
         applyNameLengthBindings(area);
     }
 
@@ -317,16 +322,23 @@
                     <input class="team-name-input" type="text" value="${defaultName}">
                 </div>
                 <div class="team-btns">
-                    <button class="btn btn-primary btn-mini" style="font-size:11px;padding:3px 8px;" onclick="addMember(this.closest('.team-section'))">➕ 팀원</button>
+                    <button class="btn btn-primary btn-mini" style="font-size:11px;padding:3px 8px;" onclick="addEditMember(this.closest('.team-section'))">➕ 팀원</button>
                     <button class="btn btn-dark btn-mini"    style="font-size:11px;padding:3px 8px;" onclick="removeMember(this.closest('.team-section'))">➖ 팀원</button>
                     <button class="btn btn-danger btn-mini"  style="font-size:11px;padding:3px 8px;" onclick="this.closest('.team-section').remove()">🗑️ 삭제</button>
                 </div>
             </div>
             <div class="team-members"></div>`;
         area.appendChild(wrapper);
-        addMember(wrapper, true);
+        addEditMember(wrapper, true);
         renumberMembers(wrapper);
         applyNameLengthBindings(area);
+    }
+
+    function addEditMember(teamSection, focusCitizenSearch = false) {
+        addMember(teamSection, false);
+        const row = teamSection?.querySelector('.team-members .citizen-row:last-child');
+        lockLoadedCitizenNameFields(row);
+        if (focusCitizenSearch) row?.querySelector('.citizen-select')?.focus();
     }
 
     async function applyPlayerEdits() {
@@ -374,8 +386,7 @@
             let idx = 0;
             area.querySelectorAll('.team-section').forEach(teamSec => {
                 const teamName = (teamSec.querySelector('.team-name-input')?.value || '').trim() || '팀';
-                const existingTeamPlayer = players.find(p => p.team === teamName);
-                const teamId = existingTeamPlayer?.teamId || ('T' + Math.random().toString(36).substr(2, 8).toUpperCase());
+                const teamId = teamSec.dataset.teamId || ('T' + Math.random().toString(36).substr(2, 8).toUpperCase());
                 teamSec.querySelectorAll('.citizen-row').forEach(row => {
                     const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자${idx + 1}`;
                     const nickname = row.querySelector('.nickname-input')?.value?.trim() || realName;
