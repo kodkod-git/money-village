@@ -514,13 +514,13 @@ async function bankStep2Submit() {
     }
 }
 
-function _bankSaveReward(nickname, source, amount) {
+function _bankSaveReward(nickname, userId, source, amount) {
     if (source === 'team') _bank.teamRewards[nickname] = amount;
     else                   _bank.indivRewards[nickname] = amount;
     const total = (_bank.prevRoundsTotal[nickname] || 0)
                 + (_bank.teamRewards[nickname]   || 0)
                 + (_bank.indivRewards[nickname]  || 0);
-    sbSaveDepositReward(_bank.gameId, nickname, total).catch(console.error);
+    sbSaveDepositReward(_bank.gameId, userId, total).catch(console.error);
 }
 
 function _bankSubmitIndividual(p, type, amount) {
@@ -528,9 +528,9 @@ function _bankSubmitIndividual(p, type, amount) {
     const maturity = Math.round(amount * ratio);
     const interest = maturity - amount;
 
-    _bankSaveReward(p.nickname, 'indiv', maturity);
+    _bankSaveReward(p.nickname, p.user_id, 'indiv', maturity);
     _bank.indivCompleted[_bank.currentPlayerIdx] = { type, amount };
-    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, maturity, false);
+    sbUpsertBankHistory(_bank.gameId, p.user_id, _bank.currentRound, type, amount, maturity, false);
 
     // 누적 타입 태그
     if (!_bank.playerTypeTags[p.nickname]) _bank.playerTypeTags[p.nickname] = [];
@@ -558,7 +558,7 @@ function _bankSubmitTeam(p, type, amount) {
     }
     _bank.teamDeposits[teamName].type = type;
     _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
-    sbUpsertBankHistory(_bank.gameId, p.nickname, _bank.currentRound, type, amount, 0, true);
+    sbUpsertBankHistory(_bank.gameId, p.user_id, _bank.currentRound, type, amount, 0, true);
 
     const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
     const teamSize     = teamMembers.length;
@@ -576,13 +576,13 @@ function _bankSubmitTeam(p, type, amount) {
         teamMembers.forEach(pl => {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
-            _bankSaveReward(pl.nickname, 'team', memberPrincipal + perMemberReward);
+            _bankSaveReward(pl.nickname, pl.user_id, 'team', memberPrincipal + perMemberReward);
         });
         teamMembers.forEach(pl => {
             const memberIdx = _bank.players.findIndex(x => x === pl);
             const memberPrincipal = td.members[memberIdx] || 0;
             const memberMatured = memberPrincipal + perMemberReward;
-            sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, type, memberPrincipal, memberMatured, true);
+            sbUpsertBankHistory(_bank.gameId, pl.user_id, _bank.currentRound, type, memberPrincipal, memberMatured, true);
         });
 
         // 누적 타입 태그 — 팀 헤더
@@ -659,8 +659,8 @@ function bankAdvanceRound() {
             for (const [memberIdxStr, amount] of Object.entries(td.members)) {
                 const pl = _bank.players[parseInt(memberIdxStr)];
                 if (pl) {
-                    _bankSaveReward(pl.nickname, 'team', amount);
-                    sbUpsertBankHistory(_bank.gameId, pl.nickname, _bank.currentRound, td.type, amount, amount, true);
+                    _bankSaveReward(pl.nickname, pl.user_id, 'team', amount);
+                    sbUpsertBankHistory(_bank.gameId, pl.user_id, _bank.currentRound, td.type, amount, amount, true);
                 }
             }
         }
@@ -725,26 +725,26 @@ async function bankResetEntry(playerIdx) {
 
     if (!confirm('이 항목의 예금 신청 내역을 삭제하시겠습니까?')) return;
 
-    let nicknames, isTeam;
+    let members, isTeam;
     if (isTeamTab) {
-        const teamMembers = _bank.players.filter(pl => pl.team_name === p.team_name);
-        nicknames = teamMembers.map(pl => pl.nickname);
+        members = _bank.players.filter(pl => pl.team_name === p.team_name);
         isTeam = true;
     } else {
-        nicknames = [p.nickname];
+        members = [p];
         isTeam = false;
     }
 
-    const result = await sbDeleteBankHistoryEntries(_bank.gameId, nicknames, _bank.currentRound, isTeam);
+    const userIds = members.map(pl => pl.user_id);
+    const result = await sbDeleteBankHistoryEntries(_bank.gameId, userIds, _bank.currentRound, isTeam);
     if (!result.success) { alert('초기화에 실패했습니다.'); return; }
 
     await _bankPollAndMerge();
 
-    for (const nick of nicknames) {
-        const total = (_bank.prevRoundsTotal[nick] || 0)
-                    + (_bank.teamRewards[nick]   || 0)
-                    + (_bank.indivRewards[nick]  || 0);
-        sbSaveDepositReward(_bank.gameId, nick, total).catch(console.error);
+    for (const pl of members) {
+        const total = (_bank.prevRoundsTotal[pl.nickname] || 0)
+                    + (_bank.teamRewards[pl.nickname]   || 0)
+                    + (_bank.indivRewards[pl.nickname]  || 0);
+        sbSaveDepositReward(_bank.gameId, pl.user_id, total).catch(console.error);
     }
 }
 
@@ -804,10 +804,14 @@ function _bankMergeRemoteState(state, history) {
         _bank.indivRewards   = {};
     }
 
+    const findPlayer = (userId) => _bank.players.find(p => p.user_id === userId);
+
     // prevRoundsTotal: 현재 라운드 미만 행의 matured_amount 합산
     const prevTotals = {};
     history.filter(r => r.round_num < _bank.currentRound).forEach(r => {
-        prevTotals[r.nickname] = (prevTotals[r.nickname] || 0) + (r.matured_amount || 0);
+        const pl = findPlayer(r.user_id);
+        if (!pl) return;
+        prevTotals[pl.nickname] = (prevTotals[pl.nickname] || 0) + (r.matured_amount || 0);
     });
     _bank.prevRoundsTotal = prevTotals;
 
@@ -820,7 +824,7 @@ function _bankMergeRemoteState(state, history) {
     // 팀 완료 라운드 사전 계산 (팀 전원 신청한 경우만 뱃지 부여)
     const _teamRoundCounts = {};
     history.filter(h => h.is_team).forEach(h => {
-        const pl = _bank.players.find(p => p.nickname === h.nickname);
+        const pl = findPlayer(h.user_id);
         if (!pl || !pl.team_name) return;
         const key = `${pl.team_name}|${h.round_num}`;
         _teamRoundCounts[key] = (_teamRoundCounts[key] || 0) + 1;
@@ -833,12 +837,12 @@ function _bankMergeRemoteState(state, history) {
 
     // 타입 태그는 전체 라운드에서 누적 (팀은 전원 완료된 라운드만)
     history.forEach(r => {
-        const player = _bank.players.find(p => p.nickname === r.nickname);
+        const player = findPlayer(r.user_id);
         if (!player) return;
         if (!r.is_team) {
-            if (!_bank.playerTypeTags[r.nickname]) _bank.playerTypeTags[r.nickname] = [];
-            if (!_bank.playerTypeTags[r.nickname].includes(r.deposit_type)) {
-                _bank.playerTypeTags[r.nickname].push(r.deposit_type);
+            if (!_bank.playerTypeTags[player.nickname]) _bank.playerTypeTags[player.nickname] = [];
+            if (!_bank.playerTypeTags[player.nickname].includes(r.deposit_type)) {
+                _bank.playerTypeTags[player.nickname].push(r.deposit_type);
             }
         } else {
             const teamName = player.team_name;
@@ -852,7 +856,7 @@ function _bankMergeRemoteState(state, history) {
 
     const currentRows = history.filter(r => r.round_num === _bank.currentRound);
     currentRows.forEach(r => {
-        const idx = _bank.players.findIndex(p => p.nickname === r.nickname);
+        const idx = _bank.players.findIndex(p => p.user_id === r.user_id);
         if (idx === -1) return;
 
         if (!r.is_team) {
@@ -874,10 +878,12 @@ function _bankMergeRemoteState(state, history) {
     _bank.teamRewards  = {};
     currentRows.forEach(r => {
         if (!r.matured_amount) return;
+        const pl = findPlayer(r.user_id);
+        if (!pl) return;
         if (!r.is_team) {
-            _bank.indivRewards[r.nickname] = r.matured_amount;
+            _bank.indivRewards[pl.nickname] = r.matured_amount;
         } else {
-            _bank.teamRewards[r.nickname] = r.matured_amount;
+            _bank.teamRewards[pl.nickname] = r.matured_amount;
         }
     });
 
@@ -896,25 +902,28 @@ function _bankMergeRemoteState(state, history) {
             teamTypeTags:   {},
         };
         history.filter(h => h.round_num < rNum).forEach(h => {
-            snap.prevRoundsTotal[h.nickname] = (snap.prevRoundsTotal[h.nickname] || 0) + (h.matured_amount || 0);
+            const pl = findPlayer(h.user_id);
+            if (!pl) return;
+            snap.prevRoundsTotal[pl.nickname] = (snap.prevRoundsTotal[pl.nickname] || 0) + (h.matured_amount || 0);
         });
         roundRows.forEach(h => {
-            const idx = _bank.players.findIndex(p => p.nickname === h.nickname);
+            const idx = _bank.players.findIndex(p => p.user_id === h.user_id);
             if (idx === -1) return;
+            const pl = _bank.players[idx];
             if (!h.is_team) {
                 snap.indivCompleted[idx] = { type: h.deposit_type, amount: h.amount };
-                if (h.matured_amount) snap.indivRewards[h.nickname] = h.matured_amount;
+                if (h.matured_amount) snap.indivRewards[pl.nickname] = h.matured_amount;
             } else {
-                const teamName = _bank.players[idx].team_name;
+                const teamName = pl.team_name;
                 if (!teamName) return;
                 if (!snap.teamDeposits[teamName]) snap.teamDeposits[teamName] = { type: h.deposit_type, members: {} };
                 snap.teamDeposits[teamName].members[idx] = h.amount;
-                if (h.matured_amount) snap.teamRewards[h.nickname] = h.matured_amount;
+                if (h.matured_amount) snap.teamRewards[pl.nickname] = h.matured_amount;
             }
         });
         const snapTeamRoundCounts = {};
         history.filter(h => h.is_team && h.round_num <= rNum).forEach(h => {
-            const pl = _bank.players.find(p => p.nickname === h.nickname);
+            const pl = findPlayer(h.user_id);
             if (!pl || !pl.team_name) return;
             const key = `${pl.team_name}|${h.round_num}`;
             snapTeamRoundCounts[key] = (snapTeamRoundCounts[key] || 0) + 1;
@@ -926,11 +935,11 @@ function _bankMergeRemoteState(state, history) {
         );
 
         history.filter(h => h.round_num <= rNum).forEach(h => {
-            const player = _bank.players.find(p => p.nickname === h.nickname);
+            const player = findPlayer(h.user_id);
             if (!player) return;
             if (!h.is_team) {
-                if (!snap.playerTypeTags[h.nickname]) snap.playerTypeTags[h.nickname] = [];
-                if (!snap.playerTypeTags[h.nickname].includes(h.deposit_type)) snap.playerTypeTags[h.nickname].push(h.deposit_type);
+                if (!snap.playerTypeTags[player.nickname]) snap.playerTypeTags[player.nickname] = [];
+                if (!snap.playerTypeTags[player.nickname].includes(h.deposit_type)) snap.playerTypeTags[player.nickname].push(h.deposit_type);
             } else {
                 const teamName = player.team_name;
                 if (!teamName || !snapCompletedTeamRounds.has(`${teamName}|${h.round_num}`)) return;
