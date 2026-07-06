@@ -617,16 +617,44 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 // =========================================================
 
 async function sbLoadHallOfFame() {
-    const [{ data: gameInfoList }, { data: indiv }, { data: team }] = await Promise.all([
+    const [{ data: gameInfoList }, { data: indiv }, { data: team }, { data: users }, { data: allIndiv }] = await Promise.all([
         _sb.from('game_info').select('game_id, game_variant'),
         _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
-        _sb.from('game_team').select('*').order('team_total_asset', { ascending: false }).limit(200)
+        _sb.from('game_team').select('*'),
+        _sb.from('users').select('user_id, nickname'),
+        _sb.from('game_individual').select('user_id, team_id, total_asset, game_id')
     ]);
+
     const variantMap = Object.fromEntries(
         (gameInfoList || []).map(r => [r.game_id, r.game_variant || 'basic'])
     );
-    const indivWithVariant = (indiv || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
-    const teamWithVariant  = (team  || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
+    const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
+
+    const indivWithVariant = (indiv || []).map(r => ({
+        ...r,
+        nickname:     nickByUserId[r.user_id] || '',
+        game_variant: variantMap[r.game_id] || 'basic'
+    }));
+
+    // team_id별 총자산/멤버 닉네임 온더플라이 집계
+    const teamAgg = {};
+    (allIndiv || []).forEach(r => {
+        if (!r.team_id) return;
+        if (!teamAgg[r.team_id]) teamAgg[r.team_id] = { total: 0, members: [] };
+        teamAgg[r.team_id].total += Number(r.total_asset) || 0;
+        teamAgg[r.team_id].members.push(nickByUserId[r.user_id] || '');
+    });
+
+    const teamWithVariant = (team || [])
+        .map(t => ({
+            ...t,
+            team_total_asset: teamAgg[t.team_id]?.total || 0,
+            members:          (teamAgg[t.team_id]?.members || []).filter(Boolean).join(', '),
+            game_variant:     variantMap[t.game_id] || 'basic'
+        }))
+        .sort((a, b) => b.team_total_asset - a.team_total_asset)
+        .slice(0, 200);
+
     return { indiv: indivWithVariant, team: teamWithVariant };
 }
 
