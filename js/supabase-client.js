@@ -700,10 +700,10 @@ async function sbGetQuizHistory(gameId) {
     return data || [];
 }
 
-async function sbUpsertQuizHistory(gameId, nickname, fields) {
+async function sbUpsertQuizHistory(gameId, userId, fields) {
     const { error } = await _sb.from('quiz_history').upsert(
-        { game_id: gameId, nickname, ...fields },
-        { onConflict: 'game_id,nickname' }
+        { game_id: gameId, user_id: userId, ...fields },
+        { onConflict: 'game_id,user_id' }
     );
     if (error) console.error('[sbUpsertQuizHistory]', error);
 }
@@ -740,12 +740,12 @@ async function sbDeleteQuizHistory(gameId) {
     return { success: true };
 }
 
-async function sbDeleteQuizHistoryEntries(gameId, nicknames) {
+async function sbDeleteQuizHistoryEntries(gameId, userIds) {
     const gid = String(gameId || '').trim();
-    if (!gid || !nicknames.length) return { success: false };
+    if (!gid || !userIds.length) return { success: false };
     const { error } = await _sb.from('quiz_history').delete()
         .eq('game_id', gid)
-        .in('nickname', nicknames);
+        .in('user_id', userIds);
     if (error) { console.error('[sbDeleteQuizHistoryEntries]', error); return { success: false }; }
     return { success: true };
 }
