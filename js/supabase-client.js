@@ -308,36 +308,35 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
     }
 }
 
-async function sbSaveUserBalance(nickname, gameId, assets) {
-    const nick = _nick(nickname);
-    const gid  = String(gameId || '').trim();
-    if (!nick || !gid) return;
+async function sbSaveUserBalance(userId, gameId, assets) {
+    const gid = String(gameId || '').trim();
+    if (!userId || !gid) return;
 
     await _sb.from('stock_balance').upsert({
-        nickname: nick, game_id: gid,
+        user_id: userId, game_id: gid,
         sasung:  Number(assets['SASUNG']  || 0),
         lgi:     Number(assets['LGI']     || 0),
         skei:    Number(assets['SKEI']    || 0),
         cacao:   Number(assets['CACAO']   || 0),
         hyunde:  Number(assets['HYUNDE']  || 0),
         naber:   Number(assets['NABER']   || 0)
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
 
     await _sb.from('cash_balance').upsert({
-        nickname: nick, game_id: gid,
+        user_id: userId, game_id: gid,
         bill_100:   Number(assets['100']   || 0),
         bill_500:   Number(assets['500']   || 0),
         bill_1000:  Number(assets['1000']  || 0),
         bill_5000:  Number(assets['5000']  || 0),
         bill_10000: Number(assets['10000'] || 0),
         bill_50000: Number(assets['50000'] || 0)
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
 }
 
-async function sbLoadUserBalance(nickname, gameId) {
+async function sbLoadUserBalance(userId, gameId) {
     const { data } = await _sb
         .from('stock_balance').select('*')
-        .eq('nickname', nickname).eq('game_id', gameId)
+        .eq('user_id', userId).eq('game_id', gameId)
         .maybeSingle();
     if (!data) return null;
     return {
@@ -548,12 +547,11 @@ async function sbSaveEstatePrice(gameId, prices) {
     if (error) console.error('[sbSaveEstatePrice]', error);
 }
 
-async function sbSaveEstateBalance(nickname, gameId, assets) {
-    const nick = _nick(nickname);
-    const gid  = String(gameId || '').trim();
-    if (!nick || !gid) return;
+async function sbSaveEstateBalance(userId, gameId, assets) {
+    const gid = String(gameId || '').trim();
+    if (!userId || !gid) return;
     const { error } = await _sb.from('estate_balance').upsert({
-        nickname:   nick,
+        user_id:   userId,
         game_id:    gid,
         gaongaemi:    Number(assets['GAONGAEMI']    || 0),
         nurigoyangi:  Number(assets['NURIGOYANGI']  || 0),
@@ -561,14 +559,14 @@ async function sbSaveEstateBalance(nickname, gameId, assets) {
         marusuri:     Number(assets['MARUSURI']     || 0),
         chorongbungi: Number(assets['CHORONGBUNGI'] || 0),
         haniyuwoo:    Number(assets['HANIYUWOO']    || 0),
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveEstateBalance]', error);
 }
 
-async function sbLoadEstateBalance(nickname, gameId) {
+async function sbLoadEstateBalance(userId, gameId) {
     const { data } = await _sb
         .from('estate_balance').select('*')
-        .eq('nickname', nickname).eq('game_id', gameId)
+        .eq('user_id', userId).eq('game_id', gameId)
         .maybeSingle();
     if (!data) return null;
     return {

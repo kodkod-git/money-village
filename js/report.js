@@ -999,10 +999,10 @@
             }
 
             if (currentGameVariant !== 'basic') {
-                await Promise.all(players.map(p => sbSaveEstateBalance(p.nickname, gameId, p.assets)));
+                await Promise.all(players.map(p => sbSaveEstateBalance(p.userId, gameId, p.assets)));
                 await sbSaveSuccessFactors(gameId, players);
             } else {
-                await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+                await Promise.all(players.map(p => saveUserBalance(p.userId, gameId, p.assets)));
                 await saveTraits(gameId, players);
             }
             await Promise.all(players.map(p => {
@@ -1271,7 +1271,7 @@
             await Promise.all(players.map(async p => {
                 if (!p.gameId) { console.warn(`  no gameId: ${p.nickname}`); return; }
                 if (gameVariant !== 'basic') {
-                    const estates = await sbLoadEstateBalance(p.nickname, p.gameId);
+                    const estates = await sbLoadEstateBalance(p.userId, p.gameId);
                     if (estates) {
                         Object.assign(p.assets, estates);
                         const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
@@ -1280,7 +1280,7 @@
                         console.warn(`  no estate balance: ${p.nickname}`);
                     }
                 } else {
-                    const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
+                    const stocks = await sbLoadUserBalance(p.userId, p.gameId);
                     if (stocks) {
                         Object.assign(p.assets, stocks);
                         p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);

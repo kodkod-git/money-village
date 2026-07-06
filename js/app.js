@@ -257,18 +257,18 @@
     }
 
 
-    async function loadUserBalance(nickname, gameId) {
+    async function loadUserBalance(userId, gameId) {
         try {
-            return await sbLoadUserBalance(nickname, gameId);
+            return await sbLoadUserBalance(userId, gameId);
         } catch (e) {
-            console.error(`[loadUserBalance] ${nickname} 오류:`, e);
+            console.error(`[loadUserBalance] ${userId} 오류:`, e);
             return null;
         }
     }
 
-    async function saveUserBalance(nickname, gameId, assets) {
+    async function saveUserBalance(userId, gameId, assets) {
         try {
-            await sbSaveUserBalance(nickname, gameId, assets);
+            await sbSaveUserBalance(userId, gameId, assets);
         } catch (e) {
             console.error('[saveUserBalance] 오류:', e);
         }
