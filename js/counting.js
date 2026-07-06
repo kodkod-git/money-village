@@ -233,7 +233,9 @@
             players.forEach((p, i) => {
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = makeInp(`참가자 ${i + 1}`, p.realName || p.name || '', p.nickname || '');
-                area.appendChild(wrapper.firstElementChild);
+                const row = wrapper.firstElementChild;
+                row.dataset.userId = p.userId || '';
+                area.appendChild(row);
             });
         } else {
             document.getElementById('indivEditBar').style.display = 'none';
@@ -265,7 +267,9 @@
                 members.forEach((p, j) => {
                     const rowWrapper = document.createElement('div');
                     rowWrapper.innerHTML = makeInp(`참가자 ${j + 1}`, p.realName || p.name || '', p.nickname || '');
-                    membersEl.appendChild(rowWrapper.firstElementChild);
+                    const row = rowWrapper.firstElementChild;
+                    row.dataset.userId = p.userId || '';
+                    membersEl.appendChild(row);
                 });
                 area.appendChild(wrapper);
             });
@@ -328,8 +332,8 @@
     async function applyPlayerEdits() {
         const area = document.getElementById('playerEditArea');
         const gameId = players[0]?.gameId;
-        const existingMap = {};
-        players.forEach(p => { existingMap[p.nickname] = p; });
+        const existingByUserId = {};
+        players.forEach(p => { if (p.userId) existingByUserId[p.userId] = p; });
 
         const newPlayers = [];
 
@@ -348,15 +352,17 @@
                 const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자${i + 1}`;
                 const nickname = row.querySelector('.nickname-input')?.value?.trim() || realName;
                 const efti = row.dataset.efti || '-';
-                const existing = existingMap[nickname];
+                const rowUserId = row.dataset.userId || '';
+                const existing = rowUserId ? existingByUserId[rowUserId] : null;
                 if (existing) {
                     existing.realName = realName; existing.name = realName; existing.id = i;
+                    existing.nickname = nickname;
                     if (efti !== '-') existing.efti = efti;
                     newPlayers.push(existing);
                 } else {
                     newPlayers.push({
                         id: i, gameId, nickname, realName, name: realName,
-                        efti: efti || '-', team: '-',
+                        efti: efti || '-', team: '-', userId: null,
                         assets: initAssets(), total: 0,
                         rankIndiv: 0, rankTeam: 0, teamTotal: 0,
                         manualCash: 0, diligenceReward: 0,
@@ -374,7 +380,8 @@
                     const realName = row.querySelector('.realname-input')?.value?.trim() || `참가자${idx + 1}`;
                     const nickname = row.querySelector('.nickname-input')?.value?.trim() || realName;
                     const efti = row.dataset.efti || '-';
-                    const existing = existingMap[nickname];
+                    const rowUserId = row.dataset.userId || '';
+                    const existing = rowUserId ? existingByUserId[rowUserId] : null;
                     if (existing) {
                         existing.realName = realName; existing.name = realName;
                         existing.team = teamName; existing.teamId = teamId; existing.id = idx;
@@ -383,7 +390,7 @@
                     } else {
                         newPlayers.push({
                             id: idx, gameId, nickname, realName, name: realName,
-                            efti: efti || '-', team: teamName, teamId,
+                            efti: efti || '-', team: teamName, teamId, userId: null,
                             assets: initAssets(), total: 0,
                             rankIndiv: 0, rankTeam: 0, teamTotal: 0,
                             manualCash: 0, diligenceReward: 0,
@@ -413,62 +420,75 @@
         if (!gameId) return;
 
         const isAdvancedLike = currentGameVariant !== 'basic';
-        const oldNickSet = new Set(oldPlayers.map(p => _nick(p.nickname)));
-        const newNickSet = new Set(newPlayers.map(p => _nick(p.nickname)));
+        const oldUserIdSet = new Set(oldPlayers.map(p => p.userId).filter(Boolean));
+        const newUserIdSet = new Set(newPlayers.map(p => p.userId).filter(Boolean));
 
-        const removedNicks = [...oldNickSet].filter(n => n && !newNickSet.has(n));
-        const addedNicks   = new Set([...newNickSet].filter(n => n && !oldNickSet.has(n)));
-
-        // 삭제된 플레이어: 해당 게임 테이블에서 제거 (users는 시민권자이므로 유지)
+        // 삭제된 플레이어: 이전에 있던 user_id가 새 명단에 없는 경우 (users는 시민권자이므로 유지)
+        const removedUserIds = [...oldUserIdSet].filter(id => !newUserIdSet.has(id));
         const removeTables = isAdvancedLike
             ? ['cash_balance', 'estate_balance', 'success_factors', 'game_individual']
             : ['cash_balance', 'stock_balance', 'traits', 'game_individual'];
-        for (const nick of removedNicks) {
+        for (const userId of removedUserIds) {
             for (const table of removeTables) {
-                await _sb.from(table).delete().eq('game_id', gameId).eq('nickname', nick);
+                await _sb.from(table).delete().eq('game_id', gameId).eq('user_id', userId);
             }
         }
 
-        // 추가된 플레이어: 초기 레코드 삽입
-        const addedPlayers = newPlayers.filter(p => addedNicks.has(_nick(p.nickname)));
+        // 추가된 플레이어: user_id가 아직 없는 행 — 닉네임으로 users 조회/생성 후 게임 테이블에 초기 레코드 삽입
+        const addedPlayers = newPlayers.filter(p => !p.userId);
         if (addedPlayers.length > 0) {
             const today = new Date().toISOString().slice(0, 10);
-            const userRows = addedPlayers.map(p => ({
-                nickname:     _nick(p.nickname),
-                real_name:    p.realName || p.name || '',
-                join_date:    today,
-                is_citizen:   false,
-                default_efti: p.efti || 'FAEN',
-                status:       'active'
-            }));
-            await _sb.from('users').upsert(userRows, { onConflict: 'nickname' });
+            const addedNicks = addedPlayers.map(p => _nick(p.nickname));
+
+            const { data: existingUsers } = await _sb.from('users').select('user_id, nickname').in('nickname', addedNicks);
+            const userIdByNick = new Map((existingUsers || []).map(u => [u.nickname, u.user_id]));
+
+            const brandNewRows = addedPlayers
+                .filter(p => !userIdByNick.has(_nick(p.nickname)))
+                .map(p => ({
+                    nickname:     _nick(p.nickname),
+                    real_name:    p.realName || p.name || '',
+                    join_date:    today,
+                    is_citizen:   false,
+                    default_efti: p.efti || 'FAEN',
+                    status:       'active'
+                }));
+            if (brandNewRows.length > 0) {
+                const { data: insertedUsers, error } = await _sb.from('users').insert(brandNewRows).select('user_id, nickname');
+                if (error) console.error('[syncPlayerEdits] users insert', error);
+                (insertedUsers || []).forEach(u => userIdByNick.set(u.nickname, u.user_id));
+            }
+
+            for (const p of addedPlayers) {
+                p.userId = userIdByNick.get(_nick(p.nickname)) || null;
+            }
 
             const cashRows = addedPlayers.map(p => ({
-                game_id: gameId, nickname: _nick(p.nickname),
+                game_id: gameId, user_id: p.userId,
                 bill_100: 0, bill_500: 0, bill_1000: 0,
                 bill_5000: 0, bill_10000: 0, bill_50000: 0
             }));
-            await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,nickname' });
+            await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,user_id' });
 
             if (isAdvancedLike) {
                 const estateRows = addedPlayers.map(p => ({
-                    game_id: gameId, nickname: _nick(p.nickname),
+                    game_id: gameId, user_id: p.userId,
                     gaongaemi: 0, nurigoyangi: 0, damiwonsungi: 0,
                     marusuri: 0, chorongbungi: 0, haniyuwoo: 0
                 }));
-                await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,nickname' });
+                await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,user_id' });
                 await sbSaveSuccessFactors(gameId, addedPlayers);
             } else {
                 const stockRows = addedPlayers.map(p => ({
-                    game_id: gameId, nickname: _nick(p.nickname),
+                    game_id: gameId, user_id: p.userId,
                     sasung: 0, lgi: 0, skei: 0, cacao: 0, hyunde: 0, naber: 0
                 }));
-                await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,nickname' });
+                await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,user_id' });
                 await sbSaveTraits(gameId, addedPlayers);
             }
 
             const indivRows = addedPlayers.map(p => ({
-                nickname:         _nick(p.nickname),
+                user_id:          p.userId,
                 real_name:        p.realName || p.name || '',
                 total_asset:      0,
                 cash:             0,
@@ -477,26 +497,30 @@
                 game_id:          gameId,
                 team_id:          p.teamId || null
             }));
-            await _sb.from('game_individual').upsert(indivRows, { onConflict: 'game_id,nickname' });
+            await _sb.from('game_individual').upsert(indivRows, { onConflict: 'game_id,user_id' });
         }
 
-        // 유지된 플레이어: 이름/팀 변경 반영
-        const keptPlayers = newPlayers.filter(p => oldNickSet.has(_nick(p.nickname)));
+        // 유지된 플레이어: 닉네임/이름/팀 변경 반영 — user_id가 그대로이므로 자산 테이블은 손댈 필요 없음
+        const keptPlayers = newPlayers.filter(p => p.userId && oldUserIdSet.has(p.userId));
         for (const p of keptPlayers) {
-            const nick = _nick(p.nickname);
-            const old  = oldPlayers.find(op => _nick(op.nickname) === nick);
+            const old = oldPlayers.find(op => op.userId === p.userId);
             if (!old) continue;
+            const nicknameChanged = _nick(old.nickname) !== _nick(p.nickname);
             const realNameChanged = (old.realName || old.name) !== (p.realName || p.name);
             const teamChanged     = old.teamId !== p.teamId;
+
             if (realNameChanged || teamChanged) {
                 await _sb.from('game_individual')
                     .update({ real_name: p.realName || p.name || '', team_id: p.teamId || null })
-                    .eq('game_id', gameId).eq('nickname', nick);
+                    .eq('game_id', gameId).eq('user_id', p.userId);
             }
-            if (realNameChanged) {
+            if (nicknameChanged || realNameChanged) {
                 await _sb.from('users')
-                    .update({ real_name: p.realName || p.name || '' })
-                    .eq('nickname', nick);
+                    .update({
+                        ...(nicknameChanged ? { nickname: _nick(p.nickname) } : {}),
+                        ...(realNameChanged ? { real_name: p.realName || p.name || '' } : {})
+                    })
+                    .eq('user_id', p.userId);
             }
         }
 
@@ -511,16 +535,13 @@
             const newTeamMap = {};
             newPlayers.forEach(p => {
                 if (!p.teamId) return;
-                if (!newTeamMap[p.teamId]) newTeamMap[p.teamId] = { name: p.team || '', members: [] };
-                newTeamMap[p.teamId].members.push(_nick(p.nickname));
+                if (!newTeamMap[p.teamId]) newTeamMap[p.teamId] = { name: p.team || '' };
             });
             for (const [tid, t] of Object.entries(newTeamMap)) {
                 await _sb.from('game_team').upsert({
-                    team_id:          tid,
-                    game_id:          gameId,
-                    team_name:        t.name,
-                    team_total_asset: 0,
-                    members:          t.members.join(', ')
+                    team_id:   tid,
+                    game_id:   gameId,
+                    team_name: t.name
                 }, { onConflict: 'team_id' });
             }
             const removedTeamIds = [...oldTeamIds].filter(tid => !newTeamMap[tid]);
