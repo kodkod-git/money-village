@@ -481,23 +481,23 @@ async function sbGetPlayersByGameId(gameId) {
     }));
 }
 
-async function sbSaveDepositReward(gameId, nickname, depositReward) {
+async function sbSaveDepositReward(gameId, userId, depositReward) {
     await _sb.from('game_individual')
         .update({ deposit_reward: Number(depositReward) })
         .eq('game_id', gameId)
-        .eq('nickname', nickname);
+        .eq('user_id', userId);
 }
 
-async function sbSaveQuestReward(gameId, nickname, questReward) {
+async function sbSaveQuestReward(gameId, userId, questReward) {
     await _sb.from('game_individual')
         .update({ quest_reward: Number(questReward) })
         .eq('game_id', gameId)
-        .eq('nickname', nickname);
+        .eq('user_id', userId);
 }
 
 async function sbGetRewardsByGameId(gameId) {
     const { data } = await _sb.from('game_individual')
-        .select('nickname, quest_reward, deposit_reward')
+        .select('user_id, quest_reward, deposit_reward')
         .eq('game_id', gameId);
     return data || [];
 }

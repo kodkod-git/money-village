@@ -102,10 +102,10 @@
         if (gameId) {
             try {
                 const rewards = await sbGetRewardsByGameId(gameId);
-                const rewardMap = Object.fromEntries(rewards.map(r => [r.nickname, r]));
+                const rewardMap = Object.fromEntries(rewards.map(r => [r.user_id, r]));
                 players.forEach(p => {
-                    p.questReward   = Number(rewardMap[p.nickname]?.quest_reward   || 0);
-                    p.depositReward = Number(rewardMap[p.nickname]?.deposit_reward || 0);
+                    p.questReward   = Number(rewardMap[p.userId]?.quest_reward   || 0);
+                    p.depositReward = Number(rewardMap[p.userId]?.deposit_reward || 0);
                 });
                 recalculateAllRankings();
             } catch(e) {
