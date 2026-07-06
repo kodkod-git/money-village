@@ -349,7 +349,7 @@ async function sbSaveTraits(gameId, players) {
     if (!gameId) return;
     const rows = players
         .map(p => ({
-            nickname:  _nick(p.nickname || ''),
+            user_id:   p.userId,
             game_id:   gameId,
             diligent:  !!(p.traits && p.traits.diligent),
             saving:    !!(p.traits && p.traits.saving),
@@ -358,9 +358,9 @@ async function sbSaveTraits(gameId, players) {
             luck:      !!(p.traits && p.traits.luck),
             adventure: !!(p.traits && p.traits.adventure)
         }))
-        .filter(r => r.nickname);
+        .filter(r => r.user_id);
     if (rows.length === 0) return;
-    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,nickname' });
+    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveTraits]', error);
 }
 
@@ -600,7 +600,7 @@ async function sbSaveSuccessFactors(gameId, players) {
     const gid = String(gameId).trim();
     const rows = players
         .map(p => ({
-            nickname:             _nick(p.nickname || ''),
+            user_id:              p.userId,
             game_id:              gid,
             financial_management: !!(p.successFactors && p.successFactors.financial_management),
             communication:        !!(p.successFactors && p.successFactors.communication),
@@ -609,9 +609,9 @@ async function sbSaveSuccessFactors(gameId, players) {
             credit_trust:         !!(p.successFactors && p.successFactors.credit_trust),
             entrepreneurship:     !!(p.successFactors && p.successFactors.entrepreneurship),
         }))
-        .filter(r => r.nickname);
+        .filter(r => r.user_id);
     if (rows.length === 0) return;
-    const { error } = await _sb.from('success_factors').upsert(rows, { onConflict: 'game_id,nickname' });
+    const { error } = await _sb.from('success_factors').upsert(rows, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveSuccessFactors]', error);
 }
 
