@@ -1224,6 +1224,7 @@
                 return {
                     id: index,
                     gameId: p.game_id || null,
+                    userId: p.user_id || null,
                     nickname: p.nickname || '',
                     realName: nameValue,
                     name: nameValue,
@@ -1293,9 +1294,9 @@
                     const sfData = await sbLoadSuccessFactorsByGameId(gameId);
                     if (sfData.success && Array.isArray(sfData.factors)) {
                         const sfMap = {};
-                        sfData.factors.forEach(f => { sfMap[f.nickname] = f; });
+                        sfData.factors.forEach(f => { sfMap[f.user_id] = f; });
                         players.forEach(p => {
-                            const f = sfMap[p.nickname];
+                            const f = sfMap[p.userId];
                             if (f) p.successFactors = {
                                 financial_management: !!f.financial_management,
                                 communication:        !!f.communication,
@@ -1310,9 +1311,9 @@
                     const traitsData = await sbLoadTraitsByGameId(gameId);
                     if (traitsData.success && Array.isArray(traitsData.traits)) {
                         const traitsMap = {};
-                        traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                        traitsData.traits.forEach(t => { traitsMap[t.user_id] = t; });
                         players.forEach(p => {
-                            const t = traitsMap[p.nickname];
+                            const t = traitsMap[p.userId];
                             if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
                         });
                     }
