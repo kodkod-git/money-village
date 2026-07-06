@@ -172,11 +172,11 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
     })).filter(r => r.nick);
 
     // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date·is_citizen:false 포함 insert
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicks = new Set((existingUsers || []).map(u => u.nickname));
+    const { data: existingUsers } = await _sb.from('users').select('user_id, nickname');
+    const userIdByNick = new Map((existingUsers || []).map(u => [u.nickname, u.user_id]));
 
-    const newNicks     = nicks.filter(({ nick }) => !existingNicks.has(nick));
-    const existingRows = nicks.filter(({ nick }) =>  existingNicks.has(nick));
+    const newNicks     = nicks.filter(({ nick }) => !userIdByNick.has(nick));
+    const existingRows = nicks.filter(({ nick }) =>  userIdByNick.has(nick));
 
     if (newNicks.length > 0) {
         const insertRows = newNicks.map(({ nick, name, efti }) => {
@@ -191,8 +191,9 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
             if (gameVariant === 'rich_vessel') row.user_type = 'adult';
             return row;
         });
-        const { error } = await _sb.from('users').insert(insertRows);
+        const { data: insertedUsers, error } = await _sb.from('users').insert(insertRows).select('user_id, nickname');
         if (error) console.error('[sbInitGame] users insert', error);
+        (insertedUsers || []).forEach(u => userIdByNick.set(u.nickname, u.user_id));
     }
 
     if (existingRows.length > 0) {
@@ -210,66 +211,69 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         if (error) console.error('[sbInitGame] users upsert', error);
     }
 
+    // 각 플레이어 객체에 user_id를 채워 넣는다 (닉네임 변경 등 이후 저장 흐름의 식별자로 사용)
+    nicks.forEach(({ nick, p }) => { p.userId = userIdByNick.get(nick) || null; });
+
     // cash_balance (전체 0 init)
-    const cashRows = nicks.map(({ nick }) => ({
-        game_id: gameId, nickname: nick,
+    const cashRows = nicks.map(({ p }) => ({
+        game_id: gameId, user_id: p.userId,
         bill_100: 0, bill_500: 0, bill_1000: 0,
         bill_5000: 0, bill_10000: 0, bill_50000: 0
     }));
     if (cashRows.length > 0) {
-        const { error } = await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,nickname' });
+        const { error } = await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,user_id' });
         if (error) console.error('[sbInitGame] cash_balance', error);
     }
 
     if (isAdvancedLike) {
         // estate_balance (심화/부자의그릇 — 0 init)
-        const estateRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const estateRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             gaongaemi: 0, nurigoyangi: 0, damiwonsungi: 0,
             marusuri: 0, chorongbungi: 0, haniyuwoo: 0
         }));
         if (estateRows.length > 0) {
-            const { error } = await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] estate_balance', error);
         }
 
         // success_factors (심화/부자의그릇 — false init)
-        const sfRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const sfRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             financial_management: false, communication: false,
             critical_thinking: false, global_economy: false,
             credit_trust: false, entrepreneurship: false
         }));
         if (sfRows.length > 0) {
-            const { error } = await _sb.from('success_factors').upsert(sfRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('success_factors').upsert(sfRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] success_factors', error);
         }
     } else {
         // stock_balance (기본 — 0 init)
-        const stockRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const stockRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             sasung: 0, lgi: 0, skei: 0, cacao: 0, hyunde: 0, naber: 0
         }));
         if (stockRows.length > 0) {
-            const { error } = await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] stock_balance', error);
         }
 
         // traits (기본 — false init)
-        const traitRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const traitRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             diligent: false, saving: false, invest: false,
             career: false, luck: false, adventure: false
         }));
         if (traitRows.length > 0) {
-            const { error } = await _sb.from('traits').upsert(traitRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('traits').upsert(traitRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] traits', error);
         }
     }
 
     // game_individual (자산 0)
-    const indivRows = nicks.map(({ nick, name, p }) => ({
-        nickname:         nick,
+    const indivRows = nicks.map(({ name, p }) => ({
+        user_id:          p.userId,
         real_name:        name,
         total_asset:      0,
         cash:             0,
@@ -283,25 +287,21 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         if (error) console.error('[sbInitGame] game_individual', error);
     }
 
-    // game_team (팀전인 경우, 총자산 0)
+    // game_team (팀전인 경우)
     if (mode === 'team') {
         const teamMap = {};
         players.forEach(p => {
             const tid = p.teamId || '';
             if (!tid) return;
-            if (!teamMap[tid]) teamMap[tid] = { name: p.team || '', members: [] };
-            const nick = _nick(p.nickname || p.name || '');
-            if (nick) teamMap[tid].members.push(nick);
+            if (!teamMap[tid]) teamMap[tid] = { name: p.team || '' };
         });
 
         for (const [tid, t] of Object.entries(teamMap)) {
             if (!tid || !t.name) continue;
             const { error } = await _sb.from('game_team').upsert({
-                team_id:          tid,
-                game_id:          gameId,
-                team_name:        _text(t.name),
-                team_total_asset: 0,
-                members:          t.members.join(', ')
+                team_id:   tid,
+                game_id:   gameId,
+                team_name: _text(t.name)
             }, { onConflict: 'team_id' });
             if (error) console.error('[sbInitGame] game_team', error);
         }

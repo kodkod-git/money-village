@@ -214,7 +214,7 @@
         row.querySelector('.citizen-efti-text').innerText = nextEfti;
         row.dataset.efti = nextEfti;
     }
-    function startGame() {
+    async function startGame() {
         // 닉네임 중복 검사 (실제 사용 값 기준 — 닉네임 미입력 시 실명 폴백)
         const allNicknames = Array.from(
             document.querySelectorAll('#nameInputArea .citizen-row')
@@ -310,19 +310,21 @@
         }
         if (players.length === 0) return alert("명단을 입력하세요.");
 
-        // 게임 초기 데이터 DB 삽입 (백그라운드)
+        // 게임 초기 데이터 DB 삽입 — userId 배정을 기다린 뒤 카운팅 화면으로 전환
         const selectedDate = document.getElementById('gameDate').value || new Date().toISOString().slice(0, 10);
-        if (currentGameVariant !== 'basic') {
-            const estateValues = Object.fromEntries(
-                Object.entries(estateInfo).map(([k, v]) => [k, v.price])
-            );
-            sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate)
-                .then(() => sbSaveEstatePrice(gameId, estateValues))
-                .catch(e => console.error('[sbInitGame/sbSaveEstatePrice]', e));
-        } else {
-            const stockValues = Object.values(stockInfo).map(s => s.price);
-            sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate)
-                .catch(e => console.error('[sbInitGame]', e));
+        try {
+            if (currentGameVariant !== 'basic') {
+                const estateValues = Object.fromEntries(
+                    Object.entries(estateInfo).map(([k, v]) => [k, v.price])
+                );
+                await sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate);
+                await sbSaveEstatePrice(gameId, estateValues);
+            } else {
+                const stockValues = Object.values(stockInfo).map(s => s.price);
+                await sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate);
+            }
+        } catch (e) {
+            console.error('[startGame/sbInitGame]', e);
         }
 
         switchScreen('countingScreen');
