@@ -406,13 +406,30 @@
         if (newPlayers.length === 0) { alert("명단을 입력하세요."); return; }
 
         const oldPlayers = players.slice();
-        players = newPlayers;
-        recalculateAllRankings();
-        if (activeCountingIndex >= players.length) activeCountingIndex = 0;
-        renderSidebar();
-        selectCountingPlayer(activeCountingIndex);
-        closePlayerEditModal(true);
-        _syncPlayerEditsToDb(oldPlayers, newPlayers).catch(e => console.error('[syncPlayerEdits]', e));
+        const applyBtn = document.querySelector('#playerEditModal .modal-footer .btn-success');
+        const originalApplyText = applyBtn ? applyBtn.innerHTML : '';
+        if (applyBtn) {
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = '저장 중...';
+        }
+
+        try {
+            await _syncPlayerEditsToDb(oldPlayers, newPlayers);
+            players = newPlayers;
+            recalculateAllRankings();
+            if (activeCountingIndex >= players.length) activeCountingIndex = 0;
+            renderSidebar();
+            selectCountingPlayer(activeCountingIndex);
+            closePlayerEditModal(true);
+        } catch (e) {
+            console.error('[syncPlayerEdits]', e);
+            alert('참가자 명단 변경사항을 DB에 저장하지 못했습니다. 다시 시도해주세요.');
+        } finally {
+            if (applyBtn) {
+                applyBtn.disabled = false;
+                applyBtn.innerHTML = originalApplyText;
+            }
+        }
     }
 
     async function _syncPlayerEditsToDb(oldPlayers, newPlayers) {

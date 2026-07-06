@@ -980,6 +980,9 @@
                 </div>
                 <!-- Step 3: 명단 입력 -->
                 <div id="gameStep3" style="display:none;">
+                    <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
+                        <button class="btn btn-citizen btn-mini" onclick="openCitizenMgmtModal()">👥 시민권자 관리</button>
+                    </div>
                     <div id="indivAddRemoveBar" style="display:flex; gap:8px; margin-bottom:12px;">
                         <button class="btn btn-primary btn-mini" onclick="addIndividualPlayer()">➕ 참가자 추가</button>
                         <button class="btn btn-dark btn-mini" onclick="removeIndividualPlayer()">➖ 참가자 삭제</button>
@@ -1059,6 +1062,9 @@
                 <h3>👥 참가자 명단 수정</h3>
             </div>
             <div class="modal-body">
+                <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
+                    <button class="btn btn-citizen btn-mini" onclick="openCitizenMgmtModal()">👥 시민권자 관리</button>
+                </div>
                 <div id="indivEditBar" style="display:flex; gap:8px; margin-bottom:12px;">
                     <button class="btn btn-primary btn-mini" onclick="addEditIndividualPlayer()">➕ 참가자 추가</button>
                     <button class="btn btn-dark btn-mini" onclick="removeEditIndividualPlayer()">➖ 참가자 삭제</button>

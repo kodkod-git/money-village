@@ -736,6 +736,9 @@
         .modal-backdrop.show{
             display: flex;
         }
+        #citizenMgmtModal.show{
+            z-index: 2100;
+        }
         .modal-card{
             width: 100%;
             max-width: 520px;
@@ -799,6 +802,11 @@
             font-size: 13px;
             color: #d32f2f;
             font-weight: 700;
+        }
+        .loaded-citizen-locked{
+            background: #f1f5f9 !important;
+            color: #475569;
+            cursor: pointer;
         }
         .modal-footer{
             display: flex;

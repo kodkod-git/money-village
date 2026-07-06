@@ -165,8 +165,8 @@
             <div style="font-weight:bold; color:#555; font-size:14px;">${lbl}</div>
 
             <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
-                <input type="text" class="realname-input" placeholder="실명" value="${realName}" data-team="${team}">
-                <input type="text" class="nickname-input" placeholder="닉네임" value="${nickname}" data-team="${team}">
+                <input type="text" class="realname-input" placeholder="실명" value="${realName}" data-team="${team}" onfocus="handleLockedCitizenNameEdit(this)">
+                <input type="text" class="nickname-input" placeholder="닉네임" value="${nickname}" data-team="${team}" onfocus="handleLockedCitizenNameEdit(this)">
             </div>
 
             <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap; align-items:flex-start;">
@@ -185,6 +185,23 @@
                 EFTI: <span class="citizen-efti-text">-</span>
             </div>
         </div>`;
+    }
+
+    function handleLockedCitizenNameEdit(input) {
+        const row = input?.closest?.('.citizen-row');
+        if (!row || row.dataset.loadedCitizen !== 'true') return;
+        alert('시민권자 관리 기능으로 실명/닉네임을 수정해주세요.');
+        input.blur();
+    }
+
+    function lockLoadedCitizenNameFields(row) {
+        if (!row) return;
+        row.dataset.loadedCitizen = 'true';
+        row.querySelectorAll('.realname-input, .nickname-input').forEach(input => {
+            input.readOnly = true;
+            input.classList.add('loaded-citizen-locked');
+            input.title = '시민권자 관리 기능으로 실명/닉네임을 수정해주세요.';
+        });
     }
 
     function applyCitizenToRow(btn) {
@@ -209,6 +226,7 @@
 
         realNameInput.value = sanitizeLimitedText(citizen.real_name || '');
         nicknameInput.value = sanitizeNickname(citizen.nickname || '');
+        lockLoadedCitizenNameFields(row);
 
         const nextEfti = citizen.default_EFTI || '-';
         row.querySelector('.citizen-efti-text').innerText = nextEfti;
