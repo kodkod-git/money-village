@@ -453,21 +453,29 @@ async function sbGetGamesByDate(date) {
 
 // game_id 기반 플레이어 전체 로드
 async function sbLoadAssetsByGameId(gameId) {
-    const { data } = await _sb.from('game_individual').select('*')
+    const { data: rows } = await _sb.from('game_individual').select('*')
         .eq('game_id', gameId).order('total_asset', { ascending: false });
-    return { success: true, history: data || [] };
+    if (!rows || rows.length === 0) return { success: true, history: [] };
+
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    const { data: users } = await _sb.from('users')
+        .select('user_id, nickname').in('user_id', userIds);
+    const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
+
+    const history = rows.map(r => ({ ...r, nickname: nickByUserId[r.user_id] || '' }));
+    return { success: true, history };
 }
 
-// game_id 참가자 목록 (nickname, real_name, default_efti)
+// game_id 참가자 목록 (user_id, nickname, real_name, default_efti)
 async function sbGetPlayersByGameId(gameId) {
     const { data: rows } = await _sb.from('game_individual')
-        .select('nickname, real_name, team_id').eq('game_id', gameId);
+        .select('user_id, real_name, team_id').eq('game_id', gameId);
     if (!rows || rows.length === 0) return [];
 
-    const nicknames = rows.map(r => r.nickname).filter(Boolean);
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
     const { data: users } = await _sb.from('users')
-        .select('nickname, real_name, default_efti').in('nickname', nicknames);
-    const userMap = Object.fromEntries((users || []).map(u => [u.nickname, u]));
+        .select('user_id, nickname, real_name, default_efti').in('user_id', userIds);
+    const userMap = Object.fromEntries((users || []).map(u => [u.user_id, u]));
 
     const teamIds = [...new Set(rows.map(r => r.team_id).filter(Boolean))];
     let teamMap = {};
@@ -478,9 +486,10 @@ async function sbGetPlayersByGameId(gameId) {
     }
 
     return rows.map(r => ({
-        nickname:     r.nickname,
-        real_name:    userMap[r.nickname]?.real_name || r.real_name || '',
-        default_efti: userMap[r.nickname]?.default_efti || 'FAEN',
+        user_id:      r.user_id,
+        nickname:     userMap[r.user_id]?.nickname || '',
+        real_name:    userMap[r.user_id]?.real_name || r.real_name || '',
+        default_efti: userMap[r.user_id]?.default_efti || 'FAEN',
         team_name:    r.team_id ? (teamMap[r.team_id] || '') : ''
     }));
 }
