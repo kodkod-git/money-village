@@ -365,29 +365,10 @@ async function sbSaveTraits(gameId, players) {
 }
 
 async function sbSaveGameResult({ mode, date, game_variant = 'basic', individuals = [], teams = [] }) {
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicknames = new Set((existingUsers || []).map(u => u.nickname));
-
     for (const p of individuals) {
-        const nickname = _nick(p.nickname ?? '');
-        const realName = _text(p.real_name ?? '');
-        if (!nickname && !realName) continue;
-        const finalNickname = nickname || realName;
-
-        if (!existingNicknames.has(finalNickname)) {
-            await _sb.from('users').insert({
-                nickname:     finalNickname,
-                real_name:    realName || '',
-                join_date:    date,
-                is_citizen:   false,
-                default_efti: p.efti_type || 'FAEN',
-                status:       'active'
-            });
-            existingNicknames.add(finalNickname);
-        }
-
+        if (!p.user_id) { console.error('[sbSaveGameResult] user_id 없는 individual 무시', p); continue; }
         await _sb.from('game_individual').upsert({
-            nickname:         finalNickname,
+            user_id:          p.user_id,
             real_name:        _text(p.real_name ?? ''),
             total_asset:      Number(p.total ?? 0),
             cash:             Number(p.manualCash ?? 0),
@@ -397,7 +378,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             deposit_reward:   Number(p.depositReward ?? 0),
             game_id:          String(p.game_id || '').trim(),
             team_id:          String(p.team_id || '').trim() || null
-        }, { onConflict: 'game_id,nickname' });
+        }, { onConflict: 'game_id,user_id' });
     }
 
     if (mode === 'team') {
@@ -407,11 +388,9 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             const gameId   = String(t.game_id || '').trim();
             if (!teamId || !teamName || !gameId) continue;
             await _sb.from('game_team').upsert({
-                team_id:          teamId,
-                game_id:          gameId,
-                team_name:        teamName,
-                team_total_asset: Number(t.total ?? 0),
-                members:          String(t.members ?? '')
+                team_id:   teamId,
+                game_id:   gameId,
+                team_name: teamName
             }, { onConflict: 'team_id' });
         }
     }

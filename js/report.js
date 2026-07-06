@@ -1007,8 +1007,8 @@
             }
             await Promise.all(players.map(p => {
                 const saves = [];
-                if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.nickname, p.depositReward));
-                if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
+                if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.userId, p.depositReward));
+                if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.userId, p.questReward));
                 return Promise.all(saves);
             }));
 
@@ -1021,7 +1021,7 @@
                 game_variant: currentGameVariant,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
-                    nickname: p.nickname || '',
+                    user_id: p.userId || null,
                     real_name: p.realName || p.name || '',
                     efti_type: p.efti || '',
                     total: p.total,
@@ -1052,11 +1052,7 @@
                         team_id: sortedMembers[0]?.teamId || '',
                         game_id: sortedMembers[0]?.gameId || '',
                         name: tName,
-                        total: teamMap[tName].total,
-                        members: sortedMembers
-                            .map(m => (m.nickname || '').trim())
-                            .filter(Boolean)
-                            .join(", ")
+                        total: teamMap[tName].total
                     });
                 }
             }
