@@ -82,8 +82,17 @@
 
         renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
         renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
+        updateFameDiligenceColumn();
         applyTableNumberScale('indivTableBody');
         setSpecialAwards(indiv);
+    }
+
+    function updateFameDiligenceColumn() {
+        const hideDiligence = currentFameVariant === 'rich_vessel';
+        ['indivDiligenceCol', 'indivDiligenceHeader'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = hideDiligence ? 'none' : '';
+        });
     }
 
     function renderRankingTable(data, tableId, isTeam) {
@@ -91,7 +100,7 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            const colSpan = isTeam ? 4 : 8;
+            const colSpan = isTeam ? 4 : (currentFameVariant === 'rich_vessel' ? 7 : 8);
             tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
             return;
         }
@@ -130,8 +139,10 @@
                 row += `<td class="sub-asset-col">${fitNumber(item.cash)}</td>
                         <td class="sub-asset-col">${fitNumber(item.stock)}</td>
                         <td class="sub-asset-col">${fitNumber(item.deposit_reward)}</td>
-                        <td class="sub-asset-col">${fitNumber(item.quest_reward)}</td>
-                        <td class="sub-asset-col">${fitNumber(item.diligence_reward)}</td>`;
+                        <td class="sub-asset-col">${fitNumber(item.quest_reward)}</td>`;
+                if (currentFameVariant !== 'rich_vessel') {
+                    row += `<td class="sub-asset-col">${fitNumber(item.diligence_reward)}</td>`;
+                }
             }
 
             row += `</tr>`;
