@@ -63,16 +63,20 @@ async function sbDeleteCitizen(nickname) {
     const nick = _nick(nickname);
     if (!nick) return { success: false, code: 'EMPTY_NICKNAME' };
 
-    const { data: user } = await _sb.from('users').select('nickname').eq('nickname', nick).maybeSingle();
+    const { data: user } = await _sb.from('users').select('user_id, nickname').eq('nickname', nick).maybeSingle();
     if (!user) return { success: false, code: 'USER_NOT_FOUND' };
 
-    const tables = ['cash_balance', 'game_individual', 'estate_balance', 'success_factors', 'stock_balance', 'traits'];
+    const tables = [
+        'cash_balance', 'game_individual', 'estate_balance',
+        'success_factors', 'stock_balance', 'traits',
+        'bank_history', 'quiz_history'
+    ];
     for (const table of tables) {
-        const { error } = await _sb.from(table).delete().eq('nickname', nick);
+        const { error } = await _sb.from(table).delete().eq('user_id', user.user_id);
         if (error) return { success: false, code: 'DELETE_FAILED', table, message: error.message };
     }
 
-    const { error: e5 } = await _sb.from('users').delete().eq('nickname', nick);
+    const { error: e5 } = await _sb.from('users').delete().eq('user_id', user.user_id);
     if (e5) return { success: false, code: 'DELETE_FAILED', message: e5.message };
 
     return { success: true, nickname: nick };
@@ -172,11 +176,11 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
     })).filter(r => r.nick);
 
     // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date·is_citizen:false 포함 insert
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicks = new Set((existingUsers || []).map(u => u.nickname));
+    const { data: existingUsers } = await _sb.from('users').select('user_id, nickname');
+    const userIdByNick = new Map((existingUsers || []).map(u => [u.nickname, u.user_id]));
 
-    const newNicks     = nicks.filter(({ nick }) => !existingNicks.has(nick));
-    const existingRows = nicks.filter(({ nick }) =>  existingNicks.has(nick));
+    const newNicks     = nicks.filter(({ nick }) => !userIdByNick.has(nick));
+    const existingRows = nicks.filter(({ nick }) =>  userIdByNick.has(nick));
 
     if (newNicks.length > 0) {
         const insertRows = newNicks.map(({ nick, name, efti }) => {
@@ -191,8 +195,9 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
             if (gameVariant === 'rich_vessel') row.user_type = 'adult';
             return row;
         });
-        const { error } = await _sb.from('users').insert(insertRows);
+        const { data: insertedUsers, error } = await _sb.from('users').insert(insertRows).select('user_id, nickname');
         if (error) console.error('[sbInitGame] users insert', error);
+        (insertedUsers || []).forEach(u => userIdByNick.set(u.nickname, u.user_id));
     }
 
     if (existingRows.length > 0) {
@@ -210,66 +215,69 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         if (error) console.error('[sbInitGame] users upsert', error);
     }
 
+    // 각 플레이어 객체에 user_id를 채워 넣는다 (닉네임 변경 등 이후 저장 흐름의 식별자로 사용)
+    nicks.forEach(({ nick, p }) => { p.userId = userIdByNick.get(nick) || null; });
+
     // cash_balance (전체 0 init)
-    const cashRows = nicks.map(({ nick }) => ({
-        game_id: gameId, nickname: nick,
+    const cashRows = nicks.map(({ p }) => ({
+        game_id: gameId, user_id: p.userId,
         bill_100: 0, bill_500: 0, bill_1000: 0,
         bill_5000: 0, bill_10000: 0, bill_50000: 0
     }));
     if (cashRows.length > 0) {
-        const { error } = await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,nickname' });
+        const { error } = await _sb.from('cash_balance').upsert(cashRows, { onConflict: 'game_id,user_id' });
         if (error) console.error('[sbInitGame] cash_balance', error);
     }
 
     if (isAdvancedLike) {
         // estate_balance (심화/부자의그릇 — 0 init)
-        const estateRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const estateRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             gaongaemi: 0, nurigoyangi: 0, damiwonsungi: 0,
             marusuri: 0, chorongbungi: 0, haniyuwoo: 0
         }));
         if (estateRows.length > 0) {
-            const { error } = await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('estate_balance').upsert(estateRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] estate_balance', error);
         }
 
         // success_factors (심화/부자의그릇 — false init)
-        const sfRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const sfRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             financial_management: false, communication: false,
             critical_thinking: false, global_economy: false,
             credit_trust: false, entrepreneurship: false
         }));
         if (sfRows.length > 0) {
-            const { error } = await _sb.from('success_factors').upsert(sfRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('success_factors').upsert(sfRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] success_factors', error);
         }
     } else {
         // stock_balance (기본 — 0 init)
-        const stockRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const stockRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             sasung: 0, lgi: 0, skei: 0, cacao: 0, hyunde: 0, naber: 0
         }));
         if (stockRows.length > 0) {
-            const { error } = await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('stock_balance').upsert(stockRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] stock_balance', error);
         }
 
         // traits (기본 — false init)
-        const traitRows = nicks.map(({ nick }) => ({
-            game_id: gameId, nickname: nick,
+        const traitRows = nicks.map(({ p }) => ({
+            game_id: gameId, user_id: p.userId,
             diligent: false, saving: false, invest: false,
             career: false, luck: false, adventure: false
         }));
         if (traitRows.length > 0) {
-            const { error } = await _sb.from('traits').upsert(traitRows, { onConflict: 'game_id,nickname' });
+            const { error } = await _sb.from('traits').upsert(traitRows, { onConflict: 'game_id,user_id' });
             if (error) console.error('[sbInitGame] traits', error);
         }
     }
 
     // game_individual (자산 0)
-    const indivRows = nicks.map(({ nick, name, p }) => ({
-        nickname:         nick,
+    const indivRows = nicks.map(({ name, p }) => ({
+        user_id:          p.userId,
         real_name:        name,
         total_asset:      0,
         cash:             0,
@@ -283,61 +291,56 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         if (error) console.error('[sbInitGame] game_individual', error);
     }
 
-    // game_team (팀전인 경우, 총자산 0)
+    // game_team (팀전인 경우)
     if (mode === 'team') {
         const teamMap = {};
         players.forEach(p => {
             const tid = p.teamId || '';
             if (!tid) return;
-            if (!teamMap[tid]) teamMap[tid] = { name: p.team || '', members: [] };
-            const nick = _nick(p.nickname || p.name || '');
-            if (nick) teamMap[tid].members.push(nick);
+            if (!teamMap[tid]) teamMap[tid] = { name: p.team || '' };
         });
 
         for (const [tid, t] of Object.entries(teamMap)) {
             if (!tid || !t.name) continue;
             const { error } = await _sb.from('game_team').upsert({
-                team_id:          tid,
-                game_id:          gameId,
-                team_name:        _text(t.name),
-                team_total_asset: 0,
-                members:          t.members.join(', ')
+                team_id:   tid,
+                game_id:   gameId,
+                team_name: _text(t.name)
             }, { onConflict: 'team_id' });
             if (error) console.error('[sbInitGame] game_team', error);
         }
     }
 }
 
-async function sbSaveUserBalance(nickname, gameId, assets) {
-    const nick = _nick(nickname);
-    const gid  = String(gameId || '').trim();
-    if (!nick || !gid) return;
+async function sbSaveUserBalance(userId, gameId, assets) {
+    const gid = String(gameId || '').trim();
+    if (!userId || !gid) return;
 
     await _sb.from('stock_balance').upsert({
-        nickname: nick, game_id: gid,
+        user_id: userId, game_id: gid,
         sasung:  Number(assets['SASUNG']  || 0),
         lgi:     Number(assets['LGI']     || 0),
         skei:    Number(assets['SKEI']    || 0),
         cacao:   Number(assets['CACAO']   || 0),
         hyunde:  Number(assets['HYUNDE']  || 0),
         naber:   Number(assets['NABER']   || 0)
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
 
     await _sb.from('cash_balance').upsert({
-        nickname: nick, game_id: gid,
+        user_id: userId, game_id: gid,
         bill_100:   Number(assets['100']   || 0),
         bill_500:   Number(assets['500']   || 0),
         bill_1000:  Number(assets['1000']  || 0),
         bill_5000:  Number(assets['5000']  || 0),
         bill_10000: Number(assets['10000'] || 0),
         bill_50000: Number(assets['50000'] || 0)
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
 }
 
-async function sbLoadUserBalance(nickname, gameId) {
+async function sbLoadUserBalance(userId, gameId) {
     const { data } = await _sb
         .from('stock_balance').select('*')
-        .eq('nickname', nickname).eq('game_id', gameId)
+        .eq('user_id', userId).eq('game_id', gameId)
         .maybeSingle();
     if (!data) return null;
     return {
@@ -350,7 +353,7 @@ async function sbSaveTraits(gameId, players) {
     if (!gameId) return;
     const rows = players
         .map(p => ({
-            nickname:  _nick(p.nickname || ''),
+            user_id:   p.userId,
             game_id:   gameId,
             diligent:  !!(p.traits && p.traits.diligent),
             saving:    !!(p.traits && p.traits.saving),
@@ -359,36 +362,17 @@ async function sbSaveTraits(gameId, players) {
             luck:      !!(p.traits && p.traits.luck),
             adventure: !!(p.traits && p.traits.adventure)
         }))
-        .filter(r => r.nickname);
+        .filter(r => r.user_id);
     if (rows.length === 0) return;
-    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,nickname' });
+    const { error } = await _sb.from('traits').upsert(rows, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveTraits]', error);
 }
 
 async function sbSaveGameResult({ mode, date, game_variant = 'basic', individuals = [], teams = [] }) {
-    const { data: existingUsers } = await _sb.from('users').select('nickname');
-    const existingNicknames = new Set((existingUsers || []).map(u => u.nickname));
-
     for (const p of individuals) {
-        const nickname = _nick(p.nickname ?? '');
-        const realName = _text(p.real_name ?? '');
-        if (!nickname && !realName) continue;
-        const finalNickname = nickname || realName;
-
-        if (!existingNicknames.has(finalNickname)) {
-            await _sb.from('users').insert({
-                nickname:     finalNickname,
-                real_name:    realName || '',
-                join_date:    date,
-                is_citizen:   false,
-                default_efti: p.efti_type || 'FAEN',
-                status:       'active'
-            });
-            existingNicknames.add(finalNickname);
-        }
-
+        if (!p.user_id) { console.error('[sbSaveGameResult] user_id 없는 individual 무시', p); continue; }
         await _sb.from('game_individual').upsert({
-            nickname:         finalNickname,
+            user_id:          p.user_id,
             real_name:        _text(p.real_name ?? ''),
             total_asset:      Number(p.total ?? 0),
             cash:             Number(p.manualCash ?? 0),
@@ -398,7 +382,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             deposit_reward:   Number(p.depositReward ?? 0),
             game_id:          String(p.game_id || '').trim(),
             team_id:          String(p.team_id || '').trim() || null
-        }, { onConflict: 'game_id,nickname' });
+        }, { onConflict: 'game_id,user_id' });
     }
 
     if (mode === 'team') {
@@ -408,11 +392,9 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             const gameId   = String(t.game_id || '').trim();
             if (!teamId || !teamName || !gameId) continue;
             await _sb.from('game_team').upsert({
-                team_id:          teamId,
-                game_id:          gameId,
-                team_name:        teamName,
-                team_total_asset: Number(t.total ?? 0),
-                members:          String(t.members ?? '')
+                team_id:   teamId,
+                game_id:   gameId,
+                team_name: teamName
             }, { onConflict: 'team_id' });
         }
     }
@@ -471,21 +453,29 @@ async function sbGetGamesByDate(date) {
 
 // game_id 기반 플레이어 전체 로드
 async function sbLoadAssetsByGameId(gameId) {
-    const { data } = await _sb.from('game_individual').select('*')
+    const { data: rows } = await _sb.from('game_individual').select('*')
         .eq('game_id', gameId).order('total_asset', { ascending: false });
-    return { success: true, history: data || [] };
+    if (!rows || rows.length === 0) return { success: true, history: [] };
+
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    const { data: users } = await _sb.from('users')
+        .select('user_id, nickname').in('user_id', userIds);
+    const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
+
+    const history = rows.map(r => ({ ...r, nickname: nickByUserId[r.user_id] || '' }));
+    return { success: true, history };
 }
 
-// game_id 참가자 목록 (nickname, real_name, default_efti)
+// game_id 참가자 목록 (user_id, nickname, real_name, default_efti)
 async function sbGetPlayersByGameId(gameId) {
     const { data: rows } = await _sb.from('game_individual')
-        .select('nickname, real_name, team_id').eq('game_id', gameId);
+        .select('user_id, real_name, team_id').eq('game_id', gameId);
     if (!rows || rows.length === 0) return [];
 
-    const nicknames = rows.map(r => r.nickname).filter(Boolean);
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
     const { data: users } = await _sb.from('users')
-        .select('nickname, real_name, default_efti').in('nickname', nicknames);
-    const userMap = Object.fromEntries((users || []).map(u => [u.nickname, u]));
+        .select('user_id, nickname, real_name, default_efti').in('user_id', userIds);
+    const userMap = Object.fromEntries((users || []).map(u => [u.user_id, u]));
 
     const teamIds = [...new Set(rows.map(r => r.team_id).filter(Boolean))];
     let teamMap = {};
@@ -496,30 +486,31 @@ async function sbGetPlayersByGameId(gameId) {
     }
 
     return rows.map(r => ({
-        nickname:     r.nickname,
-        real_name:    userMap[r.nickname]?.real_name || r.real_name || '',
-        default_efti: userMap[r.nickname]?.default_efti || 'FAEN',
+        user_id:      r.user_id,
+        nickname:     userMap[r.user_id]?.nickname || '',
+        real_name:    userMap[r.user_id]?.real_name || r.real_name || '',
+        default_efti: userMap[r.user_id]?.default_efti || 'FAEN',
         team_name:    r.team_id ? (teamMap[r.team_id] || '') : ''
     }));
 }
 
-async function sbSaveDepositReward(gameId, nickname, depositReward) {
+async function sbSaveDepositReward(gameId, userId, depositReward) {
     await _sb.from('game_individual')
         .update({ deposit_reward: Number(depositReward) })
         .eq('game_id', gameId)
-        .eq('nickname', nickname);
+        .eq('user_id', userId);
 }
 
-async function sbSaveQuestReward(gameId, nickname, questReward) {
+async function sbSaveQuestReward(gameId, userId, questReward) {
     await _sb.from('game_individual')
         .update({ quest_reward: Number(questReward) })
         .eq('game_id', gameId)
-        .eq('nickname', nickname);
+        .eq('user_id', userId);
 }
 
 async function sbGetRewardsByGameId(gameId) {
     const { data } = await _sb.from('game_individual')
-        .select('nickname, quest_reward, deposit_reward')
+        .select('user_id, quest_reward, deposit_reward')
         .eq('game_id', gameId);
     return data || [];
 }
@@ -548,12 +539,11 @@ async function sbSaveEstatePrice(gameId, prices) {
     if (error) console.error('[sbSaveEstatePrice]', error);
 }
 
-async function sbSaveEstateBalance(nickname, gameId, assets) {
-    const nick = _nick(nickname);
-    const gid  = String(gameId || '').trim();
-    if (!nick || !gid) return;
+async function sbSaveEstateBalance(userId, gameId, assets) {
+    const gid = String(gameId || '').trim();
+    if (!userId || !gid) return;
     const { error } = await _sb.from('estate_balance').upsert({
-        nickname:   nick,
+        user_id:   userId,
         game_id:    gid,
         gaongaemi:    Number(assets['GAONGAEMI']    || 0),
         nurigoyangi:  Number(assets['NURIGOYANGI']  || 0),
@@ -561,14 +551,14 @@ async function sbSaveEstateBalance(nickname, gameId, assets) {
         marusuri:     Number(assets['MARUSURI']     || 0),
         chorongbungi: Number(assets['CHORONGBUNGI'] || 0),
         haniyuwoo:    Number(assets['HANIYUWOO']    || 0),
-    }, { onConflict: 'game_id,nickname' });
+    }, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveEstateBalance]', error);
 }
 
-async function sbLoadEstateBalance(nickname, gameId) {
+async function sbLoadEstateBalance(userId, gameId) {
     const { data } = await _sb
         .from('estate_balance').select('*')
-        .eq('nickname', nickname).eq('game_id', gameId)
+        .eq('user_id', userId).eq('game_id', gameId)
         .maybeSingle();
     if (!data) return null;
     return {
@@ -602,7 +592,7 @@ async function sbSaveSuccessFactors(gameId, players) {
     const gid = String(gameId).trim();
     const rows = players
         .map(p => ({
-            nickname:             _nick(p.nickname || ''),
+            user_id:              p.userId,
             game_id:              gid,
             financial_management: !!(p.successFactors && p.successFactors.financial_management),
             communication:        !!(p.successFactors && p.successFactors.communication),
@@ -611,9 +601,9 @@ async function sbSaveSuccessFactors(gameId, players) {
             credit_trust:         !!(p.successFactors && p.successFactors.credit_trust),
             entrepreneurship:     !!(p.successFactors && p.successFactors.entrepreneurship),
         }))
-        .filter(r => r.nickname);
+        .filter(r => r.user_id);
     if (rows.length === 0) return;
-    const { error } = await _sb.from('success_factors').upsert(rows, { onConflict: 'game_id,nickname' });
+    const { error } = await _sb.from('success_factors').upsert(rows, { onConflict: 'game_id,user_id' });
     if (error) console.error('[sbSaveSuccessFactors]', error);
 }
 
@@ -627,16 +617,44 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 // =========================================================
 
 async function sbLoadHallOfFame() {
-    const [{ data: gameInfoList }, { data: indiv }, { data: team }] = await Promise.all([
+    const [{ data: gameInfoList }, { data: indiv }, { data: team }, { data: users }, { data: allIndiv }] = await Promise.all([
         _sb.from('game_info').select('game_id, game_variant'),
         _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
-        _sb.from('game_team').select('*').order('team_total_asset', { ascending: false }).limit(200)
+        _sb.from('game_team').select('*'),
+        _sb.from('users').select('user_id, nickname'),
+        _sb.from('game_individual').select('user_id, team_id, total_asset, game_id')
     ]);
+
     const variantMap = Object.fromEntries(
         (gameInfoList || []).map(r => [r.game_id, r.game_variant || 'basic'])
     );
-    const indivWithVariant = (indiv || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
-    const teamWithVariant  = (team  || []).map(r => ({ ...r, game_variant: variantMap[r.game_id] || 'basic' }));
+    const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
+
+    const indivWithVariant = (indiv || []).map(r => ({
+        ...r,
+        nickname:     nickByUserId[r.user_id] || '',
+        game_variant: variantMap[r.game_id] || 'basic'
+    }));
+
+    // team_id별 총자산/멤버 닉네임 온더플라이 집계
+    const teamAgg = {};
+    (allIndiv || []).forEach(r => {
+        if (!r.team_id) return;
+        if (!teamAgg[r.team_id]) teamAgg[r.team_id] = { total: 0, members: [] };
+        teamAgg[r.team_id].total += Number(r.total_asset) || 0;
+        teamAgg[r.team_id].members.push(nickByUserId[r.user_id] || '');
+    });
+
+    const teamWithVariant = (team || [])
+        .map(t => ({
+            ...t,
+            team_total_asset: teamAgg[t.team_id]?.total || 0,
+            members:          (teamAgg[t.team_id]?.members || []).filter(Boolean).join(', '),
+            game_variant:     variantMap[t.game_id] || 'basic'
+        }))
+        .sort((a, b) => b.team_total_asset - a.team_total_asset)
+        .slice(0, 200);
+
     return { indiv: indivWithVariant, team: teamWithVariant };
 }
 
@@ -686,16 +704,16 @@ async function sbGetBankHistory(gameId) {
     return data || [];
 }
 
-async function sbUpsertBankHistory(gameId, nickname, roundNum, depositType, amount, maturedAmount, isTeam) {
+async function sbUpsertBankHistory(gameId, userId, roundNum, depositType, amount, maturedAmount, isTeam) {
     const { error } = await _sb.from('bank_history').upsert({
         game_id:        gameId,
-        nickname:       nickname,
+        user_id:        userId,
         round_num:      roundNum,
         deposit_type:   depositType,
         amount:         amount,
         matured_amount: maturedAmount,
         is_team:        !!isTeam
-    }, { onConflict: 'game_id,nickname,round_num,is_team' });
+    }, { onConflict: 'game_id,user_id,round_num,is_team' });
     if (error) console.error('[sbUpsertBankHistory]', error);
 }
 
@@ -723,10 +741,10 @@ async function sbGetQuizHistory(gameId) {
     return data || [];
 }
 
-async function sbUpsertQuizHistory(gameId, nickname, fields) {
+async function sbUpsertQuizHistory(gameId, userId, fields) {
     const { error } = await _sb.from('quiz_history').upsert(
-        { game_id: gameId, nickname, ...fields },
-        { onConflict: 'game_id,nickname' }
+        { game_id: gameId, user_id: userId, ...fields },
+        { onConflict: 'game_id,user_id' }
     );
     if (error) console.error('[sbUpsertQuizHistory]', error);
 }
@@ -743,12 +761,12 @@ async function sbDeleteBankHistory(gameId) {
     return { success: true };
 }
 
-async function sbDeleteBankHistoryEntries(gameId, nicknames, roundNum, isTeam) {
+async function sbDeleteBankHistoryEntries(gameId, userIds, roundNum, isTeam) {
     const gid = String(gameId || '').trim();
-    if (!gid || !nicknames.length) return { success: false };
+    if (!gid || !userIds.length) return { success: false };
     const { error } = await _sb.from('bank_history').delete()
         .eq('game_id', gid)
-        .in('nickname', nicknames)
+        .in('user_id', userIds)
         .eq('round_num', roundNum)
         .eq('is_team', !!isTeam);
     if (error) { console.error('[sbDeleteBankHistoryEntries]', error); return { success: false }; }
@@ -763,12 +781,12 @@ async function sbDeleteQuizHistory(gameId) {
     return { success: true };
 }
 
-async function sbDeleteQuizHistoryEntries(gameId, nicknames) {
+async function sbDeleteQuizHistoryEntries(gameId, userIds) {
     const gid = String(gameId || '').trim();
-    if (!gid || !nicknames.length) return { success: false };
+    if (!gid || !userIds.length) return { success: false };
     const { error } = await _sb.from('quiz_history').delete()
         .eq('game_id', gid)
-        .in('nickname', nicknames);
+        .in('user_id', userIds);
     if (error) { console.error('[sbDeleteQuizHistoryEntries]', error); return { success: false }; }
     return { success: true };
 }

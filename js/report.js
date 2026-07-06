@@ -102,10 +102,10 @@
         if (gameId) {
             try {
                 const rewards = await sbGetRewardsByGameId(gameId);
-                const rewardMap = Object.fromEntries(rewards.map(r => [r.nickname, r]));
+                const rewardMap = Object.fromEntries(rewards.map(r => [r.user_id, r]));
                 players.forEach(p => {
-                    p.questReward   = Number(rewardMap[p.nickname]?.quest_reward   || 0);
-                    p.depositReward = Number(rewardMap[p.nickname]?.deposit_reward || 0);
+                    p.questReward   = Number(rewardMap[p.userId]?.quest_reward   || 0);
+                    p.depositReward = Number(rewardMap[p.userId]?.deposit_reward || 0);
                 });
                 recalculateAllRankings();
             } catch(e) {
@@ -999,16 +999,16 @@
             }
 
             if (currentGameVariant !== 'basic') {
-                await Promise.all(players.map(p => sbSaveEstateBalance(p.nickname, gameId, p.assets)));
+                await Promise.all(players.map(p => sbSaveEstateBalance(p.userId, gameId, p.assets)));
                 await sbSaveSuccessFactors(gameId, players);
             } else {
-                await Promise.all(players.map(p => saveUserBalance(p.nickname, gameId, p.assets)));
+                await Promise.all(players.map(p => saveUserBalance(p.userId, gameId, p.assets)));
                 await saveTraits(gameId, players);
             }
             await Promise.all(players.map(p => {
                 const saves = [];
-                if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.nickname, p.depositReward));
-                if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.nickname, p.questReward));
+                if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.userId, p.depositReward));
+                if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.userId, p.questReward));
                 return Promise.all(saves);
             }));
 
@@ -1021,7 +1021,7 @@
                 game_variant: currentGameVariant,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
-                    nickname: p.nickname || '',
+                    user_id: p.userId || null,
                     real_name: p.realName || p.name || '',
                     efti_type: p.efti || '',
                     total: p.total,
@@ -1052,11 +1052,7 @@
                         team_id: sortedMembers[0]?.teamId || '',
                         game_id: sortedMembers[0]?.gameId || '',
                         name: tName,
-                        total: teamMap[tName].total,
-                        members: sortedMembers
-                            .map(m => (m.nickname || '').trim())
-                            .filter(Boolean)
-                            .join(", ")
+                        total: teamMap[tName].total
                     });
                 }
             }
@@ -1228,6 +1224,7 @@
                 return {
                     id: index,
                     gameId: p.game_id || null,
+                    userId: p.user_id || null,
                     nickname: p.nickname || '',
                     realName: nameValue,
                     name: nameValue,
@@ -1271,7 +1268,7 @@
             await Promise.all(players.map(async p => {
                 if (!p.gameId) { console.warn(`  no gameId: ${p.nickname}`); return; }
                 if (gameVariant !== 'basic') {
-                    const estates = await sbLoadEstateBalance(p.nickname, p.gameId);
+                    const estates = await sbLoadEstateBalance(p.userId, p.gameId);
                     if (estates) {
                         Object.assign(p.assets, estates);
                         const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
@@ -1280,7 +1277,7 @@
                         console.warn(`  no estate balance: ${p.nickname}`);
                     }
                 } else {
-                    const stocks = await sbLoadUserBalance(p.nickname, p.gameId);
+                    const stocks = await sbLoadUserBalance(p.userId, p.gameId);
                     if (stocks) {
                         Object.assign(p.assets, stocks);
                         p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
@@ -1297,9 +1294,9 @@
                     const sfData = await sbLoadSuccessFactorsByGameId(gameId);
                     if (sfData.success && Array.isArray(sfData.factors)) {
                         const sfMap = {};
-                        sfData.factors.forEach(f => { sfMap[f.nickname] = f; });
+                        sfData.factors.forEach(f => { sfMap[f.user_id] = f; });
                         players.forEach(p => {
-                            const f = sfMap[p.nickname];
+                            const f = sfMap[p.userId];
                             if (f) p.successFactors = {
                                 financial_management: !!f.financial_management,
                                 communication:        !!f.communication,
@@ -1314,9 +1311,9 @@
                     const traitsData = await sbLoadTraitsByGameId(gameId);
                     if (traitsData.success && Array.isArray(traitsData.traits)) {
                         const traitsMap = {};
-                        traitsData.traits.forEach(t => { traitsMap[t.nickname] = t; });
+                        traitsData.traits.forEach(t => { traitsMap[t.user_id] = t; });
                         players.forEach(p => {
-                            const t = traitsMap[p.nickname];
+                            const t = traitsMap[p.userId];
                             if (t) p.traits = { diligent: !!t.diligent, saving: !!t.saving, invest: !!t.invest, career: !!t.career, luck: !!t.luck, adventure: !!t.adventure };
                         });
                     }
