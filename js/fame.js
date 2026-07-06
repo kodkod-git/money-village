@@ -82,6 +82,7 @@
 
         renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
         renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
+        applyTableNumberScale('indivTableBody');
         setSpecialAwards(indiv);
     }
 
@@ -90,7 +91,7 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            const colSpan = isTeam ? 4 : 6;
+            const colSpan = isTeam ? 4 : 8;
             tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
             return;
         }
@@ -121,15 +122,16 @@
             let row = `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${item.nickname || item.name || '-'}</td>
-                <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(item.total).toLocaleString()}</td>`;
+                <td class="asset-col ${isTeam ? 'team-asset-col ' : ''}${rank === 1 ? 'top' : ''}">${fitNumber(item.total)}</td>`;
 
             if (isTeam) {
                 row += `<td class="member-col">${item.members || '-'}</td>`;
             } else {
-                const etc = (Number(item.diligence_reward) || 0) + (Number(item.quest_reward) || 0) + (Number(item.deposit_reward) || 0);
-                row += `<td class="sub-asset-col">${(Number(item.cash) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${(Number(item.stock) || 0).toLocaleString()}</td>
-                        <td class="sub-asset-col">${etc.toLocaleString()}</td>`;
+                row += `<td class="sub-asset-col">${fitNumber(item.cash)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.stock)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.deposit_reward)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.quest_reward)}</td>
+                        <td class="sub-asset-col">${fitNumber(item.diligence_reward)}</td>`;
             }
 
             row += `</tr>`;
@@ -144,21 +146,28 @@
         document.getElementById('awardStockLabel').innerText = isEstateVariant ? '부동산 평가액' : '주식 평가액';
 
         if (data.length === 0) {
-            document.getElementById('awardCashName').innerText = '데이터 없음';
-            document.getElementById('awardCashVal').innerText = '-';
-            document.getElementById('awardStockName').innerText = '데이터 없음';
-            document.getElementById('awardStockVal').innerText = '-';
+            setAwardDisplay('awardCashName', 'awardCashVal');
+            setAwardDisplay('awardDiligenceName', 'awardDiligenceVal');
+            setAwardDisplay('awardStockName', 'awardStockVal');
             return;
         }
-        const cashKing  = [...data].sort((a, b) => b.cash  - a.cash)[0];
-        const stockKing = [...data].sort((a, b) => b.stock - a.stock)[0];
+        const cashKing = findPositiveAwardWinner(data, 'cash');
+        const diligenceKing = findPositiveAwardWinner(data, 'diligence_reward');
+        const stockKing = findPositiveAwardWinner(data, 'stock');
 
-        if (cashKing) {
-            document.getElementById('awardCashName').innerText = cashKing.nickname || cashKing.name || '-';
-            document.getElementById('awardCashVal').innerText  = cashKing.cash.toLocaleString();
-        }
-        if (stockKing) {
-            document.getElementById('awardStockName').innerText = stockKing.nickname || stockKing.name || '-';
-            document.getElementById('awardStockVal').innerText  = stockKing.stock.toLocaleString();
-        }
+        setAwardDisplay('awardCashName', 'awardCashVal', cashKing, 'cash');
+        setAwardDisplay('awardDiligenceName', 'awardDiligenceVal', diligenceKing, 'diligence_reward');
+        setAwardDisplay('awardStockName', 'awardStockVal', stockKing, 'stock');
+    }
+
+    function findPositiveAwardWinner(data, field) {
+        return [...data]
+            .filter(item => Number(item?.[field] || 0) > 0)
+            .sort((a, b) => Number(b?.[field] || 0) - Number(a?.[field] || 0))[0] || null;
+    }
+
+    function setAwardDisplay(nameId, valueId, winner = null, field = '') {
+        const value = Number(winner?.[field] || 0);
+        document.getElementById(nameId).innerText = value > 0 ? (winner.nickname || winner.name || '-') : '-';
+        document.getElementById(valueId).innerText = value > 0 ? value.toLocaleString() : '-';
     }

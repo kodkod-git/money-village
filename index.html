@@ -192,11 +192,13 @@
             <table class="ranking-table">
                 <colgroup>
                     <col style="width:7%">
-                    <col style="width:20%">
-                    <col style="width:20%">
+                    <col style="width:18%">
                     <col style="width:15%">
-                    <col style="width:15%">
-                    <col style="width:13%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:12%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -205,7 +207,9 @@
                         <th>총 자산</th>
                         <th>현금</th>
                         <th id="summaryAssetHeader">주식</th>
-                        <th>기타</th>
+                        <th>예금</th>
+                        <th>퀘스트</th>
+                        <th>성실활동금</th>
                     </tr>
                 </thead>
                 <tbody id="summaryIndivTableBody"></tbody>
@@ -355,6 +359,8 @@
                                 stroke-linecap="butt"
                                 stroke-dasharray="0 9999"
                                 transform="rotate(-90 50 50)"></circle>
+
+                        <g id="rptDonutSeparators"></g>
                     </svg>
 
                     <div class="chart-center">
@@ -421,10 +427,12 @@
                 <colgroup>
                     <col style="width: 7%">
                     <col style="width: 18%">
-                    <col style="width: 18%">
-                    <col style="width: 14%">
-                    <col style="width: 14%">
-                    <col style="width: 14%">
+                    <col style="width: 15%">
+                    <col style="width: 12%">
+                    <col style="width: 12%">
+                    <col style="width: 12%">
+                    <col style="width: 12%">
+                    <col style="width: 12%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -433,7 +441,9 @@
                         <th>총 자산</th>
                         <th>현금</th>
                         <th id="indivStockHeader">주식</th>
-                        <th>기타</th>
+                        <th>예금</th>
+                        <th>퀘스트</th>
+                        <th>성실활동금</th>
                     </tr>
                 </thead>
                 <tbody id="indivTableBody"></tbody>
@@ -449,6 +459,14 @@
                     </div>
                 </div>
                 <div class="award-card">
+                    <div class="award-icon">👷</div>
+                    <div class="award-info">
+                        <div class="award-title hl-diligence">Personal Diligence King</div>
+                        <div class="award-name" id="awardDiligenceName">-</div>
+                        <div class="award-value">성실활동금: <span id="awardDiligenceVal">0</span> 원</div>
+                    </div>
+                </div>
+                <div class="award-card">
                     <div class="award-icon" id="awardStockIcon">📈</div>
                     <div class="award-info">
                         <div class="award-title hl-stock" id="awardStockTitle">Personal Stock King</div>
@@ -461,7 +479,7 @@
             <div class="fame-only section-title">👥 팀전 역대 Top 5 (Team)</div>
             <table class="ranking-table">
                 <colgroup><col style="width: 8%"><col style="width: 25%"><col style="width: 25%"><col style="width: 42%"></colgroup>
-                <thead><tr><th>순위</th><th>팀명</th><th>팀 총 자산</th><th>팀원 (Top 4 기여)</th></tr></thead>
+                <thead><tr><th>순위</th><th>팀명</th><th>팀 총 자산</th><th>팀원</th></tr></thead>
                 <tbody id="teamTableBody"></tbody>
             </table>
 
@@ -519,25 +537,23 @@
                         <div class="bank-screen-title" id="bankRoundTitle">1라운드 장기 예금 신청</div>
                         <div id="bankGameInfo" class="bank-screen-subtitle"></div>
                     </div>
-                    <span id="bankRatioBadge" class="bank-ratio-header-badge" style="margin-left:auto;"></span>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <span id="bankRatioBadge" class="bank-ratio-header-badge"></span>
+                        <button class="bank-reset-btn" onclick="bankReset()" title="초기화">↻</button>
+                    </div>
                 </div>
                 <div id="bankTabBar" style="display:none;" class="player-tab-bar">
                     <button id="bankTabTeam"  class="player-tab active" onclick="bankSetViewMode('team')">팀</button>
                     <button id="bankTabIndiv" class="player-tab"        onclick="bankSetViewMode('individual')">개인</button>
                 </div>
                 <div id="bankPlayerGrid" class="bank-player-grid"></div>
-                <div style="padding: 16px 0 8px; display:flex; gap:8px;">
+                <div class="screen-bottom-actions bank-round-actions">
                     <button id="bankGoBackRoundBtn" class="btn btn-dark"
-                        style="flex:1; padding:14px; font-size:15px; justify-content:center;"
+                        style="padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankGoBackRound()">← 이전 라운드</button>
-                    <button id="bankAdvanceRoundBtn" class="btn btn-purple"
-                        style="flex:1; padding:14px; font-size:15px; justify-content:center;"
+                    <button id="bankAdvanceRoundBtn" class="btn btn-bank"
+                        style="padding:14px; font-size:15px; justify-content:center;"
                         onclick="bankAdvanceRound()">다음 라운드 →</button>
-                </div>
-                <div style="padding: 0 0 16px;">
-                    <button class="btn btn-danger"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
-                        onclick="bankReset()">초기화</button>
                 </div>
             </div>
 
@@ -619,22 +635,20 @@
                         <div class="bank-screen-title">🧩 퀴즈 퀘스트</div>
                         <div id="quizGameInfo" class="bank-screen-subtitle"></div>
                     </div>
-                    <span class="quiz-reward-badge" style="margin-left:auto;">보상: <span id="quizRewardBadge">1,000원</span></span>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <span class="quiz-reward-badge">보상: <span id="quizRewardBadge">1,000원</span></span>
+                        <button class="quiz-reset-btn" onclick="quizReset()" title="초기화">↻</button>
+                    </div>
                 </div>
                 <div id="quizTabBar" style="display:none;" class="player-tab-bar">
                     <button id="quizTabTeam"  class="player-tab active" onclick="quizSetViewMode('team')">팀</button>
                     <button id="quizTabIndiv" class="player-tab"        onclick="quizSetViewMode('individual')">개인</button>
                 </div>
                 <div id="quizPlayerGrid" class="bank-player-grid"></div>
-                <div style="padding: 16px 0 8px;">
-                    <button id="quizCloseBtn" class="btn btn-purple"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
+                <div class="screen-bottom-actions quiz-close-actions">
+                    <button id="quizCloseBtn" class="btn btn-quiz"
+                        style="padding:14px; font-size:15px; justify-content:center;"
                         onclick="quizClose()">마감</button>
-                </div>
-                <div style="padding: 0 0 16px;">
-                    <button class="btn btn-danger"
-                        style="width:100%; padding:14px; font-size:15px; justify-content:center;"
-                        onclick="quizReset()">초기화</button>
                 </div>
             </div>
         </div>
@@ -665,8 +679,8 @@
             <div class="result-box">
                 <div class="result-msg" id="quizResultMsg"></div>
                 <div class="quiz-result-reward" id="quizResultReward" style="display:none;"></div>
-                <button class="btn-retry" id="quizBtnConfirm" style="background:#2e7d32;" onclick="quizResultNext()">확인</button>
-                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#1565C0;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
+                <button class="btn-retry" id="quizBtnConfirm" style="background:#7B3F99;" onclick="quizResultNext()">확인</button>
+                <button class="btn-retry" id="quizBtnTeamNext" style="display:none; background:#7B3F99;" onclick="quizResultNext()">다른 팀원도 문제를 풀어야해요</button>
                 <button class="btn-retry" id="quizBtnRetry" style="display:none; background:#E74C3C;" onclick="quizResultNext()">돌아가기</button>
             </div>
         </div>
@@ -909,6 +923,18 @@
                     <div style="margin-bottom:16px;">
                         <input type="date" id="gameDate" style="width:100%; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; font-weight:600; color:#1e293b; cursor:pointer; box-sizing:border-box; font-family:inherit;">
                     </div>
+                    <!-- 테스트 데이터 -->
+                    <div class="gs-section-label">테스트 데이터</div>
+                    <div class="gs-card-row" style="margin-bottom:16px;">
+                        <div class="gs-card" onclick="selectTestMode(true)" id="btnTestModeO">
+                            <span class="gs-card-ico">🟢</span>
+                            <span class="gs-card-title">테스트</span>
+                        </div>
+                        <div class="gs-card selected" onclick="selectTestMode(false)" id="btnTestModeX">
+                            <span class="gs-card-ico">❌</span>
+                            <span class="gs-card-title">실제</span>
+                        </div>
+                    </div>
                     <!-- 게임 버전 -->
                     <div class="gs-section-label">게임 버전</div>
                     <div class="gs-card-row">
@@ -1106,6 +1132,7 @@
 <script src="js/report.js"></script>
 <script src="js/fame.js"></script>
 <script src="js/arduino.js"></script>
+<script src="js/player-list-view.js"></script>
 <script src="js/bank.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/admin.js"></script>
