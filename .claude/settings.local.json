@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/USER/AppData/Roaming/npm\")",
-      "Bash(clasp push:*)"
+      "Bash(clasp push:*)",
+      "Bash(git rm *)",
+      "Bash(grep *)",
+      "Bash(npm test *)",
+      "Bash(node tests/table-number-fit.test.js)",
+      "Bash(git restore *)",
+      "Bash(node tests/player-edit-nickname-rename.test.js)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git branch *)"
     ]
   }
 }
