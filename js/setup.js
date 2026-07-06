@@ -159,9 +159,9 @@
         }, 150);
     }
 
-    function makeInp(lbl, realName = '', nickname = '', team='') {
+    function makeInp(lbl, realName = '', nickname = '', team='', origNickname = '') {
         return `
-        <div class="p-input-group citizen-row" style="align-items:flex-start; flex-direction:column; gap:6px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
+        <div class="p-input-group citizen-row" data-orig-nickname="${origNickname}" style="align-items:flex-start; flex-direction:column; gap:6px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
             <div style="font-weight:bold; color:#555; font-size:14px;">${lbl}</div>
 
             <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
@@ -228,7 +228,8 @@
             return;
         }
 
-        isSampleMode = false;
+        const isTestMode = document.getElementById('btnTestModeO')?.classList.contains('selected') ?? false;
+        isSampleMode = isTestMode;
         document.getElementById('gameStartModal')?.classList.remove('show');
         document.getElementById('btnEditPrev').style.display = 'inline-flex';
 
@@ -317,11 +318,11 @@
                 const estateValues = Object.fromEntries(
                     Object.entries(estateInfo).map(([k, v]) => [k, v.price])
                 );
-                await sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate);
+                await sbInitGame(gameId, currentMode, players, [], currentGameVariant, selectedDate, isTestMode);
                 await sbSaveEstatePrice(gameId, estateValues);
             } else {
                 const stockValues = Object.values(stockInfo).map(s => s.price);
-                await sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate);
+                await sbInitGame(gameId, currentMode, players, stockValues, currentGameVariant, selectedDate, isTestMode);
             }
         } catch (e) {
             console.error('[startGame/sbInitGame]', e);
@@ -376,15 +377,16 @@
     function addMember(teamSection, focus = true) {
         if (!teamSection) return;
         const members = teamSection.querySelector('.team-members');
-        const count = members.querySelectorAll('.citizen-row').length;
+        const totalCount = document.getElementById('nameInputArea')
+            .querySelectorAll('.citizen-row').length;
 
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = makeInp(`참가자 ${count + 1}`, `참가자${count + 1}`, '');
+        wrapper.innerHTML = makeInp(`참가자 ${totalCount + 1}`, `참가자${totalCount + 1}`, '');
         const row = wrapper.firstElementChild;
 
         members.appendChild(row);
 
-        renumberMembers(teamSection);
+        renumberMembers();
         if (focus) row.querySelector('.realname-input')?.focus();
     }
 
@@ -397,13 +399,13 @@
             return;
         }
         rows[rows.length - 1].remove();
-        renumberMembers(teamSection);
+        renumberMembers();
     }
 
-    function renumberMembers(teamSection) {
-        if (!teamSection) return;
-        const rows = teamSection.querySelectorAll('.team-members .citizen-row');
-        rows.forEach((row, i) => {
+    function renumberMembers() {
+        const allRows = document.getElementById('nameInputArea')
+            ?.querySelectorAll('.citizen-row') || [];
+        allRows.forEach((row, i) => {
             const label = row.querySelector('div');
             if (label) label.innerText = `참가자${i + 1}`;
         });
@@ -449,7 +451,13 @@
         currentGameStep = 1;
         gsGoToStep(1);
         document.getElementById('gameDate').value = new Date().toISOString().slice(0, 10);
+        selectTestMode(false);
         document.getElementById('gameStartModal').classList.add('show');
+    }
+
+    function selectTestMode(isTest) {
+        document.getElementById('btnTestModeO').classList.toggle('selected', isTest);
+        document.getElementById('btnTestModeX').classList.toggle('selected', !isTest);
     }
 
     function closeGameStartModal(force = false) {

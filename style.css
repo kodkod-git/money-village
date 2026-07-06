@@ -330,8 +330,16 @@
         .rank-icon{ display: inline-flex; align-items: center; justify-content: center; line-height: 1; position: relative; top: -1px; }
 
         .name-col { font-weight: 800; color: #333; font-size: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; }
-        .asset-col { text-align: right; font-weight: 900; color: var(--mv-blue-deep); font-size: 20px; padding-right: 10px !important; }
-        .asset-col.top { color: #d4a000; font-size: 24px; } 
+        .asset-col {
+            text-align: right;
+            font-weight: 900;
+            color: var(--mv-blue-deep);
+            font-size: 19px;
+            padding-right: 8px !important;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .asset-col.top { color: #d4a000; font-size: 19px; } 
         
         /* 2. 현금/주식 폰트 크기 수정 */
         .sub-asset-col { 
@@ -341,6 +349,28 @@
             padding-right: 8px !important; 
         }
         .sub-asset-col.stock { color: #d32f2f; font-weight: 800; }
+        .asset-col,
+        .asset-col.top,
+        .sub-asset-col {
+            font-size: 19px !important;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .fit-number {
+            display: block;
+            max-width: 100%;
+            line-height: 1;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .team-asset-col,
+        .team-asset-col .fit-number {
+            text-align: center;
+        }
+        .ranking-table--compact-numbers .asset-col .fit-number,
+        .ranking-table--compact-numbers .sub-asset-col .fit-number {
+            font-size: 0.8em;
+        }
         
         /* 3. 날짜 폰트 크기 수정 */
         .date-col { 
@@ -358,15 +388,16 @@
         }
         .award-card {
             flex: 1; background: white; border: 1px solid #eee; border-radius: 10px;
-            padding: 10px 12px; display: flex; align-items: center;
+            padding: 10px 10px; display: flex; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
-        .award-icon { font-size: 32px; margin-right: 15px; }
+        .award-icon { font-size: 30px; margin-right: 10px; }
         .award-info { flex: 1; position: relative; top: -1.5px; }
-        .award-title { font-size: 13px; color: #666; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .award-title { font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
         .award-name { font-size: 18px; font-weight: 900; color: #333; margin-bottom: 2px; }
-        .award-value { font-size: 14px; color: var(--mv-blue-deep); font-weight: 800; }
+        .award-value { font-size: 13px; color: var(--mv-blue-deep); font-weight: 800; }
         .hl-cash { color: #00897b; }
+        .hl-diligence { color: #22c55e; }
         .hl-stock { color: #d32f2f; }
         
         /* 푸터 */
@@ -775,8 +806,9 @@
             gap: 8px;
             padding: 16px 22px 22px;
         }
-        /* 은행 예금 버튼 */
+        /* 은행 예금 버튼 (보라) / 퀴즈 버튼 (초록) */
         .btn-bank { background: #00897b; color: #fff; }
+        .btn-quiz { background: #7B3F99; color: #fff; }
 
         /* 은행 예금 모달 */
         .bank-modal-card { max-width: 580px; }
@@ -823,7 +855,15 @@
         }
 
         /* 플레이어 그리드 */
-        .bank-player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .bank-player-grid {
+            --main-card-min-width: 280px;
+            --main-card-min-height: 160px;
+            --player-button-min-height: 72px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(var(--main-card-min-width), 1fr));
+            gap: 10px;
+            overflow-x: auto;
+        }
         .bank-player-card {
             position: relative;
             border: 2px solid #e0e6f0; border-radius: 12px;
@@ -852,10 +892,13 @@
         /* 플레이어 목록 탭 (팀전 전용) */
         .player-tab-bar {
             display: flex;
+            flex: 0 0 auto;
             margin-bottom: 12px;
             border-radius: 10px;
             overflow: hidden;
             border: 1.5px solid #C5CAE9;
+            position: relative;
+            z-index: 2;
         }
         .player-tab {
             flex: 1;
@@ -872,25 +915,115 @@
         .player-tab.active { background: #5E35B1; color: #fff; }
 
         /* 팀 그룹 카드 */
-        .bank-player-grid.is-team { grid-template-columns: 1fr; }
-        .team-group {
+        .bank-player-grid {
+            grid-auto-rows: auto;
+            align-content: start;
+        }
+        .bank-player-grid.is-team {
+            grid-template-columns: minmax(var(--main-card-min-width), 1fr);
+        }
+        .main-card {
             border: 2px solid #C5CAE9; border-radius: 14px;
             padding: 12px; background: #F3F4FC;
+            box-sizing: border-box;
+            min-width: var(--main-card-min-width);
+            min-height: var(--main-card-min-height);
+            max-width: 100%;
+            overflow: visible;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            align-content: stretch;
         }
         .team-group.team-done { background: #f0f7f0; border-color: #b2dfb2; }
         .team-group.team-in-progress { background: #FFFDE7; border-color: #FB8C00; }
-        .team-group-header {
+        .main-card-header {
             display: flex; align-items: center; gap: 10px;
             font-size: 22px; font-weight: 900; color: #3949AB;
             margin-bottom: 10px; padding-bottom: 8px;
             border-bottom: 1.5px solid #C5CAE9;
+            cursor: default; user-select: none;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .main-card-header::-webkit-scrollbar { display: none; }
+        .team-group-header > span:first-child {
+            flex-shrink: 1; min-width: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .bank-header-tags {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .bank-header-tags::-webkit-scrollbar { display: none; }
+        .bank-done-badge { background: #ffebee; color: #c62828; border-radius: 8px; padding: 2px 10px; font-size: 13px; font-weight: 700; }
+        .bank-player-card.is-disabled {
+            cursor: default;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        .bank-player-grid .bank-player-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            min-height: 76px;
+            padding: 12px 8px;
+            min-width: 0;
+            overflow: visible;
+        }
+        .player-button {
+            width: 100%;
+            height: 100%;
+            min-height: var(--player-button-min-height);
+        }
+        .bank-player-grid .bank-player-name-row {
+            width: 100%;
+            min-width: 0;
+            margin-bottom: 0;
+            align-items: center;
+        }
+        .bank-player-grid .bank-player-nickname {
+            display: block;
+            width: 100%;
+            line-height: 1.1;
         }
         .team-group.team-done .team-group-header { color: #2e7d32; border-bottom-color: #b2dfb2; }
         .team-group.team-in-progress .team-group-header { color: #E65100; border-bottom-color: #FB8C00; }
-        .team-group-players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .main-card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: minmax(var(--player-button-min-height), 1fr);
+            gap: 8px;
+        }
+        .bank-player-grid .main-card-body {
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
+            min-height: 0;
+        }
         .bank-player-status { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .bank-player-indiv-tags { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; padding: 4px 0; }
         .card-reset-btn { margin-left: auto; background: #e74c3c; color: white; border: none; border-radius: 5px; padding: 3px 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
         .card-reset-btn:hover { opacity: 0.85; }
+        .bank-status-type,
+        .bank-status-pending,
+        .bank-done-badge { flex: 0 0 auto; white-space: nowrap; }
+        .team-group-header > .bank-status-pending:first-child,
+        .team-group-header > .bank-done-badge:first-child {
+            min-width: max-content;
+            overflow: visible;
+            text-overflow: clip;
+        }
         .bank-status-type  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #d3eafc; color: #005a9e; }
         .bank-status-done  { font-size: 15px; font-weight: 700; padding: 3px 10px; border-radius: 5px; background: #E8F5E9; color: #2E7D32; }
         .bank-status-pending { font-size: 15px; font-weight: 600; padding: 3px 10px; border-radius: 5px; background: #f0f0f0; color: #999; }
@@ -951,8 +1084,8 @@
             background: #F0F4F8;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            overflow-y: auto;
-            padding: 0 16px 48px;
+            overflow: hidden;
+            padding: 0 16px;
         }
         .bank-screen-wrap {
             max-width: 480px;
@@ -961,6 +1094,33 @@
             border-radius: 16px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
             padding: 32px 24px;
+        }
+        #bankScreen .bank-screen-wrap,
+        #quizView2 > .bank-screen-wrap {
+            width: min(92vw, 720px);
+            max-width: 720px;
+            height: calc(100vh - 48px);
+            min-height: calc(100vh - 48px);
+            max-height: calc(100vh - 48px);
+            height: calc(100dvh - 48px);
+            min-height: calc(100dvh - 48px);
+            max-height: calc(100dvh - 48px);
+            margin: 24px auto;
+            box-sizing: border-box;
+        }
+        #bankScreen .bank-screen-wrap.is-list-view {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #bankView2,
+        #quizView2 {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            height: 100%;
+            overflow: hidden;
         }
         .bank-screen-header {
             display: flex;
@@ -1040,6 +1200,7 @@
         .past-game-card-meta .tag-basic{ background: #e8f5e9; color: #2e7d32; }
         .past-game-card-meta .tag-advanced{ background: #f3e5f5; color: #7b1fa2; }
         .past-game-card-meta .tag-rich{ background: #fff3e0; color: #e65100; }
+        .tag-test{ background: #fff9c4; color: #f57f17; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; vertical-align: middle; }
 
         .btn[disabled]{
             opacity: 0.65;
@@ -1059,14 +1220,298 @@
         }
 
         /* ── 퀴즈 퀘스트 ─────────────────────────────────────── */
+
+        /* 퀴즈 화면 전체: 초록 테마 */
+
+        /* 탭바 */
+        #quizView2 .player-tab-bar {
+            border-color: #D1C4E9;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        #quizView2 .player-tab {
+            background: #F3F4FC;
+            color: #5E35B1;
+        }
+        #quizView2 .player-tab + .player-tab {
+            border-left-color: #D1C4E9;
+        }
+        #quizView2 .player-tab.active {
+            background: #7B3F99;
+            color: #fff;
+        }
+
+        /* 플레이어 카드 */
+        #quizView2 .bank-player-card {
+            background: #F3F4FC;
+            border-color: #D1C4E9;
+        }
+        #quizView2 .bank-player-card:hover {
+            border-color: #7B3F99;
+            background: #EDE7F6;
+            box-shadow: 0 3px 12px rgba(94,53,177,0.15);
+        }
+        #quizView2 .bank-player-card.completed {
+            background: #EDE7F6;
+            border: 3px solid #7B3F99;
+        }
+        #quizView2 .bank-player-nickname {
+            color: #4A148C;
+        }
+        #quizView2 .bank-player-efti {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+        #quizView2 .bank-player-team {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+
+        /* 은행 화면: 카드 초록 테마 */
+        #bankView2 .bank-player-card {
+            background: #f4fbf4;
+            border-color: #c8e6c9;
+        }
+        #bankView2 .bank-player-card:hover {
+            border-color: #00897b;
+            background: #e8f5e9;
+            box-shadow: 0 3px 12px rgba(0,137,123,0.15);
+        }
+
+        /* 은행 화면: 완료 시 카드 전체 초록 */
+        #bankView2 .bank-player-card.completed {
+            background: #e8f5e9;
+            border: 3px solid #2e7d32;
+        }
+        #bankView2 .bank-player-card.completed .bank-player-nickname {
+            color: #1b5e20;
+        }
+        #bankView2 .team-group.team-done {
+            background: #dcedc8;
+            border: 3px solid #2e7d32;
+        }
+        #bankView2 .team-group.team-done .team-group-header {
+            color: #1b5e20;
+            border-bottom-color: #aed581;
+        }
+
+        /* 은행 화면: 초록 테마 */
+        #bankView2 .bank-screen-title {
+            color: #2e7d32;
+        }
+        #bankView2 .bank-ratio-header-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-player-nickname {
+            color: #1b5e20;
+        }
+        #bankView2 .bank-player-team {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-player-efti {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-team-progress-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        #bankView2 .bank-team-progress-badge.in-progress {
+            background: #FFF8C5;
+            color: #E65100;
+        }
+        #bankView2 .bank-team-progress-badge.all-done {
+            background: #ffebee;
+            color: #c62828;
+        }
+        #bankView2 .card-reset-btn {
+            background: #c8e6c9;
+            color: #1b5e20;
+            font-size: 16px;
+        }
+        #bankView2 .card-reset-btn:hover {
+            background: #a5d6a7;
+            opacity: 1;
+        }
+        #quizView2 .card-reset-btn {
+            background: #D1C4E9;
+            color: #4A148C;
+            font-size: 16px;
+        }
+        #quizView2 .card-reset-btn:hover {
+            background: #B39DDB;
+            opacity: 1;
+        }
+        #bankView2 .team-group {
+            background: #f4fbf4;
+            border-color: #c8e6c9;
+        }
+        #bankView2 .team-group-header {
+            color: #2e7d32;
+            border-bottom-color: #c8e6c9;
+        }
+
+        /* 은행 헤더 새로고침 초기화 버튼 */
+        .bank-reset-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid #a5d6a7;
+            background: #f4fbf4;
+            color: #2e7d32;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .bank-reset-btn:hover {
+            background: #e8f5e9;
+            border-color: #00897b;
+            color: #00897b;
+        }
+
+        /* 헤더 새로고침 초기화 버튼 */
+        .quiz-reset-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid #C5CAE9;
+            background: #F3F4FC;
+            color: #5E35B1;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .quiz-reset-btn:hover {
+            background: #EDE7F6;
+            border-color: #7B3F99;
+            color: #7B3F99;
+        }
+
+        /* 개인뷰 헤더 플레이어 이름 뱃지 */
+        #quizView2 .player-name-badge {
+            font-size: 17px;
+            background: #ede7f6;
+            color: #4A148C;
+            border: 1px solid #ce93d8;
+            border-radius: 10px;
+            padding: 3px 12px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        #bankView2 .player-name-badge {
+            font-size: 17px;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 3px 12px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        #bankPlayerGrid,
+        #quizPlayerGrid {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            max-height: none;
+            padding: 12px 0 10px;
+        }
+        #bankPlayerGrid::-webkit-scrollbar,
+        #quizPlayerGrid::-webkit-scrollbar { display: none; }
+        .screen-bottom-actions {
+            flex: 0 0 auto;
+            box-sizing: border-box;
+            margin-top: 10px;
+            padding: 8px 0 12px;
+        }
+        .bank-round-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .bank-round-actions .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            margin-right: 0;
+        }
+        .quiz-close-actions .btn {
+            width: 100%;
+            margin-right: 0;
+        }
+        #bankView2 .player-tab-bar {
+            border-color: #a5d6a7;
+            position: relative;
+            z-index: 1;
+        }
+        #bankView2 .player-tab {
+            background: #f4fbf4;
+            color: #2e7d32;
+        }
+        #bankView2 .player-tab + .player-tab {
+            border-left-color: #a5d6a7;
+        }
+        #bankView2 .player-tab.active {
+            background: #00897b;
+            color: #fff;
+        }
+
+        /* 헤더 타이틀 & 보상 뱃지 */
+        #quizView2 .bank-screen-title {
+            color: #4A148C;
+        }
+        #quizView2 .quiz-reward-badge {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+
+        /* 팀 그룹 카드 */
+        #quizView2 .team-group {
+            background: #F3F4FC;
+            border-color: #D1C4E9;
+        }
+        #quizView2 .team-group.team-done {
+            background: #EDE7F6;
+            border: 3px solid #7B3F99;
+        }
+        #quizView2 .team-group-header {
+            color: #5E35B1;
+            border-bottom-color: #D1C4E9;
+        }
+        #quizView2 .team-group.team-done .team-group-header {
+            color: #4A148C;
+            border-bottom-color: #B39DDB;
+        }
+
         #quizScreen {
             background: #F0F4F8;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            overflow-y: auto;
-            padding: 0 16px 48px;
+            overflow: hidden;
+            padding: 0 16px;
         }
-        .btn-quiz { background: #7B3F99; color: #fff; }
+        #quizView2 {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100%;
+        }
+        #quizView2 > .bank-screen-wrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #quizPlayerGrid {
+            padding-top: 2px;
+        }
         .btn-citizen { background: #1565C0; color: #fff; }
         .btn-game-start { background: #F59E0B; color: #fff; }
 
@@ -1122,7 +1567,15 @@
             background: #FFF8C5; color: #E65100;
         }
         .quiz-progress-badge.quiz-done {
-            background: #e0f2e9; color: #2e7d32;
+            background: #ffebee; color: #c62828;
+        }
+        .bank-team-progress-badge.all-done {
+            background: #ffebee; color: #c62828;
+        }
+        .bank-indiv-done-badge {
+            font-size: 17px; font-weight: 700;
+            padding: 3px 12px; border-radius: 10px;
+            background: #ffebee; color: #c62828;
         }
         .quiz-progress-badge.quiz-cooldown { background: #fce4ec; color: #c62828; }
         .quiz-cooldown-badge {
@@ -1258,7 +1711,7 @@
         .result-msg.wrong   { color: #E74C3C; }
         .quiz-result-reward {
             font-size: 30px; font-weight: 700;
-            color: #2e7d32; margin-top: 12px;
+            color: #5E35B1; margin-top: 12px;
         }
         .btn-retry {
             margin-top: 32px;

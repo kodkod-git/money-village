@@ -4,6 +4,7 @@
 
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
 function _toStorageKey(fileName) {
     if (!/[^\x00-\x7F]/.test(fileName)) return fileName;
     let h = 0;
@@ -138,7 +139,7 @@ async function sbUpdateStockPrice(gameId, stockValues) {
 }
 
 // 게임 시작 시 초기 레코드 삽입 (자산 = 0)
-async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic', date = null) {
+async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'basic', date = null, isTest = false) {
     const today = date || new Date().toISOString().slice(0, 10);
     const isAdvancedLike = gameVariant !== 'basic';
 
@@ -164,7 +165,8 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         player_count: players.length,
         game_type:    mode,
         section_num:  (count || 0) + 1,
-        game_variant: gameVariant
+        game_variant: gameVariant,
+        is_test:      isTest
     });
     if (giErr) console.error('[sbInitGame] game_info', giErr);
 
@@ -175,7 +177,9 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
         p
     })).filter(r => r.nick);
 
-    // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date·is_citizen:false 포함 insert
+    // users — 기존 유저는 join_date/is_citizen 보존, 신규 유저만 join_date 포함 insert
+    // (테스트 게임 참가자는 is_citizen:false로 등록해 시민권자 목록에 노출되지 않게 함 — user_id는
+    //  자산 테이블들의 필수 PK이므로 테스트 게임이라도 users 행 생성 자체는 생략할 수 없음)
     const { data: existingUsers } = await _sb.from('users').select('user_id, nickname');
     const userIdByNick = new Map((existingUsers || []).map(u => [u.nickname, u.user_id]));
 
@@ -190,7 +194,7 @@ async function sbInitGame(gameId, mode, players, stockValues, gameVariant = 'bas
                 default_efti: efti,
                 status:       'active',
                 join_date:    today,
-                is_citizen:   false
+                is_citizen:   !isTest
             };
             if (gameVariant === 'rich_vessel') row.user_type = 'adult';
             return row;
@@ -618,34 +622,43 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 
 async function sbLoadHallOfFame() {
     const [{ data: gameInfoList }, { data: indiv }, { data: team }, { data: users }, { data: allIndiv }] = await Promise.all([
-        _sb.from('game_info').select('game_id, game_variant'),
+        _sb.from('game_info').select('game_id, game_variant, is_test'),
         _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
         _sb.from('game_team').select('*'),
         _sb.from('users').select('user_id, nickname'),
         _sb.from('game_individual').select('user_id, team_id, total_asset, game_id')
     ]);
 
+    // 테스트 게임은 명예의 전당에서 제외
+    const validGameIds = new Set(
+        (gameInfoList || []).filter(r => !r.is_test).map(r => r.game_id)
+    );
     const variantMap = Object.fromEntries(
-        (gameInfoList || []).map(r => [r.game_id, r.game_variant || 'basic'])
+        (gameInfoList || []).filter(r => !r.is_test).map(r => [r.game_id, r.game_variant || 'basic'])
     );
     const nickByUserId = Object.fromEntries((users || []).map(u => [u.user_id, u.nickname]));
 
-    const indivWithVariant = (indiv || []).map(r => ({
-        ...r,
-        nickname:     nickByUserId[r.user_id] || '',
-        game_variant: variantMap[r.game_id] || 'basic'
-    }));
+    const indivWithVariant = (indiv || [])
+        .filter(r => validGameIds.has(r.game_id))
+        .map(r => ({
+            ...r,
+            nickname:     nickByUserId[r.user_id] || '',
+            game_variant: variantMap[r.game_id] || 'basic'
+        }));
 
-    // team_id별 총자산/멤버 닉네임 온더플라이 집계
+    // team_id별 총자산/멤버 닉네임 온더플라이 집계 (테스트 게임 제외)
     const teamAgg = {};
-    (allIndiv || []).forEach(r => {
-        if (!r.team_id) return;
-        if (!teamAgg[r.team_id]) teamAgg[r.team_id] = { total: 0, members: [] };
-        teamAgg[r.team_id].total += Number(r.total_asset) || 0;
-        teamAgg[r.team_id].members.push(nickByUserId[r.user_id] || '');
-    });
+    (allIndiv || [])
+        .filter(r => validGameIds.has(r.game_id))
+        .forEach(r => {
+            if (!r.team_id) return;
+            if (!teamAgg[r.team_id]) teamAgg[r.team_id] = { total: 0, members: [] };
+            teamAgg[r.team_id].total += Number(r.total_asset) || 0;
+            teamAgg[r.team_id].members.push(nickByUserId[r.user_id] || '');
+        });
 
     const teamWithVariant = (team || [])
+        .filter(t => validGameIds.has(t.game_id))
         .map(t => ({
             ...t,
             team_total_asset: teamAgg[t.team_id]?.total || 0,
@@ -814,3 +827,7 @@ async function sbDeleteGame(gameId) {
         if (error) throw new Error(`[${table}] 삭제 실패: ${error.message}`);
     }
 }
+
+// =========================================================
+// 테스트 데이터 (game_id: 6a132594) — 드롭다운/명예의전당에서 제외됨
+// =========================================================

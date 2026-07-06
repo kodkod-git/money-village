@@ -384,6 +384,7 @@
                     const existing = rowUserId ? existingByUserId[rowUserId] : null;
                     if (existing) {
                         existing.realName = realName; existing.name = realName;
+                        existing.nickname = nickname;
                         existing.team = teamName; existing.teamId = teamId; existing.id = idx;
                         if (efti !== '-') existing.efti = efti;
                         newPlayers.push(existing);
@@ -415,7 +416,6 @@
     }
 
     async function _syncPlayerEditsToDb(oldPlayers, newPlayers) {
-        if (isSampleMode) return;
         const gameId = (newPlayers[0] || oldPlayers[0])?.gameId;
         if (!gameId) return;
 
@@ -449,7 +449,7 @@
                     nickname:     _nick(p.nickname),
                     real_name:    p.realName || p.name || '',
                     join_date:    today,
-                    is_citizen:   false,
+                    is_citizen:   !isSampleMode,
                     default_efti: p.efti || 'FAEN',
                     status:       'active'
                 }));
@@ -572,7 +572,7 @@
         updateDash();
 
         const gameId = players[0]?.gameId;
-        if (gameId && !isSampleMode) {
+        if (gameId) {
             if (currentGameVariant === 'basic') {
                 await sbUpdateStockPrice(gameId, prices);
             } else {

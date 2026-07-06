@@ -356,6 +356,37 @@
         el.setAttribute('stroke-dasharray', `0 9999`);
         el.setAttribute('stroke-dashoffset', `0`);
     }
+
+    function renderDonutSeparators(segments) {
+        const group = document.getElementById('rptDonutSeparators');
+        if (!group) return;
+        group.innerHTML = '';
+
+        const visibleSegments = segments.filter(percent => percent > 0.01);
+        if (visibleSegments.length < 2) return;
+
+        const center = 50;
+        const innerRadius = 34;
+        const outerRadius = 50;
+        let offsetPercent = 0;
+
+        visibleSegments.forEach(percent => {
+            const angle = ((offsetPercent / 100) * 360 - 90) * Math.PI / 180;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+
+            line.setAttribute('x1', String(center + innerRadius * Math.cos(angle)));
+            line.setAttribute('y1', String(center + innerRadius * Math.sin(angle)));
+            line.setAttribute('x2', String(center + outerRadius * Math.cos(angle)));
+            line.setAttribute('y2', String(center + outerRadius * Math.sin(angle)));
+            line.setAttribute('stroke', '#fff');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-linecap', 'round');
+            group.appendChild(line);
+
+            offsetPercent += percent;
+        });
+    }
+
     function refreshDisplayOnly(p) {
         const cash      = Number(p.manualCash      || 0);
         const assetVal  = Number(calcActiveAsset(p.assets || {}) || 0);
@@ -403,6 +434,7 @@
             clearDonutSegment(diligenceCircle);
             if (depositCircle) clearDonutSegment(depositCircle);
             if (questCircle)   clearDonutSegment(questCircle);
+            renderDonutSeparators([]);
             return;
         }
 
@@ -421,6 +453,13 @@
         _seg(diligenceCircle, diligencePercent, cashPercent + assetPercent);
         _seg(depositCircle,   depositPercent,   cashPercent + assetPercent + diligencePercent);
         _seg(questCircle,     questPercent,     cashPercent + assetPercent + diligencePercent + depositPercent);
+        renderDonutSeparators([
+            cashPercent,
+            assetPercent,
+            diligencePercent,
+            depositPercent,
+            questPercent
+        ]);
     }
     function renderSummaryPage() {
         if (customLogoData) {
@@ -449,16 +488,21 @@
             const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
             const cash     = Number(p.manualCash      || 0);
             const assetVal = Number(calcActiveAsset(p.assets || {}) || 0);
-            const etc      = Number(p.diligenceReward || 0) + Number(p.depositReward || 0) + Number(p.questReward || 0);
+            const deposit  = Number(p.depositReward   || 0);
+            const quest    = Number(p.questReward     || 0);
+            const diligence = Number(p.diligenceReward || 0);
             tbody.innerHTML += `<tr style="${rowBg}">
                 <td class="rank-col ${rankClass}">${rankCell}</td>
                 <td class="name-col">${p.nickname || p.name || '-'}</td>
-                <td class="asset-col ${rank === 1 ? 'top' : ''}">${Number(p.total).toLocaleString()}</td>
-                <td class="sub-asset-col">${cash.toLocaleString()}</td>
-                <td class="sub-asset-col">${assetVal.toLocaleString()}</td>
-                <td class="sub-asset-col">${etc.toLocaleString()}</td>
+                <td class="asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(p.total)}</td>
+                <td class="sub-asset-col">${fitNumber(cash)}</td>
+                <td class="sub-asset-col">${fitNumber(assetVal)}</td>
+                <td class="sub-asset-col">${fitNumber(deposit)}</td>
+                <td class="sub-asset-col">${fitNumber(quest)}</td>
+                <td class="sub-asset-col">${fitNumber(diligence)}</td>
             </tr>`;
         });
+        applyTableNumberScale('summaryIndivTableBody');
 
         const teamSection = document.getElementById('summaryTeamSection');
         if (currentMode === 'team') {
@@ -483,7 +527,7 @@
                 teamTbody.innerHTML += `<tr style="${rowBg}">
                     <td class="rank-col ${rankClass}">${rankCell}</td>
                     <td class="name-col">${t.name}</td>
-                    <td class="asset-col ${rank === 1 ? 'top' : ''}">${t.total.toLocaleString()}</td>
+                    <td class="asset-col team-asset-col ${rank === 1 ? 'top' : ''}">${fitNumber(t.total)}</td>
                     <td class="member-col">${t.members}</td>
                 </tr>`;
             });
@@ -690,11 +734,6 @@
             return;
         }
 
-        if (isSampleMode) {
-            alert("⚠️ 견본(샘플) 데이터는 출력 폴더로 업로드할 수 없습니다.\n실제 게임 결과만 업로드해주세요.");
-            return;
-        }
-
         if (isSavingDrive) return;
         isSavingDrive = true;
 
@@ -831,7 +870,6 @@
 
     async function uploadCurrentReportToDrive() {
         const btn = document.getElementById('btnSaveDriveReportSingle');
-        if (isSampleMode) { alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다."); return; }
         if (isSavingDrive) return;
         isSavingDrive = true;
 
@@ -963,11 +1001,6 @@
         const originalHtml = '';
 
         try {
-            if (isSampleMode) {
-                alert("⚠️ 견본(샘플) 데이터는 드라이브에 저장할 수 없습니다.\n실제 게임을 진행한 후 저장해주세요.");
-                console.warn("[saveToDrive] blocked: sample mode");
-                return;
-            }
 
             if (!_fromFinish) {
                 const ok = confirm("현재 게임 결과를 [명예의 전당] 데이터베이스에 저장하시겠습니까?");
@@ -1019,6 +1052,7 @@
                 mode: currentMode,
                 date: dateStr,
                 game_variant: currentGameVariant,
+                is_test: isSampleMode,
                 individuals: players.map(p => ({
                     game_id: p.gameId || null,
                     user_id: p.userId || null,
@@ -1158,10 +1192,11 @@
                 const _rv = g.game_variant || 'basic';
                 const variantLabel = _rv === 'advanced' ? '심화' : _rv === 'rich_vessel' ? '부자의 그릇' : '기본';
                 const variantTag   = _rv === 'advanced' ? 'tag-advanced' : _rv === 'rich_vessel' ? 'tag-rich' : 'tag-basic';
+                const isTestGame   = !!g.is_test;
                 const card = document.createElement('div');
                 card.className = 'past-game-card';
                 card.innerHTML = `
-                    <div class="past-game-card-title">${sectionLabel}</div>
+                    <div class="past-game-card-title">${sectionLabel}${isTestGame ? ' <span class="tag-test">🧪 테스트</span>' : ''}</div>
                     <div class="past-game-card-meta">
                         <span>${names || '참가자 정보 없음'}</span>
                         <span>참여인원: ${g.player_count}명</span>
