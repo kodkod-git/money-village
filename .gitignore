@@ -3,6 +3,7 @@ gas/
 node_modules/
 .env
 .env.local
+.env.staging
 .supabase/
 .omc/
 .superpowers/
