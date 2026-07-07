@@ -93,5 +93,11 @@ assert(
   /alert\(/.test(printFnBody),
   'printEftiReport should validate required fields with an alert before printing'
 );
+assert(
+  /new Image\(\)/.test(printFnBody) &&
+    printFnBody.indexOf('new Image()') < printFnBody.indexOf('window.print()'),
+  'printEftiReport should preload the background image before calling window.print(), ' +
+    'otherwise large EFTI images can render blank in the print preview (race condition)'
+);
 
 console.log('efti-report-screen.test.js OK');

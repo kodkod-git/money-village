@@ -40,20 +40,24 @@ function printEftiReport() {
 
     const imagePath = `image/efti/${efti}.png`;
 
-    const area = document.getElementById('testReportPrintArea');
-    area.innerHTML = `
-        <div style="position:relative; display:inline-block; width:100%;">
-            <img src="${imagePath}" style="width:100%; display:block;">
-            <span class="tr-overlay tr-name">${name}</span>
-            <span class="tr-overlay tr-age">${age}세</span>
-            <span class="tr-overlay tr-date">${date}</span>
-        </div>
-    `;
+    const preload = new Image();
+    preload.onload = preload.onerror = function () {
+        const area = document.getElementById('testReportPrintArea');
+        area.innerHTML = `
+            <div style="position:relative; display:inline-block; width:100%;">
+                <img src="${imagePath}" style="width:100%; display:block;">
+                <span class="tr-overlay tr-name">${name}</span>
+                <span class="tr-overlay tr-age">${age}세</span>
+                <span class="tr-overlay tr-date">${date}</span>
+            </div>
+        `;
 
-    document.body.classList.add('printing-test-report');
-    window.print();
-    document.body.classList.remove('printing-test-report');
-    area.innerHTML = '';
+        document.body.classList.add('printing-test-report');
+        window.print();
+        document.body.classList.remove('printing-test-report');
+        area.innerHTML = '';
 
-    resetEftiReportForm();
+        resetEftiReportForm();
+    };
+    preload.src = imagePath;
 }
