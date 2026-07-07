@@ -55,8 +55,8 @@
             <button class="btn btn-citizen" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openCitizenMgmtModal()">
                 👥 머니빌리지 시민권자 관리
             </button>
-            <button class="btn btn-primary" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="showTestReportScreen()">
-                📋 경제적 잠재력 테스트 보고서
+            <button class="btn btn-primary" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="showReportHubScreen()">
+                📋 머니빌리지 경제적 유형 보고서
             </button>
         </div>
     </div>
@@ -1107,11 +1107,56 @@
         </div>
     </div>
 
+    <!-- 보고서 선택 화면 -->
+    <div id="reportHubScreen" class="screen">
+        <div class="bank-screen-wrap">
+            <div class="bank-screen-header">
+                <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                <div class="bank-screen-title">📋 머니빌리지 경제적 유형 보고서</div>
+            </div>
+            <div style="padding:24px;">
+                <button class="btn btn-primary" style="width:100%; padding:15px; margin-bottom:16px; font-size:16px; justify-content:center; font-weight:900;" onclick="showEftiReportScreen()">
+                    🧭 경제적 유형 보고서
+                </button>
+                <button class="btn btn-primary" style="width:100%; padding:15px; font-size:16px; justify-content:center; font-weight:900;" onclick="showTestReportScreen()">
+                    📋 경제적 잠재력 테스트 보고서
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 경제적 유형 보고서 입력 화면 -->
+    <div id="eftiReportScreen" class="screen">
+        <div class="bank-screen-wrap">
+            <div class="bank-screen-header">
+                <button class="bank-back-btn" onclick="switchScreen('reportHubScreen')">←</button>
+                <div class="bank-screen-title">🧭 경제적 유형 보고서</div>
+            </div>
+            <div class="efti-form-wrap">
+                <label class="efti-form-label">이름</label>
+                <input id="eftiName" class="efti-form-input" type="text" placeholder="이름을 입력하세요">
+
+                <label class="efti-form-label">나이</label>
+                <input id="eftiAge" class="efti-form-input" type="number" placeholder="나이를 입력하세요">
+
+                <label class="efti-form-label">EFTI</label>
+                <select id="eftiType" class="efti-form-input"></select>
+
+                <label class="efti-form-label">날짜</label>
+                <input id="eftiDate" class="efti-form-input" type="date">
+
+                <button class="btn btn-success" style="width:100%; padding:15px; margin-top:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="printEftiReport()">
+                    🖨️ 출력하기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 경제적 잠재력 테스트 보고서 화면 -->
     <div id="testReportScreen" class="screen">
         <div class="bank-screen-wrap">
             <div class="bank-screen-header">
-                <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                <button class="bank-back-btn" onclick="switchScreen('reportHubScreen')">←</button>
                 <div class="bank-screen-title">📋 경제적 잠재력 테스트 보고서</div>
                 <button class="btn btn-primary" style="margin-left:auto; padding:8px 14px; font-size:13px;" onclick="fetchTestReports()">🔄 새로고침</button>
             </div>
@@ -1143,6 +1188,7 @@
 <script src="js/quiz.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/test-report.js"></script>
+<script src="js/efti-report.js"></script>
 <script>
     if (typeof KAKAO_APP_KEY !== 'undefined' && KAKAO_APP_KEY && typeof Kakao !== 'undefined') {
         Kakao.init(KAKAO_APP_KEY);
