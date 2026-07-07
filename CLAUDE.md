@@ -29,6 +29,8 @@ No build step required. Open `index.html` directly in a browser. Chrome is requi
 | `bankScreen` | `js/bank.js` | 은행 예금 시뮬레이터 (3라운드) |
 | `quizScreen` | `js/quiz.js` | OX 퀴즈 퀘스트 |
 | `testReportScreen` | `js/test-report.js` | 경제적 잠재력 테스트 결과 조회 |
+| `reportHubScreen` | `js/efti-report.js` | 보고서 선택 화면 (유형 보고서 / 잠재력 테스트 보고서) |
+| `eftiReportScreen` | `js/efti-report.js` | 이름/나이/EFTI/날짜 직접 입력 → EFTI 배경 이미지로 즉시 출력 |
 
 ## Code Organization
 
@@ -45,6 +47,7 @@ No build step required. Open `index.html` directly in a browser. Chrome is requi
 | `js/bank.js` | bankScreen 로직 (예금 3라운드) |
 | `js/quiz.js` | quizScreen 로직 (OX 퀴즈) |
 | `js/test-report.js` | testReportScreen — JSONP로 설문 결과 로드 |
+| `js/efti-report.js` | reportHubScreen / eftiReportScreen — EFTI 직접 입력 즉시 출력 보고서 |
 | `js/arduino.js` | Web Serial API Arduino 연동 |
 | `js/supabase-client.js` | 브라우저용 Supabase `sb*` 함수 전체 |
 | `js/supabase-api.js` | (참조용) Node.js 환경 Supabase 래퍼 — 프로덕션에서 미사용 |
