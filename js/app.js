@@ -113,7 +113,7 @@
 
         _bankStopSync();
         _quizStopSync();
-        _luckStopSync();
+        if (typeof _luckStopSync === 'function') _luckStopSync();
         if (id === 'bankScreen') _bankStartSync();
         if (id === 'quizScreen') _quizStartSync();
         if (id === 'luckScreen') _luckStartSync();
