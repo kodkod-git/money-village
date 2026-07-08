@@ -24,4 +24,11 @@ assert(
 assert(html.includes('id="luckModal"'), 'index.html should define luckModal');
 assert(html.includes('id="luckScreen"'), 'index.html should define luckScreen');
 
+assert(html.includes('id="luckDateSelect"'), 'luckModal should have a date select, mirroring bankModal/quizModal');
+assert(html.includes('onclick="luckStep1Complete()"'), 'luckModal should have a 설정 완료 button');
+assert(html.includes('id="luckRpsMultiplierDisplay"'), 'luckModal should show the RPS multiplier');
+assert(html.includes('id="luckRouletteMultiplierDisplay"'), 'luckModal should show the roulette multiplier');
+assert(html.includes('id="luckDiceMultiplierDisplay"'), 'luckModal should show the dice multiplier');
+assert(html.includes(`onclick="luckAdjustMultiplier('rps', -1)"`), 'RPS multiplier stepper should call luckAdjustMultiplier');
+
 console.log('luck-screen-markup.test.js (entry + script) passed');

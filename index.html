@@ -823,6 +823,58 @@
         </div>
     </div>
 
+    <!-- 머니빌리지 행운 모달 -->
+    <div id="luckModal" class="modal-backdrop" onclick="handleLuckModalBackdrop(event)">
+        <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🍀 머니빌리지 행운</h3>
+                <p>날짜와 분반을 선택한 뒤 보상 배수를 설정하세요</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>게임 날짜</label>
+                    <select id="luckDateSelect" onchange="onLuckDateChange()">
+                        <option value="">-- 날짜를 선택하세요 --</option>
+                    </select>
+                </div>
+                <div id="luckGameLoading" style="display:none; text-align:center; padding:10px; color:#888; font-size:14px;">불러오는 중...</div>
+                <div id="luckGameCardsGrid" class="past-game-cards-grid"></div>
+
+                <div id="luckMultiplierSection" style="display:none; margin-top:16px;">
+                    <div class="bank-section-divider">🎲 보상 배수 설정</div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">✂️ 가위바위보</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('rps', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckRpsMultiplierDisplay">4배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('rps', 1)">▲</button>
+                        </div>
+                    </div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">🎡 룰렛 색깔 맞추기</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('roulette', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckRouletteMultiplierDisplay">5배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('roulette', 1)">▲</button>
+                        </div>
+                    </div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">🎲 주사위 눈금 맞추기</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('dice', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckDiceMultiplierDisplay">7배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('dice', 1)">▲</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeLuckModal()">닫기</button>
+                <button class="btn btn-success" id="luckStep1Btn" onclick="luckStep1Complete()" disabled>설정 완료</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 시민권자 관리 모달 -->
     <div id="citizenMgmtModal" class="modal-backdrop" onclick="handleCitizenMgmtBackdrop(event)">
         <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
