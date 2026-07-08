@@ -817,6 +817,7 @@
         /* 은행 예금 버튼 (보라) / 퀴즈 버튼 (초록) */
         .btn-bank { background: #00897b; color: #fff; }
         .btn-quiz { background: #7B3F99; color: #fff; }
+        .btn-luck { background: #c0392b; color: #fff; }
 
         /* 은행 예금 모달 */
         .bank-modal-card { max-width: 580px; }
@@ -1590,6 +1591,74 @@
             font-size: 17px; font-weight: 700;
             padding: 3px 12px; border-radius: 10px;
             background: #fdecea; color: #c62828;
+        }
+
+        /* ── 행운 ─────────────────────────────────────────────── */
+
+        /* 행운 화면: 빨강 테마 */
+        #luckView2 .bank-screen-title {
+            color: #c0392b;
+        }
+        #luckView2 .bank-player-card {
+            background: #fdf1f0;
+            border-color: #f5c6c2;
+        }
+        #luckView2 .bank-player-card:hover {
+            border-color: #c0392b;
+            background: #fbe3e1;
+            box-shadow: 0 3px 12px rgba(192,57,43,0.15);
+        }
+        #luckView2 .bank-player-nickname {
+            color: #922b21;
+        }
+        .luck-earned-badge {
+            display: inline-block;
+            background: #fdecea;
+            color: #c0392b;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            padding: 2px 8px;
+        }
+
+        /* 행운 게임 플레이 스테이지 */
+        .luck-game-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+        }
+        .luck-game-img {
+            max-width: 220px;
+            max-height: 220px;
+        }
+        .luck-choice-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .luck-choice-btns .btn-luck {
+            flex: 1;
+            padding: 16px;
+            font-size: 16px;
+            justify-content: center;
+        }
+        .luck-color-btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* 룰렛 회전 애니메이션 */
+        @keyframes luck-spin {
+            to { transform: rotate(360deg); }
+        }
+        .luck-roulette-spinning {
+            animation: luck-spin 1s linear infinite;
         }
 
         /* 퀴즈 게임 뷰 (fixed overlay) */
