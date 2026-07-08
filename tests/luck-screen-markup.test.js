@@ -31,4 +31,30 @@ assert(html.includes('id="luckRouletteMultiplierDisplay"'), 'luckModal should sh
 assert(html.includes('id="luckDiceMultiplierDisplay"'), 'luckModal should show the dice multiplier');
 assert(html.includes(`onclick="luckAdjustMultiplier('rps', -1)"`), 'RPS multiplier stepper should call luckAdjustMultiplier');
 
+// View 2: 목록 — 보상 배지/팀 탭 없어야 함
+assert(html.includes('id="luckPlayerGrid"'), 'luckScreen should have a player grid');
+assert(!/#luckScreen[\s\S]{0,400}player-tab-bar/.test(html), 'luckScreen should not have a team/individual tab bar');
+assert(html.includes('onclick="luckClose()"'), 'luckScreen should have a 마감 button');
+assert(html.includes('onclick="luckReset()"'), 'luckScreen should have a 전체 초기화 button');
+
+// View 3: 게임 선택
+assert(html.includes(`onclick="luckSelectGame('rps')"`), 'game-select view should offer RPS');
+assert(html.includes(`onclick="luckSelectGame('roulette')"`), 'game-select view should offer roulette');
+assert(html.includes(`onclick="luckSelectGame('dice')"`), 'game-select view should offer dice');
+
+// View 4: 배팅 신청서 — 예금 신청서(bank View3)와 동일한 스테퍼 재사용
+assert(html.includes('id="luckBetAmountDisplay"'), 'bet view should show the bet amount');
+assert(/onmousedown="startHold\(\(\)=>luckAdjustBet\(-10000\)\)"/.test(html), 'bet stepper should reuse startHold/stopHold like the deposit form');
+assert(html.includes('onclick="luckStep2Submit()"'), 'bet view should have a 배팅 완료 button');
+
+// View 5: 게임 플레이
+assert(html.includes('id="luckGameImg"'), 'play view should have a single game image element shared by all 3 games');
+assert(html.includes(`onclick="luckRpsPick('scissors')"`), 'play view should have RPS pick buttons');
+assert(html.includes(`onclick="luckRoulettePick('red')"`), 'play view should have roulette color buttons');
+assert(html.includes('onclick="luckDiceStop()"'), 'play view should have a dice 멈춤 button');
+
+// View 6: 결과
+assert(html.includes('id="luckRReward"'), 'result view should show the reward amount');
+assert(html.includes('onclick="luckNextStudent()"'), 'result view should have a 다른 학생 배팅 접수 button');
+
 console.log('luck-screen-markup.test.js (entry + script) passed');
