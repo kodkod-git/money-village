@@ -275,3 +275,63 @@ function _luckMergeRemoteState(state, history) {
 
     _luckSyncMultiplierUI();
 }
+
+// ── 뷰 전환 (luckScreen 내 View 2~6) ─────────────────────────────
+function _luckShowView(n) {
+    [2, 3, 4, 5, 6].forEach(i => {
+        const el = document.getElementById('luckView' + i);
+        if (el) el.style.display = i === n ? 'block' : 'none';
+    });
+}
+
+// ── View 2: 플레이어 목록 ────────────────────────────────────────
+function _luckRenderPlayerList() {
+    const closeBtn = document.getElementById('luckCloseBtn');
+    if (closeBtn) {
+        closeBtn.disabled    = _luck.isClosed;
+        closeBtn.textContent = _luck.isClosed ? '마감됨' : '마감';
+    }
+
+    const grid = document.getElementById('luckPlayerGrid');
+    renderActivityPlayerList({
+        grid,
+        players: _luck.players,
+        useTeamGroups: false,
+        getPlayerGroupState: ({ player }) => {
+            const earned = _luck.earnedRewards[player.nickname] || 0;
+            const headerHtml = earned > 0
+                ? `<span class="luck-earned-badge">+${earned.toLocaleString()}원</span>`
+                : '';
+            return { done: false, headerHtml };
+        },
+        getPlayerCardState: ({ index }) => ({
+            done: false,
+            disabled: _luck.isClosed,
+            onClick: () => luckSelectPlayer(index),
+        }),
+    });
+}
+
+// ── 마감 / 초기화 ─────────────────────────────────────────────────
+async function luckClose() {
+    if (_luck.isClosed) return;
+    if (!confirm('행운 게임을 마감합니다.\n이후 진행이 불가능합니다.\n마감하시겠습니까?')) return;
+    _luck.isClosed = true;
+    await sbUpsertLuckState(_luck.gameId, { is_closed: true });
+    _luckRenderPlayerList();
+}
+
+async function luckReset() {
+    if (!_luck.gameId) return;
+    if (!confirm('이전에 기록되었던 모든 데이터가 삭제됩니다.\n초기화 하시겠습니까?')) return;
+
+    const result = await sbDeleteLuckHistory(_luck.gameId);
+    if (!result.success) { alert('초기화에 실패했습니다. 다시 시도해주세요.'); return; }
+
+    _luck.earnedRewards = {};
+    _luck.isClosed = false;
+    await sbUpsertLuckState(_luck.gameId, { is_closed: false });
+    await Promise.all(_luck.players.map(p => sbSaveLuckReward(_luck.gameId, p.user_id, 0)));
+
+    _luckRenderPlayerList();
+}

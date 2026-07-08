@@ -36,4 +36,20 @@ assert(/setInterval\(_luckPollAndMerge, 3000\)/.test(js), 'luck sync should poll
 assert(/async function _luckPollAndMerge\(\)/.test(js), '_luckPollAndMerge should exist');
 assert(/function _luckMergeRemoteState\(state, history\)/.test(js), '_luckMergeRemoteState should exist');
 
+assert(/function _luckShowView\(n\)/.test(js), '_luckShowView should exist to toggle View2~6');
+assert(/\[2, 3, 4, 5, 6\]\.forEach/.test(js), '_luckShowView should manage all 5 views');
+
+assert(/function _luckRenderPlayerList\(\)/.test(js), '_luckRenderPlayerList should exist');
+assert(/useTeamGroups:\s*false/.test(js), 'luck player list should never use team groups (individual-only per the design)');
+assert(!/getTeamGroupState/.test(js), 'luck.js should not need getTeamGroupState since there is no team mode');
+assert(/disabled:\s*_luck\.isClosed/.test(js), 'player cards should disable once the round is closed, with no cooldown/attempt-limit logic otherwise');
+assert(!/cooldown/i.test(js), 'luck.js must not port quiz-style cooldown logic (explicitly out of scope)');
+
+assert(/async function luckClose\(\)/.test(js), 'luckClose should exist');
+assert(/sbUpsertLuckState\(_luck\.gameId, \{ is_closed: true \}\)/.test(js), 'luckClose should persist is_closed');
+
+assert(/async function luckReset\(\)/.test(js), 'luckReset should exist');
+assert(/sbDeleteLuckHistory\(_luck\.gameId\)/.test(js), 'luckReset should delete all history for the game');
+assert(/sbSaveLuckReward\(_luck\.gameId, p\.user_id, 0\)/.test(js), 'luckReset should zero out each player\'s persisted luck_reward');
+
 console.log('luck-core.test.js passed');
