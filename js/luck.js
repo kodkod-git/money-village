@@ -335,3 +335,63 @@ async function luckReset() {
 
     _luckRenderPlayerList();
 }
+
+// ── View 2 → 3: 플레이어 선택 ─────────────────────────────────────
+function luckSelectPlayer(idx) {
+    _luck.currentPlayerIdx = idx;
+    const p = _luck.players[idx];
+    document.getElementById('luckGameSelectPlayerName').textContent = `${p.nickname}(${p.real_name})의 게임 선택`;
+    _luckShowView(3);
+}
+
+function luckBackToList() {
+    _luckShowView(2);
+}
+
+function luckBackToGameSelect() {
+    _luckShowView(3);
+}
+
+// ── View 3 → 4: 게임 선택 → 배팅 신청서 ────────────────────────────
+function luckSelectGame(type) {
+    _luck.selectedGame = type;
+    const p = _luck.players[_luck.currentPlayerIdx];
+    document.getElementById('luckBetPlayerName').textContent =
+        `${p.nickname}(${p.real_name}) · ${_LUCK_GAME[type].label}`;
+    document.getElementById('luckBetAmountDisplay').textContent = _luck.bet.amount.toLocaleString() + '원';
+    _luckUpdateBetPreview();
+    _luckShowView(4);
+}
+
+function luckAdjustBet(delta) {
+    const next = _luck.bet.amount + delta;
+    if (next < 0) return;
+    _luck.bet.amount = next;
+    document.getElementById('luckBetAmountDisplay').textContent = next.toLocaleString() + '원';
+    _luckUpdateBetPreview();
+}
+
+function _luckUpdateBetPreview() {
+    const mult = _luck.multipliers[_luck.selectedGame];
+    const out  = Math.round(_luck.bet.amount * mult);
+    document.getElementById('luckBetPreviewBox').textContent =
+        `${_luck.bet.amount.toLocaleString()}원 → 🎉 ${out.toLocaleString()}원 (승리 시)`;
+}
+
+// ── View 4 → 5: 배팅 완료 → 게임 플레이 ────────────────────────────
+function luckStep2Submit() {
+    _luckShowView(5);
+    _luckStartGame();
+}
+
+function _luckStartGame() {
+    const type = _luck.selectedGame;
+    document.getElementById('luckPlayGameTitle').textContent = `${_LUCK_GAME[type].icon} ${_LUCK_GAME[type].label}`;
+    document.getElementById('luckRpsButtons').style.display      = type === 'rps'      ? 'flex' : 'none';
+    document.getElementById('luckRouletteButtons').style.display = type === 'roulette' ? 'flex' : 'none';
+    document.getElementById('luckDiceButtons').style.display     = type === 'dice'     ? 'flex' : 'none';
+
+    if (type === 'rps')      _luckRpsStart();
+    if (type === 'roulette') _luckRouletteStart();
+    if (type === 'dice')     _luckDiceStart();
+}

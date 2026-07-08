@@ -52,4 +52,23 @@ assert(/async function luckReset\(\)/.test(js), 'luckReset should exist');
 assert(/sbDeleteLuckHistory\(_luck\.gameId\)/.test(js), 'luckReset should delete all history for the game');
 assert(/sbSaveLuckReward\(_luck\.gameId, p\.user_id, 0\)/.test(js), 'luckReset should zero out each player\'s persisted luck_reward');
 
+assert(/function luckSelectPlayer\(idx\)/.test(js), 'luckSelectPlayer should exist');
+assert(/_luckShowView\(3\)/.test(js), 'luckSelectPlayer should navigate to the game-select view');
+
+assert(/function luckBackToList\(\)/.test(js), 'luckBackToList should exist');
+assert(/function luckBackToGameSelect\(\)/.test(js), 'luckBackToGameSelect should exist');
+
+assert(/function luckSelectGame\(type\)/.test(js), 'luckSelectGame should exist');
+assert(/_luckShowView\(4\)/.test(js), 'luckSelectGame should navigate to the bet view');
+
+assert(/function luckAdjustBet\(delta\)/.test(js), 'luckAdjustBet should exist');
+assert(/if \(next < 0\) return;/.test(js), 'bet amount should not go negative');
+
+assert(/function _luckUpdateBetPreview\(\)/.test(js), '_luckUpdateBetPreview should exist');
+assert(/_luck\.multipliers\[_luck\.selectedGame\]/.test(js), 'bet preview should use the selected game\'s multiplier');
+
+assert(/function luckStep2Submit\(\)/.test(js), 'luckStep2Submit should exist');
+assert(/_luckShowView\(5\)/.test(js), 'luckStep2Submit should navigate to the play view');
+assert(/function _luckStartGame\(\)/.test(js), '_luckStartGame should exist to dispatch to the selected game engine');
+
 console.log('luck-core.test.js passed');
