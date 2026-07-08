@@ -1757,7 +1757,7 @@
         .efti-form-input:focus { border-color: #1565c0; }
 
         .tr-overlay { position: absolute; color: #333; font-weight: 700; font-size: 2.0vw; line-height: 1; }
-        .tr-name { top: 11.9%; left: 21%; }
+        .tr-name { top: 11.9%; left: 17.5%; }
         .tr-age  { top: 11.9%; left: 47.5%; }
         .tr-date { top: 11.9%; left: 78.5%; }
         #testReportPrintArea { display: none; }
