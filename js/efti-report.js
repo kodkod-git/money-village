@@ -46,9 +46,9 @@ function printEftiReport() {
         area.innerHTML = `
             <div style="position:relative; display:inline-block; width:100%;">
                 <img src="${imagePath}" style="width:100%; display:block;">
-                <span class="tr-overlay tr-name">${name}</span>
-                <span class="tr-overlay tr-age">${age}세</span>
-                <span class="tr-overlay tr-date">${date}</span>
+                <span class="tr-overlay efti-report-name">${name}</span>
+                <span class="tr-overlay efti-report-age">${age}세</span>
+                <span class="tr-overlay efti-report-date">${date}</span>
             </div>
         `;
 

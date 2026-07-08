@@ -73,14 +73,22 @@ assert(
   'printEftiReport should build the background image path from image/efti/{EFTI}.png'
 );
 assert(
-  eftiJs.includes('class="tr-overlay tr-name"') &&
-    eftiJs.includes('class="tr-overlay tr-age"') &&
-    eftiJs.includes('class="tr-overlay tr-date"'),
-  'printEftiReport should reuse the existing tr-overlay/tr-name/tr-age/tr-date classes'
+  eftiJs.includes('class="tr-overlay efti-report-name"') &&
+    eftiJs.includes('class="tr-overlay efti-report-age"') &&
+    eftiJs.includes('class="tr-overlay efti-report-date"'),
+  'printEftiReport should use EFTI-only overlay position classes so test report positions are unchanged'
 );
 assert(
-  !eftiJs.includes('tr-overlay tr-efti'),
-  'EFTI code should only drive the background image, not appear as a text overlay'
+  !eftiJs.includes('class="tr-overlay tr-name"') &&
+    !eftiJs.includes('class="tr-overlay tr-age"') &&
+    !eftiJs.includes('class="tr-overlay tr-date"'),
+  'printEftiReport should not reuse the test report overlay position classes'
+);
+assert(
+  /\.efti-report-name\s*\{\s*top:\s*8\.8%;\s*left:\s*17\.5%;\s*\}/.test(css) &&
+    /\.efti-report-age\s*\{\s*top:\s*8\.8%;\s*left:\s*47\.5%;\s*\}/.test(css) &&
+    /\.efti-report-date\s*\{\s*top:\s*8\.8%;\s*left:\s*78\.5%;\s*\}/.test(css),
+  'style.css should move only the EFTI report name/age/date overlays upward'
 );
 assert(/window\.print\(\)/.test(eftiJs), 'printEftiReport should call window.print()');
 

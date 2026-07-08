@@ -25,17 +25,22 @@ function fetchTestReports() {
 
     const cbName = '_trCb_' + Date.now();
     const script = document.createElement('script');
+    function removeJsonpScript() {
+        if (document.body.contains(script)) {
+            document.body.removeChild(script);
+        }
+    }
 
     const timeout = setTimeout(() => {
         delete window[cbName];
-        if (document.body.contains(script)) document.body.removeChild(script);
+        removeJsonpScript();
         container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 응답 시간 초과<br><small style="color:#aaa">GAS 배포 URL을 확인하거나 잠시 후 재시도해 주세요.</small><br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>';
     }, 12000);
 
     window[cbName] = function(data) {
         clearTimeout(timeout);
         delete window[cbName];
-        document.body.removeChild(script);
+        removeJsonpScript();
         if (!data.success) {
             const detail = data.message ? `<br><small style="color:#aaa">${data.message}</small>` : '';
             container.innerHTML = `<div class="tr-status-msg">❌ 오류: ${data.code || 'FETCH_ERROR'}${detail}<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>`;
@@ -52,7 +57,7 @@ function fetchTestReports() {
     script.onerror = function() {
         clearTimeout(timeout);
         delete window[cbName];
-        document.body.removeChild(script);
+        removeJsonpScript();
         container.innerHTML = '<div class="tr-status-msg">❌ 불러오기 실패: 네트워크 오류<br><br><button onclick="fetchTestReports()" style="padding:8px 16px;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 재시도</button></div>';
     };
 
