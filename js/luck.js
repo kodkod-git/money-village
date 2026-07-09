@@ -279,6 +279,8 @@ function _luckMergeRemoteState(state, history) {
 
 // ── 뷰 전환 (luckScreen 내 View 2~6) ─────────────────────────────
 function _luckShowView(n) {
+    const wrap = document.querySelector('#luckScreen .bank-screen-wrap');
+    if (wrap) wrap.classList.toggle('is-luck-play-view', n === 5);
     [2, 3, 4, 5, 6].forEach(i => {
         const el = document.getElementById('luckView' + i);
         if (el) el.style.display = i === n ? (i === 2 ? 'flex' : 'block') : 'none';
@@ -353,13 +355,32 @@ function _luckResetGameImg() {
         clearInterval(_luck.rpsCycleTimer);
         _luck.rpsCycleTimer = null;
     }
+    if (_rouletteSpinFrame) {
+        cancelAnimationFrame(_rouletteSpinFrame);
+        _rouletteSpinFrame = null;
+    }
+    _rouletteLastTs = null;
     const img = document.getElementById('luckGameImg');
     if (img) {
         img.classList.remove('luck-roulette-spinning');
+        img.classList.remove('luck-roulette-wheel');
         img.style.transform = '';
         img.style.transition = '';
         img.style.display = '';
     }
+    const roulettePointer = document.getElementById('luckRoulettePointer');
+    if (roulettePointer) roulettePointer.style.display = 'none';
+    const rpsStage = document.getElementById('luckRpsStage');
+    if (rpsStage) rpsStage.style.display = 'none';
+    const rpsComputer = document.getElementById('luckRpsComputerImg');
+    if (rpsComputer) rpsComputer.src = '';
+    const rpsPlayer = document.getElementById('luckRpsPlayerImg');
+    if (rpsPlayer) {
+        rpsPlayer.src = '';
+        rpsPlayer.style.display = 'none';
+    }
+    const rpsPlaceholder = document.getElementById('luckRpsPlayerPlaceholder');
+    if (rpsPlaceholder) rpsPlaceholder.style.display = 'block';
     if (_diceRollFrame) {
         cancelAnimationFrame(_diceRollFrame);
         _diceRollFrame = null;
@@ -405,7 +426,7 @@ function _luckUpdateBetPreview() {
     const mult = _luck.multipliers[_luck.selectedGame];
     const out  = Math.round(_luck.bet.amount * mult);
     document.getElementById('luckBetPreviewBox').textContent =
-        `${_luck.bet.amount.toLocaleString()}원 → 🎉 ${out.toLocaleString()}원 (승리 시)`;
+        `${_luck.bet.amount.toLocaleString()}원 → 🎉 ${out.toLocaleString()}원 (성공 시)`;
 }
 
 // ── View 3 → 5: 배팅 완료 → 게임 플레이 ────────────────────────────
@@ -421,10 +442,14 @@ function luckStep2Submit() {
 function _luckStartGame() {
     _luckResetGameImg();
     const type = _luck.selectedGame;
+    document.getElementById('luckView6').style.display = 'none';
+    _luckResetChoiceButtons();
     document.getElementById('luckPlayGameTitle').textContent = `${_LUCK_GAME[type].icon} ${_LUCK_GAME[type].label}`;
     document.getElementById('luckRpsButtons').style.display      = type === 'rps'      ? 'flex' : 'none';
     document.getElementById('luckRouletteButtons').style.display = type === 'roulette' ? 'flex' : 'none';
     document.getElementById('luckDiceButtons').style.display     = type === 'dice'     ? 'flex' : 'none';
+    document.getElementById('luckRpsStage').style.display        = type === 'rps'      ? 'grid' : 'none';
+    document.getElementById('luckGameImg').style.display         = type === 'rps'      ? 'none' : '';
 
     if (type === 'rps')      _luckRpsStart();
     if (type === 'roulette') _luckRouletteStart();
@@ -446,18 +471,38 @@ function _luckResolve(isWin, detail) {
         sbSaveLuckReward(_luck.gameId, p.user_id, _luck.earnedRewards[p.nickname]).catch(console.error);
     }
 
-    document.getElementById('luckResultTitle').textContent = isWin ? '🎉 승리!' : '😢 실패';
+    document.getElementById('luckResultTitle').textContent = isWin ? '🎉 성공!' : '😢 실패';
     document.getElementById('luckRGame').textContent   = _LUCK_GAME[type].label;
     document.getElementById('luckRPlayer').textContent = `${p.nickname} (${p.real_name})`;
     document.getElementById('luckRBet').textContent    = amount.toLocaleString() + '원';
     document.getElementById('luckRReward').textContent = isWin ? matured.toLocaleString() + '원' : '0원';
 
-    _luckShowView(6);
+    _luckDisableVisibleChoiceButtons();
+    document.getElementById('luckView6').style.display = 'block';
 }
 
 function luckNextStudent() {
     _luckRenderPlayerList();
     _luckShowView(2);
+}
+
+function _luckResetChoiceButtons() {
+    document.querySelectorAll('#luckRpsButtons .btn, #luckRouletteButtons .btn, #luckDiceButtons .btn').forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('is-selected');
+    });
+}
+
+function _luckDisableVisibleChoiceButtons() {
+    document.querySelectorAll('#luckRpsButtons .btn, #luckRouletteButtons .btn, #luckDiceButtons .btn').forEach(btn => {
+        btn.disabled = true;
+    });
+}
+
+function _luckMarkSelectedChoice(groupId, choice) {
+    document.querySelectorAll(`#${groupId} .btn`).forEach(btn => {
+        btn.classList.toggle('is-selected', btn.dataset.choice === choice);
+    });
 }
 
 // ── 가위바위보 ─────────────────────────────────────────────────────
@@ -471,19 +516,26 @@ const _RPS_BEATS = { scissors: 'paper', rock: 'scissors', paper: 'rock' };
 
 function _luckRpsStart() {
     let i = 0;
-    document.getElementById('luckGameImg').src = _RPS_IMAGES[_RPS_ORDER[0]];
+    document.getElementById('luckRpsComputerImg').src = _RPS_IMAGES[_RPS_ORDER[0]];
+    document.getElementById('luckRpsPlayerPlaceholder').style.display = 'block';
+    document.getElementById('luckRpsPlayerImg').style.display = 'none';
     _luck.rpsCycleTimer = setInterval(() => {
         i = (i + 1) % _RPS_ORDER.length;
-        document.getElementById('luckGameImg').src = _RPS_IMAGES[_RPS_ORDER[i]];
+        document.getElementById('luckRpsComputerImg').src = _RPS_IMAGES[_RPS_ORDER[i]];
     }, 200);
 }
 
 function luckRpsPick(playerChoice) {
+    _luckMarkSelectedChoice('luckRpsButtons', playerChoice);
     clearInterval(_luck.rpsCycleTimer);
     _luck.rpsCycleTimer = null;
-    document.getElementById('luckGameImg').src = _RPS_IMAGES[playerChoice];
+    document.getElementById('luckRpsPlayerPlaceholder').style.display = 'none';
+    const playerImg = document.getElementById('luckRpsPlayerImg');
+    playerImg.src = _RPS_IMAGES[playerChoice];
+    playerImg.style.display = 'block';
 
     const computerChoice = _RPS_ORDER[Math.floor(Math.random() * 3)];
+    document.getElementById('luckRpsComputerImg').src = _RPS_IMAGES[computerChoice];
     const isWin = _RPS_BEATS[playerChoice] === computerChoice;
     _luckResolve(isWin, { playerChoice, computerChoice });
 }
@@ -491,29 +543,55 @@ function luckRpsPick(playerChoice) {
 // ── 룰렛 색깔 맞추기 ─────────────────────────────────────────────
 const _ROULETTE_COLORS = ['red', 'blue', 'yellow', 'green'];
 const _ROULETTE_DEG    = { red: 0, blue: 90, yellow: 180, green: 270 };
+const _ROULETTE_CENTER_DEG = { red: 45, blue: 135, yellow: 225, green: 315 };
+let _rouletteSpinFrame = null;
+let _rouletteLastTs = null;
+let _rouletteAngle = 0;
 
 function _luckRouletteStart() {
     const img = document.getElementById('luckGameImg');
     img.src = 'image/luck/roulette_wheel.png';
+    img.classList.add('luck-roulette-wheel');
+    document.getElementById('luckRoulettePointer').style.display = 'block';
     img.style.transition = 'none';
-    img.style.transform  = 'rotate(0deg)';
+    _rouletteAngle = 0;
+    img.style.transform  = `rotate(${_rouletteAngle}deg)`;
     void img.offsetWidth; // 강제 리플로우 — transition 리셋
-    img.style.transition = '';
-    img.classList.add('luck-roulette-spinning');
+    _rouletteLastTs = null;
+
+    function spin(ts) {
+        if (_rouletteLastTs == null) _rouletteLastTs = ts;
+        const elapsed = ts - _rouletteLastTs;
+        _rouletteLastTs = ts;
+        _rouletteAngle += elapsed * 1.35;
+        img.style.transform = `rotate(${_rouletteAngle}deg)`;
+        _rouletteSpinFrame = requestAnimationFrame(spin);
+    }
+    _rouletteSpinFrame = requestAnimationFrame(spin);
 }
 
 function luckRoulettePick(playerColor) {
+    _luckMarkSelectedChoice('luckRouletteButtons', playerColor);
+    _luckDisableVisibleChoiceButtons();
     const img = document.getElementById('luckGameImg');
-    img.classList.remove('luck-roulette-spinning');
+    if (_rouletteSpinFrame) {
+        cancelAnimationFrame(_rouletteSpinFrame);
+        _rouletteSpinFrame = null;
+    }
+    _rouletteLastTs = null;
 
     const winningColor = _ROULETTE_COLORS[Math.floor(Math.random() * 4)];
     const extraSpins = 4; // 멈추기 전 시각적으로 몇 바퀴 더 돌림
-    const targetDeg = extraSpins * 360 + _ROULETTE_DEG[winningColor];
-    img.style.transition = 'transform 0.6s ease-out';
+    const currentNormalized = ((_rouletteAngle % 360) + 360) % 360;
+    const winningTopDeg = (360 - _ROULETTE_CENTER_DEG[winningColor]) % 360;
+    const deltaToWinningTop = (winningTopDeg - currentNormalized + 360) % 360;
+    const targetDeg = _rouletteAngle + extraSpins * 360 + deltaToWinningTop;
+    _rouletteAngle = targetDeg;
+    img.style.transition = 'transform 1.4s cubic-bezier(0.12, 0.82, 0.18, 1)';
     img.style.transform  = `rotate(${targetDeg}deg)`;
 
     const isWin = playerColor === winningColor;
-    _luckResolve(isWin, { playerColor, winningColor });
+    setTimeout(() => _luckResolve(isWin, { playerColor, winningColor }), 1400);
 }
 
 // ── 주사위 눈금 맞추기 (3D GLB 모델, Three.js 직접 렌더링) ───────────
@@ -624,7 +702,9 @@ function _luckDiceStart() {
     _diceRollFrame = requestAnimationFrame(tumble);
 }
 
-function luckDiceStop() {
+function luckDiceStop(playerGuess) {
+    _luckMarkSelectedChoice('luckDiceButtons', String(playerGuess));
+    _luckDisableVisibleChoiceButtons();
     const face  = Math.floor(Math.random() * 6) + 1;
     const token = ++_diceResolveToken;
     cancelAnimationFrame(_diceRollFrame);
@@ -643,11 +723,9 @@ function luckDiceStop() {
             _diceRollFrame = requestAnimationFrame(settle);
         } else {
             _diceRollFrame = null;
-            setTimeout(() => {
-                if (token !== _diceResolveToken) return;
-                const isWin = face === 6;
-                _luckResolve(isWin, { face });
-            }, 800);
+            if (token !== _diceResolveToken) return;
+            const isWin = face === playerGuess;
+            _luckResolve(isWin, { face, playerGuess });
         }
     }
     _diceRollFrame = requestAnimationFrame(settle);

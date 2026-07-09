@@ -57,12 +57,21 @@ assert(
 );
 
 // View 5: 게임 플레이
-assert(html.includes('id="luckGameImg"'), 'play view should have a single game image element shared by all 3 games');
+assert(html.includes('id="luckGameImg"'), 'play view should keep the shared game image for roulette');
+assert(html.includes('id="luckRoulettePointer"'), 'roulette view should have a fixed 12-o-clock pointer');
+assert(html.includes('id="luckRpsStage"'), 'play view should have a two-panel RPS stage');
+assert(html.includes('id="luckRpsComputerImg"'), 'RPS stage should show the cycling hand on the left');
+assert(html.includes('id="luckRpsPlayerPlaceholder"'), 'RPS stage should show a ? placeholder before the player picks');
+assert(html.includes('id="luckRpsPlayerImg"'), 'RPS stage should show the picked player hand on the right');
 assert(html.includes(`onclick="luckRpsPick('scissors')"`), 'play view should have RPS pick buttons');
 assert(html.includes(`onclick="luckRoulettePick('red')"`), 'play view should have roulette color buttons');
-assert(html.includes('onclick="luckDiceStop()"'), 'play view should have a dice 멈춤 button');
+for (let i = 1; i <= 6; i++) {
+    assert(html.includes(`onclick="luckDiceStop(${i})"`), `play view should have dice guess button ${i}`);
+}
+assert(!html.includes('onclick="luckDiceStop()"'), 'dice view should not use a generic stop button');
 
 // View 6: 결과
+assert(html.includes('id="luckResultTitle"') && html.includes('🎉 성공!'), 'result title should use 성공 wording');
 assert(html.includes('id="luckRReward"'), 'result view should show the reward amount');
 assert(html.includes('onclick="luckNextStudent()"'), 'result view should have a 다른 학생 배팅 접수 button');
 
