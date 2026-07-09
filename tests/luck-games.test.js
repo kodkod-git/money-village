@@ -39,4 +39,12 @@ assert(/_ROULETTE_COLORS\[Math\.floor\(Math\.random\(\) \* 4\)\]/.test(js), 'win
 assert(/playerColor === winningColor/.test(js), 'win should require the clicked color to match the randomly decided winning color');
 assert(/classList\.remove\('luck-roulette-spinning'\)/.test(js), 'picking a color should stop the spin animation immediately');
 
-console.log('luck-games.test.js (rps portion) passed');
+assert(/function _luckDiceStart\(\)/.test(js), '_luckDiceStart should exist');
+assert(/image\/luck\/dice_spin\.gif/.test(js), 'dice should play a spin GIF while rolling (per the resolved GIF-vs-static-frames design decision)');
+
+assert(/function luckDiceStop\(\)/.test(js), 'luckDiceStop should exist');
+assert(/Math\.floor\(Math\.random\(\) \* 6\) \+ 1/.test(js), 'dice face should be picked 1-6 with Math.random() at click time');
+assert(/`image\/luck\/dice_face_\$\{face\}\.png`/.test(js), 'stopping should swap the GIF for a static per-face image so the shown result is always exact — a GIF cannot be paused at an arbitrary frame');
+assert(/face === 6/.test(js), 'winning requires exactly a 6, per the proposal');
+
+console.log('luck-games.test.js passed');

@@ -498,3 +498,19 @@ function luckRoulettePick(playerColor) {
     const isWin = playerColor === winningColor;
     _luckResolve(isWin, { playerColor, winningColor });
 }
+
+// ── 주사위 눈금 맞추기 ────────────────────────────────────────────
+// GIF는 프레임 위치를 스크립트로 제어할 수 없어 '멈춤' 클릭 순간
+// 정확한 눈금에 멈추게 할 수 없다. 그래서 회전 중엔 연출용 GIF를 재생하고,
+// 멈추는 순간 결과에 해당하는 정적 이미지로 즉시 교체해 항상 정확한 결과를 보여준다.
+function _luckDiceStart() {
+    document.getElementById('luckGameImg').src = 'image/luck/dice_spin.gif';
+}
+
+function luckDiceStop() {
+    const face = Math.floor(Math.random() * 6) + 1;
+    document.getElementById('luckGameImg').src = `image/luck/dice_face_${face}.png`;
+
+    const isWin = face === 6;
+    _luckResolve(isWin, { face });
+}
