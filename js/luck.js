@@ -238,6 +238,10 @@ function _luckStopSync() {
     _luckSyncTimer = null;
     clearTimeout(_luckMultiplierDebounceTimer);
     _luckMultiplierDebounceTimer = null;
+    if (_luck.rpsCycleTimer) {
+        clearInterval(_luck.rpsCycleTimer);
+        _luck.rpsCycleTimer = null;
+    }
 }
 
 async function _luckPollAndMerge() {
@@ -345,6 +349,10 @@ function luckSelectPlayer(idx) {
 }
 
 function luckBackToList() {
+    if (_luck.rpsCycleTimer) {
+        clearInterval(_luck.rpsCycleTimer);
+        _luck.rpsCycleTimer = null;
+    }
     _luckShowView(2);
 }
 
