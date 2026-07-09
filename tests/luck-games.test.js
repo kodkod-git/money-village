@@ -40,11 +40,17 @@ assert(/playerColor === winningColor/.test(js), 'win should require the clicked 
 assert(/classList\.remove\('luck-roulette-spinning'\)/.test(js), 'picking a color should stop the spin animation immediately');
 
 assert(/function _luckDiceStart\(\)/.test(js), '_luckDiceStart should exist');
-assert(/image\/luck\/dice_spin\.gif/.test(js), 'dice should play a spin GIF while rolling (per the resolved GIF-vs-static-frames design decision)');
 
 assert(/function luckDiceStop\(\)/.test(js), 'luckDiceStop should exist');
 assert(/Math\.floor\(Math\.random\(\) \* 6\) \+ 1/.test(js), 'dice face should be picked 1-6 with Math.random() at click time');
-assert(/`image\/luck\/dice_face_\$\{face\}\.png`/.test(js), 'stopping should swap the GIF for a static per-face image so the shown result is always exact — a GIF cannot be paused at an arbitrary frame');
 assert(/face === 6/.test(js), 'winning requires exactly a 6, per the proposal');
+
+// 3D 주사위 (model-viewer)
+assert(/const _DICE_FACE_ORIENTATION = \{/.test(js), '_DICE_FACE_ORIENTATION lookup table should exist for the 3D dice calibration');
+assert(/model\.orientation/.test(js), 'dice engine should drive the model-viewer via its orientation property');
+assert(/requestAnimationFrame\(tumble\)/.test(js), 'dice should tumble continuously via requestAnimationFrame while rolling');
+assert(/cancelAnimationFrame\(_diceRollFrame\)/.test(js), 'stopping the dice should cancel the in-flight roll animation frame');
+assert(/\}, 800\);/.test(js), 'dice should pause about 0.8s on the settled face before resolving, so the result is actually visible');
+assert(/_luckResetGameImg[\s\S]{0,600}_diceRollFrame/.test(js), '_luckResetGameImg should also cancel any in-flight dice animation frame, mirroring the RPS/roulette cleanup fixes');
 
 console.log('luck-games.test.js passed');

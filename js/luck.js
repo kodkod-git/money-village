@@ -357,7 +357,14 @@ function _luckResetGameImg() {
         img.classList.remove('luck-roulette-spinning');
         img.style.transform = '';
         img.style.transition = '';
+        img.style.display = '';
     }
+    if (_diceRollFrame) {
+        cancelAnimationFrame(_diceRollFrame);
+        _diceRollFrame = null;
+    }
+    const model = document.getElementById('luckDiceModel');
+    if (model) model.style.display = 'none';
 }
 
 function luckBackToList() {
@@ -499,18 +506,72 @@ function luckRoulettePick(playerColor) {
     _luckResolve(isWin, { playerColor, winningColor });
 }
 
-// ── 주사위 눈금 맞추기 ────────────────────────────────────────────
-// GIF는 프레임 위치를 스크립트로 제어할 수 없어 '멈춤' 클릭 순간
-// 정확한 눈금에 멈추게 할 수 없다. 그래서 회전 중엔 연출용 GIF를 재생하고,
-// 멈추는 순간 결과에 해당하는 정적 이미지로 즉시 교체해 항상 정확한 결과를 보여준다.
+// ── 주사위 눈금 맞추기 (3D GLB 모델) ────────────────────────────────
+// 각 눈금(1~6)이 카메라를 향할 때의 model-viewer orientation 값.
+// GLB 지오메트리만으로는 자동으로 신뢰성 있게 알아낼 수 없어, 실제 파일이
+// 도착한 뒤 사람이 육안으로 확인해 채워 넣는다. 아래 값은 채워 넣기 전
+// 자리표시자이며, 실제 채워 넣는 작업은 이 plan의 Task 5에서 다룬다.
+// (docs/superpowers/specs/2026-07-09-luck-dice-3d-design.md 참고)
+const _DICE_FACE_ORIENTATION = {
+    1: '0deg 0deg 0deg',
+    2: '0deg 0deg 0deg',
+    3: '0deg 0deg 0deg',
+    4: '0deg 0deg 0deg',
+    5: '0deg 0deg 0deg',
+    6: '0deg 0deg 0deg',
+};
+
+let _diceRollFrame = null;
+
+function _luckParseOrientation(str) {
+    return str.split(' ').map(part => parseFloat(part));
+}
+
+function _luckLerpOrientation(fromStr, toStr, t) {
+    const from = _luckParseOrientation(fromStr);
+    const to   = _luckParseOrientation(toStr);
+    const out  = from.map((v, i) => v + (to[i] - v) * t);
+    return `${out[0]}deg ${out[1]}deg ${out[2]}deg`;
+}
+
 function _luckDiceStart() {
-    document.getElementById('luckGameImg').src = 'image/luck/dice_spin.gif';
+    document.getElementById('luckGameImg').style.display = 'none';
+    const model = document.getElementById('luckDiceModel');
+    model.style.display = 'block';
+
+    let angle = 0;
+    function tumble() {
+        angle += 6;
+        model.orientation = `${angle % 360}deg ${(angle * 1.3) % 360}deg ${(angle * 0.7) % 360}deg`;
+        _diceRollFrame = requestAnimationFrame(tumble);
+    }
+    _diceRollFrame = requestAnimationFrame(tumble);
 }
 
 function luckDiceStop() {
     const face = Math.floor(Math.random() * 6) + 1;
-    document.getElementById('luckGameImg').src = `image/luck/dice_face_${face}.png`;
+    cancelAnimationFrame(_diceRollFrame);
+    _diceRollFrame = null;
 
-    const isWin = face === 6;
-    _luckResolve(isWin, { face });
+    const model = document.getElementById('luckDiceModel');
+    const startOrientation  = model.orientation || '0deg 0deg 0deg';
+    const targetOrientation = _DICE_FACE_ORIENTATION[face];
+    const duration  = 600;
+    const startTime = performance.now();
+
+    function settle(now) {
+        const t     = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        model.orientation = t < 1 ? _luckLerpOrientation(startOrientation, targetOrientation, eased) : targetOrientation;
+        if (t < 1) {
+            _diceRollFrame = requestAnimationFrame(settle);
+        } else {
+            _diceRollFrame = null;
+            setTimeout(() => {
+                const isWin = face === 6;
+                _luckResolve(isWin, { face });
+            }, 800);
+        }
+    }
+    _diceRollFrame = requestAnimationFrame(settle);
 }
