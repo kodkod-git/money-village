@@ -281,7 +281,7 @@ function _luckMergeRemoteState(state, history) {
 function _luckShowView(n) {
     [2, 3, 4, 5, 6].forEach(i => {
         const el = document.getElementById('luckView' + i);
-        if (el) el.style.display = i === n ? (i === 2 ? 'flex' : 'block') : 'none';
+        if (el) el.style.display = i === n ? 'block' : 'none';
     });
 }
 
