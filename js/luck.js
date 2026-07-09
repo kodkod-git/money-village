@@ -509,17 +509,16 @@ function luckRoulettePick(playerColor) {
 
 // ── 주사위 눈금 맞추기 (3D GLB 모델) ────────────────────────────────
 // 각 눈금(1~6)이 카메라를 향할 때의 model-viewer orientation 값.
-// GLB 지오메트리만으로는 자동으로 신뢰성 있게 알아낼 수 없어, 실제 파일이
-// 도착한 뒤 사람이 육안으로 확인해 채워 넣는다. 아래 값은 채워 넣기 전
-// 자리표시자이며, 실제 채워 넣는 작업은 이 plan의 Task 5에서 다룬다.
+// GLB 지오메트리만으로는 자동으로 신뢰성 있게 알아낼 수 없어, 실제 dice_spin.glb를
+// 사람이 육안으로 보정 도구(scratchpad)에서 돌려보며 직접 확인해 채워 넣었다.
 // (docs/superpowers/specs/2026-07-09-luck-dice-3d-design.md 참고)
 const _DICE_FACE_ORIENTATION = {
-    1: '0deg 0deg 0deg',
-    2: '0deg 0deg 0deg',
-    3: '0deg 0deg 0deg',
-    4: '0deg 0deg 0deg',
-    5: '0deg 0deg 0deg',
-    6: '0deg 0deg 0deg',
+    1: '0.0deg 0.0deg 0.0deg',
+    2: '90.0deg 270.0deg 0.0deg',
+    3: '180.0deg 0.0deg 0.0deg',
+    4: '270.0deg 0.0deg 0.0deg',
+    5: '180.0deg 270.0deg 0.0deg',
+    6: '180.0deg 90.0deg 0.0deg',
 };
 
 let _diceRollFrame = null;
