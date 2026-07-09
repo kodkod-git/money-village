@@ -57,4 +57,9 @@ assert(html.includes('onclick="luckDiceStop()"'), 'play view should have a dice 
 assert(html.includes('id="luckRReward"'), 'result view should show the reward amount');
 assert(html.includes('onclick="luckNextStudent()"'), 'result view should have a 다른 학생 배팅 접수 button');
 
+// 3D 주사위 모델 (model-viewer)
+assert(html.includes('@google/model-viewer'), 'index.html should load the model-viewer web component for the 3D dice');
+assert(html.includes('id="luckDiceModel"'), 'play view should have a model-viewer element for the 3D dice');
+assert(/<model-viewer[^>]*src="image\/luck\/dice_spin\.glb"/.test(html), 'luckDiceModel should point at the dice_spin.glb asset');
+
 console.log('luck-screen-markup.test.js (entry + script) passed');
