@@ -1089,7 +1089,8 @@
         .bank-r-total { font-size: 16px; font-weight: 900; }
 
         /* 은행 예금 화면 (bankScreen) */
-        #bankScreen {
+        #bankScreen,
+        #luckScreen {
             background: #F0F4F8;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -1105,6 +1106,7 @@
             padding: 32px 24px;
         }
         #bankScreen .bank-screen-wrap,
+        #luckScreen .bank-screen-wrap,
         #quizView2 > .bank-screen-wrap {
             width: min(92vw, 720px);
             max-width: 720px;
@@ -1123,7 +1125,8 @@
             overflow: hidden;
         }
         #bankView2,
-        #quizView2 {
+        #quizView2,
+        #luckView2 {
             display: flex;
             flex-direction: column;
             flex: 1 1 auto;
@@ -1425,7 +1428,8 @@
             margin-left: 4px;
         }
         #bankPlayerGrid,
-        #quizPlayerGrid {
+        #quizPlayerGrid,
+        #luckPlayerGrid {
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
@@ -1435,7 +1439,8 @@
             padding: 12px 0 10px;
         }
         #bankPlayerGrid::-webkit-scrollbar,
-        #quizPlayerGrid::-webkit-scrollbar { display: none; }
+        #quizPlayerGrid::-webkit-scrollbar,
+        #luckPlayerGrid::-webkit-scrollbar { display: none; }
         .screen-bottom-actions {
             flex: 0 0 auto;
             box-sizing: border-box;
@@ -1451,7 +1456,8 @@
             min-width: 0;
             margin-right: 0;
         }
-        .quiz-close-actions .btn {
+        .quiz-close-actions .btn,
+        .luck-close-actions .btn {
             width: 100%;
             margin-right: 0;
         }
@@ -1512,6 +1518,7 @@
             align-items: flex-start;
             height: 100%;
         }
+        #luckScreen .bank-screen-wrap,
         #quizView2 > .bank-screen-wrap {
             width: 100%;
             display: flex;
@@ -1598,6 +1605,22 @@
         /* 행운 화면: 빨강 테마 */
         #luckView2 .bank-screen-title {
             color: #c0392b;
+        }
+        #luckView2 .bank-reset-btn {
+            background: #c0392b;
+            border-color: #c0392b;
+        }
+        #luckView2 .bank-reset-btn:hover {
+            background: #922b21;
+            border-color: #922b21;
+        }
+        #luckView2 .team-group {
+            background: #fdf1f0;
+            border-color: #f5c6c2;
+        }
+        #luckView2 .team-group-header {
+            color: #922b21;
+            border-bottom-color: #f5c6c2;
         }
         #luckView2 .bank-player-card {
             background: #fdf1f0;

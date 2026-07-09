@@ -33,6 +33,7 @@ assert(html.includes(`onclick="luckAdjustMultiplier('rps', -1)"`), 'RPS multipli
 
 // View 2: 목록 — 보상 배지/팀 탭 없어야 함
 assert(html.includes('id="luckPlayerGrid"'), 'luckScreen should have a player grid');
+assert(html.includes('screen-bottom-actions luck-close-actions'), 'luck close action area should use the full-width close button layout');
 assert(!/#luckScreen[\s\S]{0,400}player-tab-bar/.test(html), 'luckScreen should not have a team/individual tab bar');
 assert(html.includes('onclick="luckClose()"'), 'luckScreen should have a 마감 button');
 assert(html.includes('onclick="luckReset()"'), 'luckScreen should have a 전체 초기화 button');

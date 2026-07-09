@@ -38,6 +38,7 @@ assert(/function _luckMergeRemoteState\(state, history\)/.test(js), '_luckMergeR
 
 assert(/function _luckShowView\(n\)/.test(js), '_luckShowView should exist to toggle View2~6');
 assert(/\[2, 3, 4, 5, 6\]\.forEach/.test(js), '_luckShowView should manage all 5 views');
+assert(/i === n \? \(i === 2 \? 'flex' : 'block'\) : 'none'/.test(js), 'luck list view should display as flex so the shared player grid can scroll');
 
 assert(/function _luckRenderPlayerList\(\)/.test(js), '_luckRenderPlayerList should exist');
 assert(/useTeamGroups:\s*false/.test(js), 'luck player list should never use team groups (individual-only per the design)');
