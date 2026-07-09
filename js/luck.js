@@ -395,3 +395,60 @@ function _luckStartGame() {
     if (type === 'roulette') _luckRouletteStart();
     if (type === 'dice')     _luckDiceStart();
 }
+
+// ── 결과 처리 (3개 게임 공유) ──────────────────────────────────────
+function _luckResolve(isWin, detail) {
+    const p      = _luck.players[_luck.currentPlayerIdx];
+    const type   = _luck.selectedGame;
+    const amount = _luck.bet.amount;
+    const multiplier = _luck.multipliers[type];
+    const matured = isWin ? Math.round(amount * multiplier) : 0;
+
+    sbInsertLuckHistory(_luck.gameId, p.user_id, type, amount, matured, isWin);
+
+    if (isWin) {
+        _luck.earnedRewards[p.nickname] = (_luck.earnedRewards[p.nickname] || 0) + matured;
+        sbSaveLuckReward(_luck.gameId, p.user_id, _luck.earnedRewards[p.nickname]).catch(console.error);
+    }
+
+    document.getElementById('luckResultTitle').textContent = isWin ? '🎉 승리!' : '😢 실패';
+    document.getElementById('luckRGame').textContent   = _LUCK_GAME[type].label;
+    document.getElementById('luckRPlayer').textContent = `${p.nickname} (${p.real_name})`;
+    document.getElementById('luckRBet').textContent    = amount.toLocaleString() + '원';
+    document.getElementById('luckRReward').textContent = isWin ? matured.toLocaleString() + '원' : '0원';
+
+    _luckShowView(6);
+}
+
+function luckNextStudent() {
+    _luckRenderPlayerList();
+    _luckShowView(2);
+}
+
+// ── 가위바위보 ─────────────────────────────────────────────────────
+const _RPS_IMAGES = {
+    scissors: 'image/luck/rps_scissors.png',
+    rock:     'image/luck/rps_rock.png',
+    paper:    'image/luck/rps_paper.png',
+};
+const _RPS_ORDER = ['scissors', 'rock', 'paper'];
+const _RPS_BEATS = { scissors: 'paper', rock: 'scissors', paper: 'rock' };
+
+function _luckRpsStart() {
+    let i = 0;
+    document.getElementById('luckGameImg').src = _RPS_IMAGES[_RPS_ORDER[0]];
+    _luck.rpsCycleTimer = setInterval(() => {
+        i = (i + 1) % _RPS_ORDER.length;
+        document.getElementById('luckGameImg').src = _RPS_IMAGES[_RPS_ORDER[i]];
+    }, 200);
+}
+
+function luckRpsPick(playerChoice) {
+    clearInterval(_luck.rpsCycleTimer);
+    _luck.rpsCycleTimer = null;
+    document.getElementById('luckGameImg').src = _RPS_IMAGES[playerChoice];
+
+    const computerChoice = _RPS_ORDER[Math.floor(Math.random() * 3)];
+    const isWin = _RPS_BEATS[playerChoice] === computerChoice;
+    _luckResolve(isWin, { playerChoice, computerChoice });
+}
