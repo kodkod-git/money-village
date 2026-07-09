@@ -445,9 +445,9 @@ function luckNextStudent() {
 
 // ── 가위바위보 ─────────────────────────────────────────────────────
 const _RPS_IMAGES = {
-    scissors: 'image/luck/rps_scissors.png',
-    rock:     'image/luck/rps_rock.png',
-    paper:    'image/luck/rps_paper.png',
+    scissors: 'image/luck/rps_scissors.jpg',
+    rock:     'image/luck/rps_rock.jpg',
+    paper:    'image/luck/rps_paper.jpg',
 };
 const _RPS_ORDER = ['scissors', 'rock', 'paper'];
 const _RPS_BEATS = { scissors: 'paper', rock: 'scissors', paper: 'rock' };

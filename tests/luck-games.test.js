@@ -15,9 +15,9 @@ assert(/function luckNextStudent\(\)/.test(js), 'luckNextStudent should exist to
 
 // 가위바위보
 assert(/const _RPS_IMAGES = \{/.test(js), '_RPS_IMAGES should map each hand to an image path under image/luck/');
-assert(/image\/luck\/rps_scissors\.png/.test(js), 'scissors image path should follow the image/luck/ convention');
-assert(/image\/luck\/rps_rock\.png/.test(js), 'rock image path should follow the image/luck/ convention');
-assert(/image\/luck\/rps_paper\.png/.test(js), 'paper image path should follow the image/luck/ convention');
+assert(/image\/luck\/rps_scissors\.jpg/.test(js), 'scissors image path should follow the image/luck/ convention');
+assert(/image\/luck\/rps_rock\.jpg/.test(js), 'rock image path should follow the image/luck/ convention');
+assert(/image\/luck\/rps_paper\.jpg/.test(js), 'paper image path should follow the image/luck/ convention');
 assert(/const _RPS_BEATS = \{\s*scissors:\s*'paper',\s*rock:\s*'scissors',\s*paper:\s*'rock'\s*\}/.test(js), 'RPS win table should encode standard rules (scissors beats paper, rock beats scissors, paper beats rock)');
 
 assert(/function _luckRpsStart\(\)/.test(js), '_luckRpsStart should exist');
