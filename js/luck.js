@@ -507,10 +507,14 @@ function luckRoulettePick(playerColor) {
     _luckResolve(isWin, { playerColor, winningColor });
 }
 
-// ── 주사위 눈금 맞추기 (3D GLB 모델) ────────────────────────────────
-// 각 눈금(1~6)이 카메라를 향할 때의 model-viewer orientation 값.
-// GLB 지오메트리만으로는 자동으로 신뢰성 있게 알아낼 수 없어, 실제 dice_spin.glb를
-// 사람이 육안으로 보정 도구(scratchpad)에서 돌려보며 직접 확인해 채워 넣었다.
+// ── 주사위 눈금 맞추기 (3D GLB 모델, Three.js 직접 렌더링) ───────────
+// model-viewer는 camera-controls 없이 orientation만 바꿔서는 화면을
+// 다시 그리지 않는 경우가 있어(사용자 상호작용 없이는 내부 렌더 루프가
+// 돌지 않는 것으로 확인됨), Three.js로 직접 씬/카메라/렌더러를 두고
+// requestAnimationFrame으로 매 프레임 강제 렌더링한다.
+// 각 눈금(1~6)이 카메라를 향할 때의 회전값(도). GLB 지오메트리만으로는
+// 자동으로 신뢰성 있게 알아낼 수 없어, 실제 dice_spin.glb를 사람이 육안으로
+// 보정 도구(scratchpad)에서 돌려보며 직접 확인해 채워 넣었다.
 // (docs/superpowers/specs/2026-07-09-luck-dice-3d-design.md 참고)
 const _DICE_FACE_ORIENTATION = {
     1: '0.0deg 0.0deg 0.0deg',
@@ -523,6 +527,8 @@ const _DICE_FACE_ORIENTATION = {
 
 let _diceRollFrame = null;
 let _diceResolveToken = 0;
+let _diceThree = null; // { scene, camera, renderer, diceGroup } — lazy 초기화, 재대결마다 재사용
+let _diceCurrentOrientation = '0deg 0deg 0deg';
 
 function _luckParseOrientation(str) {
     return str.split(' ').map(part => parseFloat(part));
@@ -535,15 +541,75 @@ function _luckLerpOrientation(fromStr, toStr, t) {
     return `${out[0]}deg ${out[1]}deg ${out[2]}deg`;
 }
 
+function _luckSetDiceRotation(orientationStr) {
+    _diceCurrentOrientation = orientationStr;
+    if (!_diceThree) return;
+    const [x, y, z] = _luckParseOrientation(orientationStr);
+    _diceThree.diceGroup.rotation.set(x * Math.PI / 180, y * Math.PI / 180, z * Math.PI / 180);
+}
+
+function _luckInitDiceThree() {
+    if (_diceThree) return;
+    const THREE = window.THREE;
+    const container = document.getElementById('luckDiceModel');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, (container.clientWidth || 1) / (container.clientHeight || 1), 0.01, 100);
+    camera.position.set(0, 0, 3);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    container.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dir1.position.set(2, 3, 4);
+    scene.add(dir1);
+    const dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dir2.position.set(-3, -2, -2);
+    scene.add(dir2);
+
+    const diceGroup = new THREE.Group();
+    scene.add(diceGroup);
+
+    _diceThree = { scene, camera, renderer, diceGroup };
+
+    new window.GLTFLoader().load('image/luck/dice_spin.glb', (gltf) => {
+        const model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const scale = 1.4 / maxDim;
+        model.scale.setScalar(scale);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        model.position.sub(center.multiplyScalar(scale));
+        diceGroup.add(model);
+    });
+
+    function renderLoop() {
+        requestAnimationFrame(renderLoop);
+        if (container.style.display === 'none') return;
+        const w = container.clientWidth, h = container.clientHeight;
+        if (w > 0 && h > 0 && (renderer.domElement.width !== w || renderer.domElement.height !== h)) {
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        renderer.render(scene, camera);
+    }
+    renderLoop();
+}
+
 function _luckDiceStart() {
     document.getElementById('luckGameImg').style.display = 'none';
-    const model = document.getElementById('luckDiceModel');
-    model.style.display = 'block';
+    document.getElementById('luckDiceModel').style.display = 'block';
+    _luckInitDiceThree();
 
     let angle = 0;
     function tumble() {
         angle += 6;
-        model.orientation = `${angle % 360}deg ${(angle * 1.3) % 360}deg ${(angle * 0.7) % 360}deg`;
+        _luckSetDiceRotation(`${angle % 360}deg ${(angle * 1.3) % 360}deg ${(angle * 0.7) % 360}deg`);
         _diceRollFrame = requestAnimationFrame(tumble);
     }
     _diceRollFrame = requestAnimationFrame(tumble);
@@ -555,8 +621,7 @@ function luckDiceStop() {
     cancelAnimationFrame(_diceRollFrame);
     _diceRollFrame = null;
 
-    const model = document.getElementById('luckDiceModel');
-    const startOrientation  = model.orientation || '0deg 0deg 0deg';
+    const startOrientation  = _diceCurrentOrientation;
     const targetOrientation = _DICE_FACE_ORIENTATION[face];
     const duration  = 600;
     const startTime = performance.now();
@@ -564,7 +629,7 @@ function luckDiceStop() {
     function settle(now) {
         const t     = Math.min(1, (now - startTime) / duration);
         const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-        model.orientation = t < 1 ? _luckLerpOrientation(startOrientation, targetOrientation, eased) : targetOrientation;
+        _luckSetDiceRotation(t < 1 ? _luckLerpOrientation(startOrientation, targetOrientation, eased) : targetOrientation);
         if (t < 1) {
             _diceRollFrame = requestAnimationFrame(settle);
         } else {

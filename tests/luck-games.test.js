@@ -45,9 +45,10 @@ assert(/function luckDiceStop\(\)/.test(js), 'luckDiceStop should exist');
 assert(/Math\.floor\(Math\.random\(\) \* 6\) \+ 1/.test(js), 'dice face should be picked 1-6 with Math.random() at click time');
 assert(/face === 6/.test(js), 'winning requires exactly a 6, per the proposal');
 
-// 3D 주사위 (model-viewer)
+// 3D 주사위 (Three.js 직접 렌더링)
 assert(/const _DICE_FACE_ORIENTATION = \{/.test(js), '_DICE_FACE_ORIENTATION lookup table should exist for the 3D dice calibration');
-assert(/model\.orientation/.test(js), 'dice engine should drive the model-viewer via its orientation property');
+assert(/diceGroup\.rotation\.set/.test(js), 'dice engine should drive the Three.js dice group rotation directly');
+assert(/new window\.GLTFLoader\(\)\.load\('image\/luck\/dice_spin\.glb'/.test(js), 'dice engine should load the GLB model via GLTFLoader');
 assert(/requestAnimationFrame\(tumble\)/.test(js), 'dice should tumble continuously via requestAnimationFrame while rolling');
 assert(/cancelAnimationFrame\(_diceRollFrame\)/.test(js), 'stopping the dice should cancel the in-flight roll animation frame');
 assert(/\}, 800\);/.test(js), 'dice should pause about 0.8s on the settled face before resolving, so the result is actually visible');
