@@ -560,11 +560,11 @@ function _luckInitDiceThree() {
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+    const dir1 = new THREE.DirectionalLight(0xffffff, 1.4);
     dir1.position.set(2, 3, 4);
     scene.add(dir1);
-    const dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    const dir2 = new THREE.DirectionalLight(0xffffff, 0.9);
     dir2.position.set(-3, -2, -2);
     scene.add(dir2);
 
@@ -579,7 +579,7 @@ function _luckInitDiceThree() {
         const size = new THREE.Vector3();
         box.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const scale = 1.4 / maxDim;
+        const scale = 1.15 / maxDim;
         model.scale.setScalar(scale);
         const center = new THREE.Vector3();
         box.getCenter(center);

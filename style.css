@@ -1656,8 +1656,10 @@
             max-height: 220px;
         }
         #luckDiceModel.luck-game-img {
-            width: 220px;
-            height: 220px;
+            width: 320px;
+            height: 320px;
+            max-width: 320px;
+            max-height: 320px;
         }
         #luckDiceModel canvas {
             width: 100%;
