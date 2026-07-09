@@ -11,8 +11,8 @@ const css = read('style.css');
 
 // --- setupScreen 진입 버튼 ---
 assert(
-  indexHtml.includes('머니빌리지 경제적 유형 보고서'),
-  'setupScreen button label should be updated to 머니빌리지 경제적 유형 보고서'
+  indexHtml.includes('머니빌리지 경제적 보고서'),
+  'setupScreen button label should be updated to 머니빌리지 경제적 보고서'
 );
 assert(
   indexHtml.includes('onclick="showReportHubScreen()"'),
@@ -48,7 +48,7 @@ assert(
   'eftiReportScreen back button should return to reportHubScreen'
 );
 
-// --- testReportScreen 뒤로가기 변경 (setupScreen이 아닌 reportHubScreen으로) ---
+// --- testReportScreen 뒤로가기 변경(setupScreen이 아닌 reportHubScreen으로) ---
 assert(
   /id="testReportScreen"[\s\S]*?onclick="switchScreen\('reportHubScreen'\)"/.test(indexHtml),
   'testReportScreen back button should now return to reportHubScreen instead of setupScreen'
@@ -85,9 +85,9 @@ assert(
   'printEftiReport should not reuse the test report overlay position classes'
 );
 assert(
-  /\.efti-report-name\s*\{\s*top:\s*10%;\s*left:\s*17\.5%;\s*\}/.test(css) &&
-    /\.efti-report-age\s*\{\s*top:\s*10%;\s*left:\s*47\.5%;\s*\}/.test(css) &&
-    /\.efti-report-date\s*\{\s*top:\s*10%;\s*left:\s*78\.5%;\s*\}/.test(css),
+  /\.efti-report-name\s*\{\s*top:\s*10\.9%;\s*left:\s*17\.5%;\s*\}/.test(css) &&
+    /\.efti-report-age\s*\{\s*top:\s*10\.9%;\s*left:\s*47\.5%;\s*\}/.test(css) &&
+    /\.efti-report-date\s*\{\s*top:\s*10\.9%;\s*left:\s*78\.5%;\s*\}/.test(css),
   'style.css should move only the EFTI report name/age/date overlays upward'
 );
 assert(/window\.print\(\)/.test(eftiJs), 'printEftiReport should call window.print()');
