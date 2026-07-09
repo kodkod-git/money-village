@@ -281,7 +281,7 @@ function _luckMergeRemoteState(state, history) {
 function _luckShowView(n) {
     [2, 3, 4, 5, 6].forEach(i => {
         const el = document.getElementById('luckView' + i);
-        if (el) el.style.display = i === n ? 'block' : 'none';
+        if (el) el.style.display = i === n ? (i === 2 ? 'flex' : 'block') : 'none';
     });
 }
 
@@ -363,6 +363,7 @@ function _luckResetGameImg() {
         cancelAnimationFrame(_diceRollFrame);
         _diceRollFrame = null;
     }
+    _diceResolveToken++;
     const model = document.getElementById('luckDiceModel');
     if (model) model.style.display = 'none';
 }
@@ -522,6 +523,7 @@ const _DICE_FACE_ORIENTATION = {
 };
 
 let _diceRollFrame = null;
+let _diceResolveToken = 0;
 
 function _luckParseOrientation(str) {
     return str.split(' ').map(part => parseFloat(part));
@@ -549,7 +551,8 @@ function _luckDiceStart() {
 }
 
 function luckDiceStop() {
-    const face = Math.floor(Math.random() * 6) + 1;
+    const face  = Math.floor(Math.random() * 6) + 1;
+    const token = ++_diceResolveToken;
     cancelAnimationFrame(_diceRollFrame);
     _diceRollFrame = null;
 
@@ -568,6 +571,7 @@ function luckDiceStop() {
         } else {
             _diceRollFrame = null;
             setTimeout(() => {
+                if (token !== _diceResolveToken) return;
                 const isWin = face === 6;
                 _luckResolve(isWin, { face });
             }, 800);
