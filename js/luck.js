@@ -238,10 +238,7 @@ function _luckStopSync() {
     _luckSyncTimer = null;
     clearTimeout(_luckMultiplierDebounceTimer);
     _luckMultiplierDebounceTimer = null;
-    if (_luck.rpsCycleTimer) {
-        clearInterval(_luck.rpsCycleTimer);
-        _luck.rpsCycleTimer = null;
-    }
+    _luckResetGameImg();
 }
 
 async function _luckPollAndMerge() {
@@ -348,11 +345,23 @@ function luckSelectPlayer(idx) {
     _luckShowView(3);
 }
 
-function luckBackToList() {
+// 게임 전환/이탈 시 이전 게임이 남긴 공유 이미지 상태(RPS 타이머, 룰렛 스핀 등)를 초기화.
+// rps/roulette/dice(Task 14) 등 game_img를 재사용하는 모든 미니게임이 여기서 정리됨.
+function _luckResetGameImg() {
     if (_luck.rpsCycleTimer) {
         clearInterval(_luck.rpsCycleTimer);
         _luck.rpsCycleTimer = null;
     }
+    const img = document.getElementById('luckGameImg');
+    if (img) {
+        img.classList.remove('luck-roulette-spinning');
+        img.style.transform = '';
+        img.style.transition = '';
+    }
+}
+
+function luckBackToList() {
+    _luckResetGameImg();
     _luckShowView(2);
 }
 
@@ -393,6 +402,7 @@ function luckStep2Submit() {
 }
 
 function _luckStartGame() {
+    _luckResetGameImg();
     const type = _luck.selectedGame;
     document.getElementById('luckPlayGameTitle').textContent = `${_LUCK_GAME[type].icon} ${_LUCK_GAME[type].label}`;
     document.getElementById('luckRpsButtons').style.display      = type === 'rps'      ? 'flex' : 'none';
