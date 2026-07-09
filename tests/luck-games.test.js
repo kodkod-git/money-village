@@ -28,4 +28,15 @@ assert(/clearInterval\(_luck\.rpsCycleTimer\)/.test(js), 'picking a hand should 
 assert(/Math\.floor\(Math\.random\(\) \* 3\)/.test(js), "computer's hand should be picked with Math.random() at click time, not pre-determined");
 assert(/_RPS_BEATS\[playerChoice\] === computerChoice/.test(js), 'win should be judged by standard RPS rules, not equality');
 
+// 룰렛
+assert(/const _ROULETTE_COLORS = \['red', 'blue', 'yellow', 'green'\]/.test(js), 'roulette should support exactly the 4 colors from the proposal');
+assert(/function _luckRouletteStart\(\)/.test(js), '_luckRouletteStart should exist');
+assert(/image\/luck\/roulette_wheel\.png/.test(js), 'roulette wheel image path should follow the image/luck/ convention');
+assert(/luck-roulette-spinning/.test(js), 'roulette should toggle the CSS spin class while active');
+
+assert(/function luckRoulettePick\(playerColor\)/.test(js), 'luckRoulettePick should exist');
+assert(/_ROULETTE_COLORS\[Math\.floor\(Math\.random\(\) \* 4\)\]/.test(js), 'winning color should be picked with Math.random() at click time');
+assert(/playerColor === winningColor/.test(js), 'win should require the clicked color to match the randomly decided winning color');
+assert(/classList\.remove\('luck-roulette-spinning'\)/.test(js), 'picking a color should stop the spin animation immediately');
+
 console.log('luck-games.test.js (rps portion) passed');

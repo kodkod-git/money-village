@@ -460,3 +460,31 @@ function luckRpsPick(playerChoice) {
     const isWin = _RPS_BEATS[playerChoice] === computerChoice;
     _luckResolve(isWin, { playerChoice, computerChoice });
 }
+
+// ── 룰렛 색깔 맞추기 ─────────────────────────────────────────────
+const _ROULETTE_COLORS = ['red', 'blue', 'yellow', 'green'];
+const _ROULETTE_DEG    = { red: 0, blue: 90, yellow: 180, green: 270 };
+
+function _luckRouletteStart() {
+    const img = document.getElementById('luckGameImg');
+    img.src = 'image/luck/roulette_wheel.png';
+    img.style.transition = 'none';
+    img.style.transform  = 'rotate(0deg)';
+    void img.offsetWidth; // 강제 리플로우 — transition 리셋
+    img.style.transition = '';
+    img.classList.add('luck-roulette-spinning');
+}
+
+function luckRoulettePick(playerColor) {
+    const img = document.getElementById('luckGameImg');
+    img.classList.remove('luck-roulette-spinning');
+
+    const winningColor = _ROULETTE_COLORS[Math.floor(Math.random() * 4)];
+    const extraSpins = 4; // 멈추기 전 시각적으로 몇 바퀴 더 돌림
+    const targetDeg = extraSpins * 360 + _ROULETTE_DEG[winningColor];
+    img.style.transition = 'transform 0.6s ease-out';
+    img.style.transform  = `rotate(${targetDeg}deg)`;
+
+    const isWin = playerColor === winningColor;
+    _luckResolve(isWin, { playerColor, winningColor });
+}
