@@ -52,7 +52,25 @@
       "Bash(awk 'NR==826,NR==874' index.html)",
       "Bash(git log *)",
       "Bash(awk '/<div id=\"luckScreen\"/,/<\\\\/div>\\\\s*$/' index.html)",
-      "Bash(awk '/Task 8/,0' docs/superpowers/plans/2026-07-08-luck-page.md)"
+      "Bash(awk '/Task 8/,0' docs/superpowers/plans/2026-07-08-luck-page.md)",
+      "Bash(node tests/luck-core.test.js)",
+      "Bash(node -c js/luck.js)",
+      "Bash(node tests/luck-games.test.js)",
+      "Bash(node tests/luck-screen-markup.test.js)",
+      "Bash(node tests/luck-supabase-client.test.js)",
+      "Bash(node tests/luck-migration.test.js)",
+      "Bash(node tests/luck-reward-integration.test.js)",
+      "Bash(node tests/luck-style-theme.test.js)",
+      "Bash(python3 -c \"import PIL; print\\('PIL available'\\)\")",
+      "Bash(python -c \"import PIL; print\\('PIL available'\\)\")",
+      "Bash(node gen-luck-images.js)",
+      "Skill(run)",
+      "Bash(find . -iname \"*.glb\" -not -path \"*/node_modules/*\")",
+      "Bash(ls image/luck/)",
+      "Bash(bash \"/c/Users/USER/.claude/plugins/cache/superpowers-dev/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh\" --project-dir \"/c/Users/USER/OneDrive/Desktop/Project/money-village\")",
+      "Bash(node *)",
+      "Bash(curl *)",
+      "Bash(bash \"/c/Users/USER/.claude/plugins/cache/superpowers-dev/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh\" \"/c/Users/USER/OneDrive/Desktop/Project/money-village/.superpowers/brainstorm/3752-1783577980\")"
     ]
   }
 }

@@ -817,6 +817,7 @@
         /* 은행 예금 버튼 (보라) / 퀴즈 버튼 (초록) */
         .btn-bank { background: #00897b; color: #fff; }
         .btn-quiz { background: #7B3F99; color: #fff; }
+        .btn-luck { background: #c0392b; color: #fff; }
 
         /* 은행 예금 모달 */
         .bank-modal-card { max-width: 580px; }
@@ -1088,7 +1089,8 @@
         .bank-r-total { font-size: 16px; font-weight: 900; }
 
         /* 은행 예금 화면 (bankScreen) */
-        #bankScreen {
+        #bankScreen,
+        #luckScreen {
             background: #F0F4F8;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -1104,6 +1106,7 @@
             padding: 32px 24px;
         }
         #bankScreen .bank-screen-wrap,
+        #luckScreen .bank-screen-wrap,
         #quizView2 > .bank-screen-wrap {
             width: min(92vw, 720px);
             max-width: 720px;
@@ -1122,13 +1125,23 @@
             overflow: hidden;
         }
         #bankView2,
-        #quizView2 {
+        #quizView2,
+        #luckView2 {
             display: flex;
             flex-direction: column;
             flex: 1 1 auto;
             min-height: 0;
             height: 100%;
             overflow: hidden;
+        }
+        #luckScreen .bank-screen-wrap.is-luck-play-view {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        #luckScreen .bank-screen-wrap.is-luck-play-view::-webkit-scrollbar { display: none; }
+        #luckView5 {
+            padding-bottom: 12px;
         }
         .bank-screen-header {
             display: flex;
@@ -1424,7 +1437,8 @@
             margin-left: 4px;
         }
         #bankPlayerGrid,
-        #quizPlayerGrid {
+        #quizPlayerGrid,
+        #luckPlayerGrid {
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
@@ -1434,7 +1448,8 @@
             padding: 12px 0 10px;
         }
         #bankPlayerGrid::-webkit-scrollbar,
-        #quizPlayerGrid::-webkit-scrollbar { display: none; }
+        #quizPlayerGrid::-webkit-scrollbar,
+        #luckPlayerGrid::-webkit-scrollbar { display: none; }
         .screen-bottom-actions {
             flex: 0 0 auto;
             box-sizing: border-box;
@@ -1450,7 +1465,8 @@
             min-width: 0;
             margin-right: 0;
         }
-        .quiz-close-actions .btn {
+        .quiz-close-actions .btn,
+        .luck-close-actions .btn {
             width: 100%;
             margin-right: 0;
         }
@@ -1511,6 +1527,7 @@
             align-items: flex-start;
             height: 100%;
         }
+        #luckScreen .bank-screen-wrap,
         #quizView2 > .bank-screen-wrap {
             width: 100%;
             display: flex;
@@ -1592,6 +1609,208 @@
             background: #fdecea; color: #c62828;
         }
 
+        /* ── 행운 ─────────────────────────────────────────────── */
+
+        /* 행운 화면: 빨강 테마 */
+        #luckView2 .bank-screen-title {
+            color: #c0392b;
+        }
+        #luckView2 .bank-reset-btn {
+            background: #c0392b;
+            border-color: #c0392b;
+        }
+        #luckView2 .bank-reset-btn:hover {
+            background: #922b21;
+            border-color: #922b21;
+        }
+        #luckView2 .team-group {
+            background: #fdf1f0;
+            border-color: #f5c6c2;
+        }
+        #luckView2 .team-group-header {
+            color: #922b21;
+            border-bottom-color: #f5c6c2;
+        }
+        #luckView2 .bank-player-card {
+            background: #fdf1f0;
+            border-color: #f5c6c2;
+        }
+        #luckView2 .bank-player-card:hover {
+            border-color: #c0392b;
+            background: #fbe3e1;
+            box-shadow: 0 3px 12px rgba(192,57,43,0.15);
+        }
+        #luckView2 .bank-player-nickname {
+            color: #922b21;
+        }
+        .luck-earned-badge {
+            display: inline-block;
+            background: #fdecea;
+            color: #c0392b;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            padding: 2px 8px;
+        }
+
+        /* 행운 게임 선택 (1행 3열, 배팅금액 카드와 동일한 톤) */
+        .luck-game-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .luck-game-select-btn {
+            background: #F8FAFF;
+            border: 1px solid #E0EAFF;
+            border-radius: 12px;
+            padding: 14px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .luck-game-select-btn:hover {
+            background: #eef4ff;
+        }
+        .luck-game-select-btn.selected {
+            background: #fff9db;
+            border-color: #ffe066;
+        }
+        .luck-game-select-icon {
+            font-size: 26px;
+        }
+        .luck-game-select-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--mv-blue-deep);
+        }
+
+        /* 행운 게임 플레이 스테이지 */
+        .luck-game-stage {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+            min-height: 340px;
+        }
+        .luck-game-img {
+            width: min(320px, 100%);
+            height: 320px;
+            max-width: 320px;
+            max-height: 320px;
+            object-fit: contain;
+        }
+        .luck-roulette-wheel {
+            background: transparent;
+            border-radius: 50%;
+            clip-path: circle(50% at 50% 50%);
+        }
+        .luck-roulette-pointer {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #c0392b;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            z-index: 2;
+            pointer-events: none;
+        }
+        .luck-rps-stage {
+            width: min(320px, 100%);
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .luck-rps-panel {
+            height: 320px;
+            border-radius: 12px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .luck-rps-img {
+            width: 100%;
+            max-height: 320px;
+            object-fit: contain;
+        }
+        .luck-rps-placeholder {
+            font-size: 96px;
+            line-height: 1;
+            font-weight: 900;
+            color: #c0392b;
+        }
+        #luckDiceModel.luck-game-img {
+            width: 320px;
+            height: 320px;
+            max-width: 320px;
+            max-height: 320px;
+        }
+        #luckDiceModel canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .luck-choice-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .luck-choice-btns .btn-luck {
+            flex: 1;
+            padding: 16px;
+            font-size: 16px;
+            justify-content: center;
+        }
+        .luck-choice-btns .btn {
+            box-sizing: border-box;
+        }
+        .luck-choice-btns .btn:disabled {
+            cursor: default;
+            opacity: 0.72;
+            transform: none;
+        }
+        .luck-choice-btns .btn.is-selected {
+            border: 4px solid #111;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.95), 0 4px 12px rgba(0,0,0,0.18);
+            opacity: 1;
+        }
+        .luck-color-btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+            border: 4px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .luck-dice-btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #111;
+            background: #fff;
+            border: 1px solid #111;
+            border-radius: 10px;
+            cursor: pointer;
+            justify-content: center;
+        }
+        #luckView6 {
+            margin-top: 32px;
+            padding-top: 8px;
+        }
+
+        /* 룰렛 회전 애니메이션 */
         /* 퀴즈 게임 뷰 (fixed overlay) */
         #quizGameView {
             position: fixed;
@@ -1760,9 +1979,9 @@
         .tr-name { top: 11.9%; left: 17.5%; }
         .tr-age  { top: 11.9%; left: 47.5%; }
         .tr-date { top: 11.9%; left: 78.5%; }
-        .efti-report-name { top: 10.9%; left: 17.5%; }
-        .efti-report-age  { top: 10.9%; left: 47.5%; }
-        .efti-report-date { top: 10.9%; left: 78.5%; }
+        .efti-report-name { top: 10%; left: 17.5%; }
+        .efti-report-age  { top: 10%; left: 47.5%; }
+        .efti-report-date { top: 10%; left: 78.5%; }
         #testReportPrintArea { display: none; }
         @media print {
             body.printing-test-report > *:not(#testReportPrintArea) { display: none !important; }

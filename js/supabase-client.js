@@ -521,9 +521,16 @@ async function sbSaveQuestReward(gameId, userId, questReward) {
         .eq('user_id', userId);
 }
 
+async function sbSaveLuckReward(gameId, userId, amount) {
+    await _sb.from('game_individual')
+        .update({ luck_reward: Number(amount) })
+        .eq('game_id', gameId)
+        .eq('user_id', userId);
+}
+
 async function sbGetRewardsByGameId(gameId) {
     const { data } = await _sb.from('game_individual')
-        .select('user_id, quest_reward, deposit_reward')
+        .select('user_id, quest_reward, deposit_reward, luck_reward')
         .eq('game_id', gameId);
     return data || [];
 }
@@ -792,6 +799,50 @@ async function sbDeleteBankHistoryEntries(gameId, userIds, roundNum, isTeam) {
         .eq('round_num', roundNum)
         .eq('is_team', !!isTeam);
     if (error) { console.error('[sbDeleteBankHistoryEntries]', error); return { success: false }; }
+    return { success: true };
+}
+
+// =========================================================
+// 동기화: luck_state / luck_history
+// =========================================================
+
+async function sbGetLuckState(gameId) {
+    const { data } = await _sb.from('luck_state').select('*')
+        .eq('game_id', gameId).maybeSingle();
+    return data || null;
+}
+
+async function sbUpsertLuckState(gameId, fields) {
+    const { error } = await _sb.from('luck_state').upsert(
+        { game_id: gameId, ...fields, updated_at: new Date().toISOString() },
+        { onConflict: 'game_id' }
+    );
+    if (error) console.error('[sbUpsertLuckState]', error);
+}
+
+async function sbGetLuckHistory(gameId) {
+    const { data } = await _sb.from('luck_history').select('*')
+        .eq('game_id', gameId);
+    return data || [];
+}
+
+async function sbInsertLuckHistory(gameId, userId, luckType, amount, maturedAmount, isWin) {
+    const { error } = await _sb.from('luck_history').insert({
+        game_id:        gameId,
+        user_id:        userId,
+        luck_type:      luckType,
+        amount:         amount,
+        matured_amount: maturedAmount,
+        is_win:         !!isWin
+    });
+    if (error) console.error('[sbInsertLuckHistory]', error);
+}
+
+async function sbDeleteLuckHistory(gameId) {
+    const gid = String(gameId || '').trim();
+    if (!gid) return { success: false };
+    const { error } = await _sb.from('luck_history').delete().eq('game_id', gid);
+    if (error) { console.error('[sbDeleteLuckHistory]', error); return { success: false }; }
     return { success: true };
 }
 

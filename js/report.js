@@ -106,6 +106,7 @@
                 players.forEach(p => {
                     p.questReward   = Number(rewardMap[p.userId]?.quest_reward   || 0);
                     p.depositReward = Number(rewardMap[p.userId]?.deposit_reward || 0);
+                    p.luckReward    = Number(rewardMap[p.userId]?.luck_reward    || 0);
                 });
                 recalculateAllRankings();
             } catch(e) {
@@ -393,7 +394,8 @@
         const diligence = Number(p.diligenceReward || 0);
         const deposit   = Number(p.depositReward   || 0);
         const quest     = Number(p.questReward     || 0);
-        const base = cash + assetVal + diligence + deposit + quest;
+        const luck      = Number(p.luckReward      || 0);
+        const base = cash + assetVal + diligence + deposit + quest + luck;
 
         let total;
         if (currentGameVariant !== 'basic') {
@@ -1042,6 +1044,7 @@
                 const saves = [];
                 if (p.depositReward !== undefined) saves.push(sbSaveDepositReward(gameId, p.userId, p.depositReward));
                 if (p.questReward   !== undefined) saves.push(sbSaveQuestReward(gameId,   p.userId, p.questReward));
+                if (p.luckReward    !== undefined) saves.push(sbSaveLuckReward(gameId,    p.userId, p.luckReward));
                 return Promise.all(saves);
             }));
 
@@ -1062,6 +1065,7 @@
                     diligence_reward: p.diligenceReward || 0,
                     questReward: p.questReward || 0,
                     depositReward: p.depositReward || 0,
+                    luckReward: p.luckReward || 0,
                     stockVal: calcActiveAsset(p.assets),
                     team: p.team || '-',
                     team_id: p.teamId || '',
@@ -1271,6 +1275,7 @@
                     diligenceReward: Number(p.diligence_reward) || 0,
                     questReward:     Number(p.quest_reward)     || 0,
                     depositReward:   Number(p.deposit_reward)   || 0,
+                    luckReward:      Number(p.luck_reward)      || 0,
                     rankIndiv: 0,
                     rankTeam: 0,
                     teamTotal: 0,
@@ -1305,7 +1310,7 @@
                     const estates = await sbLoadEstateBalance(p.userId, p.gameId);
                     if (estates) {
                         Object.assign(p.assets, estates);
-                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
                         p.total = base * calcSuccessMultiplier(p.successFactors || {});
                     } else {
                         console.warn(`  no estate balance: ${p.nickname}`);
@@ -1314,7 +1319,7 @@
                     const stocks = await sbLoadUserBalance(p.userId, p.gameId);
                     if (stocks) {
                         Object.assign(p.assets, stocks);
-                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
                     } else {
                         console.warn(`  no stock balance: ${p.nickname}`);
                     }

@@ -113,8 +113,10 @@
 
         _bankStopSync();
         _quizStopSync();
+        if (typeof _luckStopSync === 'function') _luckStopSync();
         if (id === 'bankScreen') _bankStartSync();
         if (id === 'quizScreen') _quizStartSync();
+        if (id === 'luckScreen') _luckStartSync();
     }
 
     function initAssets() {
@@ -149,7 +151,7 @@
             }
         }
 
-        const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
+        const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0) + (p.luckReward || 0);
         p.total = currentGameVariant !== 'basic'
             ? base * calcSuccessMultiplier(p.successFactors || {})
             : base;
@@ -157,7 +159,7 @@
 
     function recalculateAllRankings() {
         players.forEach(p => {
-            const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
+            const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
             p.total = currentGameVariant !== 'basic'
                 ? base * calcSuccessMultiplier(p.successFactors || {})
                 : base;

@@ -28,6 +28,19 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+      window.THREE = THREE;
+      window.GLTFLoader = GLTFLoader;
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">    
     <link rel="stylesheet" href="style.css">
 </head>
@@ -51,6 +64,9 @@
             </button>
             <button class="btn btn-quiz" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openQuizModal()">
                 🧩 머니빌리지 퀴즈 퀘스트
+            </button>
+            <button class="btn btn-luck" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openLuckModal()">
+                🍀 머니빌리지 행운
             </button>
             <button class="btn btn-citizen" style="width:100%; padding:15px; margin-bottom:20px; font-size:16px; justify-content:center; font-weight:900;" onclick="openCitizenMgmtModal()">
                 👥 머니빌리지 시민권자 관리
@@ -686,6 +702,138 @@
         </div>
     </div>
 
+    <!-- 행운 화면 -->
+    <div id="luckScreen" class="screen">
+        <div class="bank-screen-wrap">
+
+            <!-- View 2: 플레이어 목록 -->
+            <div id="luckView2">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="switchScreen('setupScreen')">←</button>
+                    <div>
+                        <div class="bank-screen-title">🍀 머니빌리지 행운</div>
+                        <div id="luckGameInfo" class="bank-screen-subtitle"></div>
+                    </div>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <button class="bank-reset-btn" onclick="luckReset()" title="초기화">↻</button>
+                    </div>
+                </div>
+                <div id="luckPlayerGrid" class="bank-player-grid"></div>
+                <div class="screen-bottom-actions luck-close-actions">
+                    <button id="luckCloseBtn" class="btn btn-luck"
+                        style="padding:14px; font-size:15px; justify-content:center;"
+                        onclick="luckClose()">마감</button>
+                </div>
+            </div>
+
+            <!-- View 3: 게임 선택 + 배팅 신청서 (한 화면) -->
+            <div id="luckView3" style="display:none;">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="luckBackToList()">←</button>
+                    <div class="bank-screen-title">게임 선택 &amp; 배팅</div>
+                </div>
+                <p id="luckGameSelectPlayerName" class="bank-screen-subtitle" style="text-align:center; margin-bottom:16px;"></p>
+
+                <div class="luck-game-select-grid">
+                    <button class="luck-game-select-btn" id="luckGameBtnRps" onclick="luckSelectGame('rps')">
+                        <span class="luck-game-select-icon">✂️</span>
+                        <span class="luck-game-select-label">가위바위보</span>
+                    </button>
+                    <button class="luck-game-select-btn" id="luckGameBtnRoulette" onclick="luckSelectGame('roulette')">
+                        <span class="luck-game-select-icon">🎡</span>
+                        <span class="luck-game-select-label">룰렛</span>
+                    </button>
+                    <button class="luck-game-select-btn" id="luckGameBtnDice" onclick="luckSelectGame('dice')">
+                        <span class="luck-game-select-icon">🎲</span>
+                        <span class="luck-game-select-label">주사위</span>
+                    </button>
+                </div>
+
+                <div class="bank-screen-card">
+                    <div class="bank-screen-card-title">배팅 금액</div>
+                    <div class="bank-stepper">
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>luckAdjustBet(-10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>luckAdjustBet(-10000));event.preventDefault()" ontouchend="stopHold()">-만</button>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>luckAdjustBet(-1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>luckAdjustBet(-1000));event.preventDefault()" ontouchend="stopHold()">-천</button>
+                        <div class="bank-stepper-val" id="luckBetAmountDisplay">0원</div>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>luckAdjustBet(1000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>luckAdjustBet(1000));event.preventDefault()" ontouchend="stopHold()">+천</button>
+                        <button class="bank-stepper-btn" style="font-size:13px;" onmousedown="startHold(()=>luckAdjustBet(10000))" onmouseup="stopHold()" onmouseleave="stopHold()" ontouchstart="startHold(()=>luckAdjustBet(10000));event.preventDefault()" ontouchend="stopHold()">+만</button>
+                    </div>
+                </div>
+
+                <div class="bank-preview-box" id="luckBetPreviewBox" style="margin-bottom:16px;">게임을 선택하면 미리보기가 나와요!</div>
+                <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center;" onclick="luckStep2Submit()">배팅 완료</button>
+            </div>
+
+            <!-- View 5: 게임 플레이 -->
+            <div id="luckView5" style="display:none;">
+                <div class="bank-screen-header">
+                    <button class="bank-back-btn" onclick="luckBackToList()">←</button>
+                    <span id="luckPlayGameTitle" class="bank-screen-title"></span>
+                </div>
+
+                <div class="luck-game-stage">
+                    <img id="luckGameImg" class="luck-game-img" draggable="false" alt="행운 게임" />
+                    <div id="luckRoulettePointer" class="luck-roulette-pointer" style="display:none;" aria-hidden="true"></div>
+                    <div id="luckRpsStage" class="luck-rps-stage" style="display:none;">
+                        <div class="luck-rps-panel">
+                            <img id="luckRpsComputerImg" class="luck-rps-img" draggable="false" alt="상대 가위바위보" />
+                        </div>
+                        <div class="luck-rps-panel luck-rps-player-panel">
+                            <div id="luckRpsPlayerPlaceholder" class="luck-rps-placeholder">?</div>
+                            <img id="luckRpsPlayerImg" class="luck-rps-img" draggable="false" alt="선택한 가위바위보" style="display:none;" />
+                        </div>
+                    </div>
+                    <div id="luckDiceModel" class="luck-game-img" style="display:none;"></div>
+                </div>
+
+                <div id="luckRpsButtons" class="luck-choice-btns" style="display:none;">
+                    <button class="btn btn-luck" data-choice="scissors" onclick="luckRpsPick('scissors')">✂️ 가위</button>
+                    <button class="btn btn-luck" data-choice="rock" onclick="luckRpsPick('rock')">✊ 바위</button>
+                    <button class="btn btn-luck" data-choice="paper" onclick="luckRpsPick('paper')">🖐️ 보</button>
+                </div>
+                <div id="luckRouletteButtons" class="luck-choice-btns" style="display:none;">
+                    <button class="btn luck-color-btn" data-choice="red" style="background:#e74c3c;" onclick="luckRoulettePick('red')">빨강</button>
+                    <button class="btn luck-color-btn" data-choice="blue" style="background:#3498db;" onclick="luckRoulettePick('blue')">파랑</button>
+                    <button class="btn luck-color-btn" data-choice="yellow" style="background:#f1c40f;" onclick="luckRoulettePick('yellow')">노랑</button>
+                    <button class="btn luck-color-btn" data-choice="green" style="background:#2ecc71;" onclick="luckRoulettePick('green')">초록</button>
+                </div>
+                <div id="luckDiceButtons" class="luck-choice-btns" style="display:none;">
+                    <button class="btn luck-dice-btn" data-choice="1" onclick="luckDiceStop(1)">1</button>
+                    <button class="btn luck-dice-btn" data-choice="2" onclick="luckDiceStop(2)">2</button>
+                    <button class="btn luck-dice-btn" data-choice="3" onclick="luckDiceStop(3)">3</button>
+                    <button class="btn luck-dice-btn" data-choice="4" onclick="luckDiceStop(4)">4</button>
+                    <button class="btn luck-dice-btn" data-choice="5" onclick="luckDiceStop(5)">5</button>
+                    <button class="btn luck-dice-btn" data-choice="6" onclick="luckDiceStop(6)">6</button>
+                </div>
+            </div>
+
+            <!-- View 6: 결과 -->
+            <div id="luckView6" style="display:none;">
+                <div class="bank-screen-title" id="luckResultTitle" style="text-align:center; margin-bottom:20px;">🎉 성공!</div>
+                <div class="bank-result-card">
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">게임</span>
+                        <span class="bank-r-value" id="luckRGame">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">참가자</span>
+                        <span class="bank-r-value" id="luckRPlayer">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label">배팅액</span>
+                        <span class="bank-r-value" id="luckRBet">—</span>
+                    </div>
+                    <div class="bank-result-row">
+                        <span class="bank-r-label bank-r-total">획득 금액</span>
+                        <span class="bank-r-value bank-r-total" id="luckRReward">—</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center; margin-top:20px;" onclick="luckNextStudent()">다른 학생 배팅 접수</button>
+            </div>
+
+        </div>
+    </div>
+
     <!-- 머니빌리지 은행 예금 모달 -->
     <div id="bankModal" class="modal-backdrop" onclick="handleBankModalBackdrop(event)">
         <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
@@ -816,6 +964,58 @@
             <div class="modal-footer">
                 <button class="btn btn-danger" onclick="closeQuizModal()">닫기</button>
                 <button class="btn btn-success" id="quizStep1Btn" onclick="quizStep1Complete()" disabled>설정 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 머니빌리지 행운 모달 -->
+    <div id="luckModal" class="modal-backdrop" onclick="handleLuckModalBackdrop(event)">
+        <div class="modal-card bank-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🍀 머니빌리지 행운</h3>
+                <p>날짜와 분반을 선택한 뒤 보상 배수를 설정하세요</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>게임 날짜</label>
+                    <select id="luckDateSelect" onchange="onLuckDateChange()">
+                        <option value="">-- 날짜를 선택하세요 --</option>
+                    </select>
+                </div>
+                <div id="luckGameLoading" style="display:none; text-align:center; padding:10px; color:#888; font-size:14px;">불러오는 중...</div>
+                <div id="luckGameCardsGrid" class="past-game-cards-grid"></div>
+
+                <div id="luckMultiplierSection" style="display:none; margin-top:16px;">
+                    <div class="bank-section-divider">🎲 보상 배수 설정</div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">✂️ 가위바위보</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('rps', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckRpsMultiplierDisplay">4배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('rps', 1)">▲</button>
+                        </div>
+                    </div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">🎡 룰렛 색깔 맞추기</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('roulette', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckRouletteMultiplierDisplay">5배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('roulette', 1)">▲</button>
+                        </div>
+                    </div>
+                    <div class="bank-ratio-card">
+                        <div class="bank-ratio-title">🎲 주사위 눈금 맞추기</div>
+                        <div class="bank-stepper">
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('dice', -1)">▼</button>
+                            <div class="bank-stepper-val" id="luckDiceMultiplierDisplay">7배</div>
+                            <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('dice', 1)">▲</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeLuckModal()">닫기</button>
+                <button class="btn btn-success" id="luckStep1Btn" onclick="luckStep1Complete()" disabled>설정 완료</button>
             </div>
         </div>
     </div>
@@ -1186,6 +1386,7 @@
 <script src="js/player-list-view.js"></script>
 <script src="js/bank.js"></script>
 <script src="js/quiz.js"></script>
+<script src="js/luck.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/test-report.js"></script>
 <script src="js/efti-report.js"></script>
