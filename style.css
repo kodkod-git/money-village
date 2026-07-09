@@ -1616,12 +1616,13 @@
             color: #c0392b;
         }
         #luckView2 .bank-reset-btn {
-            background: #c0392b;
-            border-color: #c0392b;
+            background: #fdf1f0;
+            border-color: #f5c6c2;
+            color: #c0392b;
         }
         #luckView2 .bank-reset-btn:hover {
-            background: #922b21;
-            border-color: #922b21;
+            background: #fbe3e1;
+            border-color: #c0392b;
         }
         #luckView2 .team-group {
             background: #fdf1f0;
