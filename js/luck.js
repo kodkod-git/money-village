@@ -522,7 +522,7 @@ const _DICE_FACE_ORIENTATION = {
     3: '180.0deg 0.0deg 0.0deg',
     4: '270.0deg 0.0deg 0.0deg',
     5: '180.0deg 270.0deg 0.0deg',
-    6: '180.0deg 90.0deg 0.0deg',
+    6: '90.0deg 0.0deg 90.0deg',
 };
 
 let _diceRollFrame = null;
