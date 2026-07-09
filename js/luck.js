@@ -342,6 +342,7 @@ function luckSelectPlayer(idx) {
     _luck.currentPlayerIdx = idx;
     const p = _luck.players[idx];
     document.getElementById('luckGameSelectPlayerName').textContent = `${p.nickname}(${p.real_name})의 게임 선택`;
+    _luckSyncGameSelectUI();
     _luckShowView(3);
 }
 
@@ -373,19 +374,19 @@ function luckBackToList() {
     _luckShowView(2);
 }
 
-function luckBackToGameSelect() {
-    _luckShowView(3);
-}
-
-// ── View 3 → 4: 게임 선택 → 배팅 신청서 ────────────────────────────
+// ── View 3: 게임 선택 + 배팅 신청서 (한 화면) ───────────────────────
 function luckSelectGame(type) {
     _luck.selectedGame = type;
-    const p = _luck.players[_luck.currentPlayerIdx];
-    document.getElementById('luckBetPlayerName').textContent =
-        `${p.nickname}(${p.real_name}) · ${_LUCK_GAME[type].label}`;
+    _luckSyncGameSelectUI();
+}
+
+function _luckSyncGameSelectUI() {
+    ['rps', 'roulette', 'dice'].forEach(type => {
+        const btn = document.getElementById('luckGameBtn' + _luckCap(type));
+        if (btn) btn.classList.toggle('selected', _luck.selectedGame === type);
+    });
     document.getElementById('luckBetAmountDisplay').textContent = _luck.bet.amount.toLocaleString() + '원';
     _luckUpdateBetPreview();
-    _luckShowView(4);
 }
 
 function luckAdjustBet(delta) {
@@ -397,14 +398,22 @@ function luckAdjustBet(delta) {
 }
 
 function _luckUpdateBetPreview() {
+    if (!_luck.selectedGame) {
+        document.getElementById('luckBetPreviewBox').textContent = '게임을 선택하면 미리보기가 나와요!';
+        return;
+    }
     const mult = _luck.multipliers[_luck.selectedGame];
     const out  = Math.round(_luck.bet.amount * mult);
     document.getElementById('luckBetPreviewBox').textContent =
         `${_luck.bet.amount.toLocaleString()}원 → 🎉 ${out.toLocaleString()}원 (승리 시)`;
 }
 
-// ── View 4 → 5: 배팅 완료 → 게임 플레이 ────────────────────────────
+// ── View 3 → 5: 배팅 완료 → 게임 플레이 ────────────────────────────
 function luckStep2Submit() {
+    if (!_luck.selectedGame) {
+        alert('게임을 선택해주세요.');
+        return;
+    }
     _luckShowView(5);
     _luckStartGame();
 }

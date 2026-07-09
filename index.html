@@ -726,25 +726,28 @@
                 </div>
             </div>
 
-            <!-- View 3: 게임 선택 -->
+            <!-- View 3: 게임 선택 + 배팅 신청서 (한 화면) -->
             <div id="luckView3" style="display:none;">
                 <div class="bank-screen-header">
                     <button class="bank-back-btn" onclick="luckBackToList()">←</button>
-                    <div class="bank-screen-title">게임 선택</div>
+                    <div class="bank-screen-title">게임 선택 &amp; 배팅</div>
                 </div>
                 <p id="luckGameSelectPlayerName" class="bank-screen-subtitle" style="text-align:center; margin-bottom:16px;"></p>
-                <button class="btn btn-luck" style="width:100%; padding:16px; margin-bottom:12px; font-size:16px; justify-content:center;" onclick="luckSelectGame('rps')">✂️ 가위바위보</button>
-                <button class="btn btn-luck" style="width:100%; padding:16px; margin-bottom:12px; font-size:16px; justify-content:center;" onclick="luckSelectGame('roulette')">🎡 룰렛 색깔 맞추기</button>
-                <button class="btn btn-luck" style="width:100%; padding:16px; font-size:16px; justify-content:center;" onclick="luckSelectGame('dice')">🎲 주사위 눈금 맞추기</button>
-            </div>
 
-            <!-- View 4: 배팅 신청서 -->
-            <div id="luckView4" style="display:none;">
-                <div class="bank-screen-header">
-                    <button class="bank-back-btn" onclick="luckBackToGameSelect()">←</button>
-                    <div class="bank-screen-title">💰 배팅 신청서</div>
+                <div class="luck-game-select-grid">
+                    <button class="luck-game-select-btn" id="luckGameBtnRps" onclick="luckSelectGame('rps')">
+                        <span class="luck-game-select-icon">✂️</span>
+                        <span class="luck-game-select-label">가위바위보</span>
+                    </button>
+                    <button class="luck-game-select-btn" id="luckGameBtnRoulette" onclick="luckSelectGame('roulette')">
+                        <span class="luck-game-select-icon">🎡</span>
+                        <span class="luck-game-select-label">룰렛</span>
+                    </button>
+                    <button class="luck-game-select-btn" id="luckGameBtnDice" onclick="luckSelectGame('dice')">
+                        <span class="luck-game-select-icon">🎲</span>
+                        <span class="luck-game-select-label">주사위</span>
+                    </button>
                 </div>
-                <p id="luckBetPlayerName" class="bank-screen-subtitle" style="text-align:center; margin-bottom:16px;"></p>
 
                 <div class="bank-screen-card">
                     <div class="bank-screen-card-title">배팅 금액</div>
@@ -757,7 +760,7 @@
                     </div>
                 </div>
 
-                <div class="bank-preview-box" id="luckBetPreviewBox" style="margin-bottom:16px;">금액을 입력하면 미리보기가 나와요!</div>
+                <div class="bank-preview-box" id="luckBetPreviewBox" style="margin-bottom:16px;">게임을 선택하면 미리보기가 나와요!</div>
                 <button class="btn btn-success" style="width:100%; padding:15px; font-size:16px; justify-content:center;" onclick="luckStep2Submit()">배팅 완료</button>
             </div>
 

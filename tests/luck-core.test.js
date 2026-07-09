@@ -57,10 +57,9 @@ assert(/function luckSelectPlayer\(idx\)/.test(js), 'luckSelectPlayer should exi
 assert(/_luckShowView\(3\)/.test(js), 'luckSelectPlayer should navigate to the game-select view');
 
 assert(/function luckBackToList\(\)/.test(js), 'luckBackToList should exist');
-assert(/function luckBackToGameSelect\(\)/.test(js), 'luckBackToGameSelect should exist');
 
 assert(/function luckSelectGame\(type\)/.test(js), 'luckSelectGame should exist');
-assert(/_luckShowView\(4\)/.test(js), 'luckSelectGame should navigate to the bet view');
+assert(/function _luckSyncGameSelectUI\(\)/.test(js), '_luckSyncGameSelectUI should exist to sync the selected-game highlight and bet preview');
 
 assert(/function luckAdjustBet\(delta\)/.test(js), 'luckAdjustBet should exist');
 assert(/if \(next < 0\) return;/.test(js), 'bet amount should not go negative');

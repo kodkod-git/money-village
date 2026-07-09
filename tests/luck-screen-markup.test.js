@@ -38,15 +38,23 @@ assert(!/#luckScreen[\s\S]{0,400}player-tab-bar/.test(html), 'luckScreen should 
 assert(html.includes('onclick="luckClose()"'), 'luckScreen should have a 마감 button');
 assert(html.includes('onclick="luckReset()"'), 'luckScreen should have a 전체 초기화 button');
 
-// View 3: 게임 선택
+// View 3: 게임 선택 + 배팅 신청서 (한 화면, 1행 3열 그리드)
+assert(html.includes('class="luck-game-select-grid"'), 'game-select should use a 1x3 grid');
+assert(html.includes('id="luckGameBtnRps"'), 'game-select grid should offer RPS');
+assert(html.includes('id="luckGameBtnRoulette"'), 'game-select grid should offer roulette');
+assert(html.includes('id="luckGameBtnDice"'), 'game-select grid should offer dice');
 assert(html.includes(`onclick="luckSelectGame('rps')"`), 'game-select view should offer RPS');
 assert(html.includes(`onclick="luckSelectGame('roulette')"`), 'game-select view should offer roulette');
 assert(html.includes(`onclick="luckSelectGame('dice')"`), 'game-select view should offer dice');
 
-// View 4: 배팅 신청서 — 예금 신청서(bank View3)와 동일한 스테퍼 재사용
-assert(html.includes('id="luckBetAmountDisplay"'), 'bet view should show the bet amount');
+// 배팅 신청서 — 예금 신청서(bank View3)와 동일한 스테퍼 재사용, 게임 선택과 같은 화면(View3)에 위치
+assert(html.includes('id="luckBetAmountDisplay"'), 'bet form should show the bet amount');
 assert(/onmousedown="startHold\(\(\)=>luckAdjustBet\(-10000\)\)"/.test(html), 'bet stepper should reuse startHold/stopHold like the deposit form');
-assert(html.includes('onclick="luckStep2Submit()"'), 'bet view should have a 배팅 완료 button');
+assert(html.includes('onclick="luckStep2Submit()"'), 'bet form should have a 배팅 완료 button');
+assert(
+    /<div id="luckView3"[\s\S]*luck-game-select-grid[\s\S]*luckBetAmountDisplay[\s\S]*<\/div>\s*<!-- View 5/.test(html),
+    'game-select grid and bet form should live in the same luckView3 container'
+);
 
 // View 5: 게임 플레이
 assert(html.includes('id="luckGameImg"'), 'play view should have a single game image element shared by all 3 games');

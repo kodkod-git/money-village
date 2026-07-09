@@ -1644,6 +1644,41 @@
             padding: 2px 8px;
         }
 
+        /* 행운 게임 선택 (1행 3열, 배팅금액 카드와 동일한 톤) */
+        .luck-game-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .luck-game-select-btn {
+            background: #F8FAFF;
+            border: 1px solid #E0EAFF;
+            border-radius: 12px;
+            padding: 14px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .luck-game-select-btn:hover {
+            background: #eef4ff;
+        }
+        .luck-game-select-btn.selected {
+            background: #fff9db;
+            border-color: #ffe066;
+        }
+        .luck-game-select-icon {
+            font-size: 26px;
+        }
+        .luck-game-select-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--mv-blue-deep);
+        }
+
         /* 행운 게임 플레이 스테이지 */
         .luck-game-stage {
             display: flex;
