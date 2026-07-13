@@ -394,8 +394,7 @@
         const diligence = Number(p.diligenceReward || 0);
         const deposit   = Number(p.depositReward   || 0);
         const quest     = Number(p.questReward     || 0);
-        const luck      = Number(p.luckReward      || 0);
-        const base = cash + assetVal + diligence + deposit + quest + luck;
+        const base = cash + assetVal + diligence + deposit + quest;
 
         let total;
         if (currentGameVariant !== 'basic') {
@@ -1310,7 +1309,7 @@
                     const estates = await sbLoadEstateBalance(p.userId, p.gameId);
                     if (estates) {
                         Object.assign(p.assets, estates);
-                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
+                        const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
                         p.total = base * calcSuccessMultiplier(p.successFactors || {});
                     } else {
                         console.warn(`  no estate balance: ${p.nickname}`);
@@ -1319,7 +1318,7 @@
                     const stocks = await sbLoadUserBalance(p.userId, p.gameId);
                     if (stocks) {
                         Object.assign(p.assets, stocks);
-                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
+                        p.total = (p.manualCash || 0) + calcStock(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
                     } else {
                         console.warn(`  no stock balance: ${p.nickname}`);
                     }

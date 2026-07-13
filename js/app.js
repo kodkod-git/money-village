@@ -151,7 +151,7 @@
             }
         }
 
-        const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0) + (p.luckReward || 0);
+        const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
         p.total = currentGameVariant !== 'basic'
             ? base * calcSuccessMultiplier(p.successFactors || {})
             : base;
@@ -159,7 +159,7 @@
 
     function recalculateAllRankings() {
         players.forEach(p => {
-            const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0) + (p.luckReward || 0);
+            const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
             p.total = currentGameVariant !== 'basic'
                 ? base * calcSuccessMultiplier(p.successFactors || {})
                 : base;
