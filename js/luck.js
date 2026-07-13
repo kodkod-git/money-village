@@ -268,13 +268,16 @@ function _luckMergeRemoteState(state, history) {
     const findPlayer = (userId) => _luck.players.find(p => p.user_id === userId);
     _luck.earnedRewards = {};
     history.forEach(r => {
-        if (!r.is_win || !r.matured_amount) return;
         const pl = findPlayer(r.user_id);
         if (!pl) return;
-        _luck.earnedRewards[pl.nickname] = (_luck.earnedRewards[pl.nickname] || 0) + r.matured_amount;
+        _luck.earnedRewards[pl.nickname] = (_luck.earnedRewards[pl.nickname] || 0) + _luckHistoryRewardDelta(r);
     });
 
     _luckSyncMultiplierUI();
+}
+
+function _luckHistoryRewardDelta(record) {
+    return record.is_win ? Number(record.matured_amount || 0) : -Number(record.amount || 0);
 }
 
 // ── 뷰 전환 (luckScreen 내 View 2~6) ─────────────────────────────
@@ -288,6 +291,19 @@ function _luckShowView(n) {
 }
 
 // ── View 2: 플레이어 목록 ────────────────────────────────────────
+function _luckRewardBadgeText(earned) {
+    const amount = Number(earned || 0);
+    if (amount === 0) return '0원';
+    const sign = amount < 0 ? '-' : '+';
+    return `${sign}${Math.abs(amount)}원`;
+}
+
+function _luckRewardBadgeClass(earned) {
+    const amount = Number(earned || 0);
+    if (amount === 0) return 'luck-earned-badge--zero';
+    return amount < 0 ? 'luck-earned-badge--negative' : 'luck-earned-badge--positive';
+}
+
 function _luckRenderPlayerList() {
     const closeBtn = document.getElementById('luckCloseBtn');
     if (closeBtn) {
@@ -302,9 +318,8 @@ function _luckRenderPlayerList() {
         useTeamGroups: false,
         getPlayerGroupState: ({ player }) => {
             const earned = _luck.earnedRewards[player.nickname] || 0;
-            const headerHtml = earned > 0
-                ? `<span class="luck-earned-badge">+${earned.toLocaleString()}원</span>`
-                : '';
+            const badgeClass = _luckRewardBadgeClass(earned);
+            const headerHtml = `<span class="luck-earned-badge ${badgeClass}">${_luckRewardBadgeText(earned)}</span>`;
             return { done: false, headerHtml };
         },
         getPlayerCardState: ({ index }) => ({
@@ -472,10 +487,9 @@ function _luckResolve(isWin, detail) {
 
     sbInsertLuckHistory(_luck.gameId, p.user_id, type, amount, matured, isWin);
 
-    if (isWin) {
-        _luck.earnedRewards[p.nickname] = (_luck.earnedRewards[p.nickname] || 0) + matured;
-        sbSaveLuckReward(_luck.gameId, p.user_id, _luck.earnedRewards[p.nickname]).catch(console.error);
-    }
+    _luck.earnedRewards[p.nickname] = (_luck.earnedRewards[p.nickname] || 0)
+        + _luckHistoryRewardDelta({ is_win: isWin, amount, matured_amount: matured });
+    sbSaveLuckReward(_luck.gameId, p.user_id, _luck.earnedRewards[p.nickname]).catch(console.error);
 
     document.getElementById('luckResultTitle').textContent = isWin ? '🎉 성공!' : '😢 실패';
     document.getElementById('luckRGame').textContent   = _LUCK_GAME[type].label;

@@ -1646,12 +1646,25 @@
         }
         .luck-earned-badge {
             display: inline-block;
-            background: #fdecea;
-            color: #c0392b;
             font-size: 12px;
             font-weight: 700;
             border-radius: 6px;
             padding: 2px 8px;
+        }
+        .luck-earned-badge--positive {
+            background: #e8f6ef;
+            color: #0b7a3b;
+            font-weight: 900;
+        }
+        .luck-earned-badge--negative {
+            background: #fdecea;
+            color: #c0392b;
+            font-weight: 900;
+        }
+        .luck-earned-badge--zero {
+            background: #f1f3f5;
+            color: #666666;
+            font-weight: 700;
         }
 
         /* 행운 게임 선택 (1행 3열, 배팅금액 카드와 동일한 톤) */

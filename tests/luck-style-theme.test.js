@@ -30,6 +30,9 @@ assert(/\.luck-choice-btns\s*\{/.test(css), 'luck choice button row should be st
 assert(/\.luck-choice-btns \.btn:disabled\s*\{/.test(css), 'choice buttons should have a disabled state while staying visible');
 assert(/\.luck-choice-btns \.btn\.is-selected\s*\{[\s\S]*?border:\s*4px solid #111;/.test(css), 'selected choice button should have a thick border');
 assert(/\.luck-color-btn\s*\{/.test(css), 'luck roulette color buttons should be styled');
+assert(/\.luck-earned-badge--positive\s*\{[\s\S]*?background:\s*#[0-9a-fA-F]{6};[\s\S]*?color:\s*#[0-9a-fA-F]{6};[\s\S]*?font-weight:\s*900;/.test(css), 'positive luck reward badges should use a green badge with bold green text');
+assert(/\.luck-earned-badge--negative\s*\{[\s\S]*?background:\s*#[0-9a-fA-F]{6};[\s\S]*?color:\s*#[0-9a-fA-F]{6};[\s\S]*?font-weight:\s*900;/.test(css), 'negative luck reward badges should use a red badge with bold red text');
+assert(/\.luck-earned-badge--zero\s*\{[\s\S]*?background:\s*#[0-9a-fA-F]{6};[\s\S]*?color:\s*#[0-9a-fA-F]{6};[\s\S]*?font-weight:\s*700;/.test(css), 'zero luck reward badges should use a gray badge with normal bold text');
 assert(/\.luck-dice-btn\s*\{[\s\S]*?background:\s*#fff;/.test(css), 'dice guess buttons should use a white background');
 assert(/\.luck-dice-btn\s*\{[\s\S]*?color:\s*#111;/.test(css), 'dice guess buttons should use black text');
 assert(/\.luck-dice-btn\s*\{[\s\S]*?border:\s*1px solid #111;/.test(css), 'dice guess buttons should have a thin black border');
