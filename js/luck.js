@@ -15,7 +15,7 @@ const _luck = {
 };
 
 const _LUCK_GAME = {
-    rps:      { label: '가위바위보',       icon: '✂️' },
+    rps:      { label: '가위바위보',       icon: '✊' },
     roulette: { label: '룰렛 색깔 맞추기', icon: '🎡' },
     dice:     { label: '주사위 눈금 맞추기', icon: '🎲' },
 };
@@ -368,6 +368,12 @@ function _luckResetGameImg() {
         img.style.transition = '';
         img.style.display = '';
     }
+    const rouletteWheel = document.getElementById('luckRouletteWheel');
+    if (rouletteWheel) {
+        rouletteWheel.style.transform = '';
+        rouletteWheel.style.transition = '';
+        rouletteWheel.style.display = 'none';
+    }
     const roulettePointer = document.getElementById('luckRoulettePointer');
     if (roulettePointer) roulettePointer.style.display = 'none';
     const rpsStage = document.getElementById('luckRpsStage');
@@ -449,7 +455,7 @@ function _luckStartGame() {
     document.getElementById('luckRouletteButtons').style.display = type === 'roulette' ? 'flex' : 'none';
     document.getElementById('luckDiceButtons').style.display     = type === 'dice'     ? 'flex' : 'none';
     document.getElementById('luckRpsStage').style.display        = type === 'rps'      ? 'grid' : 'none';
-    document.getElementById('luckGameImg').style.display         = type === 'rps'      ? 'none' : '';
+    document.getElementById('luckGameImg').style.display         = (type === 'rps' || type === 'roulette') ? 'none' : '';
 
     if (type === 'rps')      _luckRpsStart();
     if (type === 'roulette') _luckRouletteStart();
@@ -541,21 +547,78 @@ function luckRpsPick(playerChoice) {
 }
 
 // ── 룰렛 색깔 맞추기 ─────────────────────────────────────────────
-const _ROULETTE_COLORS = ['red', 'blue', 'yellow', 'green'];
-const _ROULETTE_DEG    = { red: 0, blue: 90, yellow: 180, green: 270 };
-const _ROULETTE_CENTER_DEG = { red: 45, blue: 135, yellow: 225, green: 315 };
+const _ROULETTE_COLORS = [
+    { key: 'red',    label: '빨강', color: '#DE4948' },
+    { key: 'orange', label: '주황', color: '#F07854' },
+    { key: 'green',  label: '초록', color: '#5ABDAA' },
+    { key: 'blue',   label: '파랑', color: '#58B7DA' },
+];
 let _rouletteSpinFrame = null;
 let _rouletteLastTs = null;
 let _rouletteAngle = 0;
 
+function _luckRoulettePoint(deg, radius = 50) {
+    const rad = (deg - 90) * Math.PI / 180;
+    return {
+        x: 50 + radius * Math.cos(rad),
+        y: 50 + radius * Math.sin(rad)
+    };
+}
+
+function _luckRouletteSlicePath(startDeg, endDeg) {
+    const start = _luckRoulettePoint(startDeg);
+    const end = _luckRoulettePoint(endDeg);
+    const largeArc = endDeg - startDeg > 180 ? 1 : 0;
+    return `M 50 50 L ${start.x.toFixed(3)} ${start.y.toFixed(3)} A 50 50 0 ${largeArc} 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)} Z`;
+}
+
+function _luckRouletteCenterDeg(colorKey) {
+    const index = _ROULETTE_COLORS.findIndex(c => c.key === colorKey);
+    if (index < 0) return 0;
+    const sliceDeg = 360 / _ROULETTE_COLORS.length;
+    return index * sliceDeg + sliceDeg / 2;
+}
+
+function _luckBuildRouletteWheel() {
+    const wheel = document.getElementById('luckRouletteWheel');
+    if (!wheel) return null;
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('aria-hidden', 'true');
+
+    const sliceDeg = 360 / _ROULETTE_COLORS.length;
+    _ROULETTE_COLORS.forEach((color, index) => {
+        const startDeg = index * sliceDeg;
+        const endDeg = startDeg + sliceDeg;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', _luckRouletteSlicePath(startDeg, endDeg));
+        path.setAttribute('fill', color.color);
+        svg.appendChild(path);
+    });
+
+    const hub = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hub.setAttribute('cx', '50');
+    hub.setAttribute('cy', '50');
+    hub.setAttribute('r', '8');
+    hub.setAttribute('fill', '#fff');
+    hub.setAttribute('stroke', '#222');
+    hub.setAttribute('stroke-width', '1.5');
+    svg.appendChild(hub);
+
+    wheel.replaceChildren(svg);
+    return wheel;
+}
+
 function _luckRouletteStart() {
-    const img = document.getElementById('luckGameImg');
-    img.src = 'image/luck/roulette_wheel.png';
-    img.classList.add('luck-roulette-wheel');
+    const wheel = _luckBuildRouletteWheel();
+    if (!wheel) return;
+    const img = wheel;
     document.getElementById('luckRoulettePointer').style.display = 'block';
-    img.style.transition = 'none';
+    wheel.style.display = 'block';
+    wheel.style.transition = 'none';
     _rouletteAngle = 0;
-    img.style.transform  = `rotate(${_rouletteAngle}deg)`;
+    wheel.style.transform  = `rotate(${_rouletteAngle}deg)`;
     void img.offsetWidth; // 강제 리플로우 — transition 리셋
     _rouletteLastTs = null;
 
@@ -573,17 +636,18 @@ function _luckRouletteStart() {
 function luckRoulettePick(playerColor) {
     _luckMarkSelectedChoice('luckRouletteButtons', playerColor);
     _luckDisableVisibleChoiceButtons();
-    const img = document.getElementById('luckGameImg');
+    const img = document.getElementById('luckRouletteWheel');
     if (_rouletteSpinFrame) {
         cancelAnimationFrame(_rouletteSpinFrame);
         _rouletteSpinFrame = null;
     }
     _rouletteLastTs = null;
 
-    const winningColor = _ROULETTE_COLORS[Math.floor(Math.random() * 4)];
+    const winningColor = _ROULETTE_COLORS[Math.floor(Math.random() * _ROULETTE_COLORS.length)].key;
     const extraSpins = 4; // 멈추기 전 시각적으로 몇 바퀴 더 돌림
     const currentNormalized = ((_rouletteAngle % 360) + 360) % 360;
-    const winningTopDeg = (360 - _ROULETTE_CENTER_DEG[winningColor]) % 360;
+    const winningCenterDeg = _luckRouletteCenterDeg(winningColor);
+    const winningTopDeg = (360 - winningCenterDeg) % 360;
     const deltaToWinningTop = (winningTopDeg - currentNormalized + 360) % 360;
     const targetDeg = _rouletteAngle + extraSpins * 360 + deltaToWinningTop;
     _rouletteAngle = targetDeg;

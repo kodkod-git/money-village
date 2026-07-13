@@ -41,6 +41,7 @@ assert(html.includes('onclick="luckReset()"'), 'luckScreen should have a 전체 
 // View 3: 게임 선택 + 배팅 신청서 (한 화면, 1행 3열 그리드)
 assert(html.includes('class="luck-game-select-grid"'), 'game-select should use a 1x3 grid');
 assert(html.includes('id="luckGameBtnRps"'), 'game-select grid should offer RPS');
+assert(html.includes('<span class="luck-game-select-icon">✊</span>'), 'RPS representative icon should use the fist emoji');
 assert(html.includes('id="luckGameBtnRoulette"'), 'game-select grid should offer roulette');
 assert(html.includes('id="luckGameBtnDice"'), 'game-select grid should offer dice');
 assert(html.includes(`onclick="luckSelectGame('rps')"`), 'game-select view should offer RPS');
@@ -57,14 +58,21 @@ assert(
 );
 
 // View 5: 게임 플레이
-assert(html.includes('id="luckGameImg"'), 'play view should keep the shared game image for roulette');
+assert(html.includes('id="luckGameImg"'), 'play view should keep the shared game image for non-roulette games');
+assert(html.includes('id="luckRouletteWheel"'), 'play view should have a JS-rendered roulette wheel container');
 assert(html.includes('id="luckRoulettePointer"'), 'roulette view should have a fixed 12-o-clock pointer');
 assert(html.includes('id="luckRpsStage"'), 'play view should have a two-panel RPS stage');
 assert(html.includes('id="luckRpsComputerImg"'), 'RPS stage should show the cycling hand on the left');
 assert(html.includes('id="luckRpsPlayerPlaceholder"'), 'RPS stage should show a ? placeholder before the player picks');
 assert(html.includes('id="luckRpsPlayerImg"'), 'RPS stage should show the picked player hand on the right');
 assert(html.includes(`onclick="luckRpsPick('scissors')"`), 'play view should have RPS pick buttons');
+assert(html.includes(`onclick="luckRpsPick('scissors')">✌️ 가위</button>`), 'scissors choice should use a hand-shaped emoji');
 assert(html.includes(`onclick="luckRoulettePick('red')"`), 'play view should have roulette color buttons');
+assert(html.includes(`onclick="luckRoulettePick('orange')"`), 'play view should have the orange roulette color button');
+assert(html.includes(`style="background:#DE4948;"`), 'red roulette button should use the requested red color');
+assert(html.includes(`style="background:#F07854;"`), 'orange roulette button should use the requested orange color');
+assert(html.includes(`style="background:#5ABDAA;"`), 'green roulette button should use the requested green color');
+assert(html.includes(`style="background:#58B7DA;"`), 'blue roulette button should use the requested blue color');
 for (let i = 1; i <= 6; i++) {
     assert(html.includes(`onclick="luckDiceStop(${i})"`), `play view should have dice guess button ${i}`);
 }

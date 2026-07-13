@@ -70,7 +70,9 @@
       "Bash(bash \"/c/Users/USER/.claude/plugins/cache/superpowers-dev/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh\" --project-dir \"/c/Users/USER/OneDrive/Desktop/Project/money-village\")",
       "Bash(node *)",
       "Bash(curl *)",
-      "Bash(bash \"/c/Users/USER/.claude/plugins/cache/superpowers-dev/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh\" \"/c/Users/USER/OneDrive/Desktop/Project/money-village/.superpowers/brainstorm/3752-1783577980\")"
+      "Bash(bash \"/c/Users/USER/.claude/plugins/cache/superpowers-dev/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh\" \"/c/Users/USER/OneDrive/Desktop/Project/money-village/.superpowers/brainstorm/3752-1783577980\")",
+      "Bash(powershell -Command \"Get-Item index.html, js/luck.js, style.css, 'tests/luck-games.test.js' | Select-Object Name, LastWriteTime\")",
+      "Bash(stat -c '%y %n' index.html js/luck.js style.css tests/luck-games.test.js)"
     ]
   }
 }

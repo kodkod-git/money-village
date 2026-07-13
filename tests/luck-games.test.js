@@ -8,6 +8,7 @@ const js = fs.readFileSync(path.join(root, 'js/luck.js'), 'utf8');
 
 // 공유 결과 처리
 assert(/function _luckResolve\(isWin, detail\)/.test(js), '_luckResolve should exist as the shared win/lose handler');
+assert(/rps:\s*\{\s*label:\s*'[^']+',\s*icon:\s*'✊'\s*\}/.test(js), 'RPS title icon should use the fist representative icon');
 assert(/isWin \? '🎉 성공!' : '😢 실패'/.test(js), 'success result title should use 성공 wording');
 assert(/sbInsertLuckHistory\(_luck\.gameId, p\.user_id, type, amount, matured, isWin\)/.test(js), '_luckResolve should record every play via sbInsertLuckHistory (insert, not upsert)');
 assert(/sbSaveLuckReward\(_luck\.gameId, p\.user_id, _luck\.earnedRewards\[p\.nickname\]\)/.test(js), '_luckResolve should persist the cumulative reward only on a win');
@@ -37,17 +38,20 @@ assert(/luckRpsComputerImg'\)\.src = _RPS_IMAGES\[computerChoice\]/.test(js), 'a
 assert(/_RPS_BEATS\[playerChoice\] === computerChoice/.test(js), 'win should be judged by standard RPS rules, not equality');
 
 // 룰렛
-assert(/const _ROULETTE_COLORS = \['red', 'blue', 'yellow', 'green'\]/.test(js), 'roulette should support exactly the 4 colors from the proposal');
+assert(/const _ROULETTE_COLORS = \[\s*\{\s*key:\s*'red',\s*label:\s*'[^']+',\s*color:\s*'#DE4948'\s*\},\s*\{\s*key:\s*'orange',\s*label:\s*'[^']+',\s*color:\s*'#F07854'\s*\},\s*\{\s*key:\s*'green',\s*label:\s*'[^']+',\s*color:\s*'#5ABDAA'\s*\},\s*\{\s*key:\s*'blue',\s*label:\s*'[^']+',\s*color:\s*'#58B7DA'\s*\}/.test(js), 'roulette should define the requested red/orange/green/blue palette as data');
 assert(/function _luckRouletteStart\(\)/.test(js), '_luckRouletteStart should exist');
-assert(/image\/luck\/roulette_wheel\.png/.test(js), 'roulette wheel image path should follow the image/luck/ convention');
-assert(/classList\.add\('luck-roulette-wheel'\)/.test(js), 'roulette should clip the wheel to a transparent circle');
+assert(/function _luckBuildRouletteWheel\(\)/.test(js), 'roulette should build its wheel directly in JS');
+assert(/document\.createElementNS\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/.test(js), 'roulette wheel should be rendered as SVG instead of an image asset');
+assert(/_luckRouletteSlicePath\(startDeg, endDeg\)/.test(js), 'roulette should draw one SVG path per color slice');
+assert(!/image\/luck\/roulette_wheel\.png/.test(js), 'roulette should no longer depend on the roulette_wheel.png image asset');
 assert(/luckRoulettePointer'\)\.style\.display = 'block'/.test(js), 'roulette should show the fixed 12-o-clock pointer');
 assert(/requestAnimationFrame\(spin\)/.test(js), 'roulette should spin quickly via requestAnimationFrame');
 
 assert(/function luckRoulettePick\(playerColor\)/.test(js), 'luckRoulettePick should exist');
-assert(/_ROULETTE_COLORS\[Math\.floor\(Math\.random\(\) \* 4\)\]/.test(js), 'winning color should be picked with Math.random() at click time');
+assert(/_ROULETTE_COLORS\[Math\.floor\(Math\.random\(\) \* _ROULETTE_COLORS\.length\)\]\.key/.test(js), 'winning color should be picked from the data array length at click time');
 assert(/_luckMarkSelectedChoice\('luckRouletteButtons', playerColor\)/.test(js), 'roulette should mark the selected color button');
-assert(/winningTopDeg = \(360 - _ROULETTE_CENTER_DEG\[winningColor\]\) % 360/.test(js), 'roulette should rotate the winning color center to the 12-o-clock pointer');
+assert(/const winningCenterDeg = _luckRouletteCenterDeg\(winningColor\)/.test(js), 'roulette should compute the winning center from the current color list');
+assert(/winningTopDeg = \(360 - winningCenterDeg\) % 360/.test(js), 'roulette should rotate the winning color center to the 12-o-clock pointer');
 assert(/cubic-bezier\(0\.12, 0\.82, 0\.18, 1\)/.test(js), 'roulette should decelerate after the player clicks');
 assert(/playerColor === winningColor/.test(js), 'win should require the clicked color to match the randomly decided winning color');
 assert(/setTimeout\(\(\) => _luckResolve\(isWin, \{ playerColor, winningColor \}\), 1400\)/.test(js), 'roulette should reveal the result after the deceleration finishes');

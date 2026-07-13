@@ -736,7 +736,7 @@
 
                 <div class="luck-game-select-grid">
                     <button class="luck-game-select-btn" id="luckGameBtnRps" onclick="luckSelectGame('rps')">
-                        <span class="luck-game-select-icon">✂️</span>
+                        <span class="luck-game-select-icon">✊</span>
                         <span class="luck-game-select-label">가위바위보</span>
                     </button>
                     <button class="luck-game-select-btn" id="luckGameBtnRoulette" onclick="luckSelectGame('roulette')">
@@ -773,6 +773,7 @@
 
                 <div class="luck-game-stage">
                     <img id="luckGameImg" class="luck-game-img" draggable="false" alt="행운 게임" />
+                    <div id="luckRouletteWheel" class="luck-roulette-wheel" style="display:none;" aria-label="룰렛"></div>
                     <div id="luckRoulettePointer" class="luck-roulette-pointer" style="display:none;" aria-hidden="true"></div>
                     <div id="luckRpsStage" class="luck-rps-stage" style="display:none;">
                         <div class="luck-rps-panel">
@@ -787,15 +788,15 @@
                 </div>
 
                 <div id="luckRpsButtons" class="luck-choice-btns" style="display:none;">
-                    <button class="btn btn-luck" data-choice="scissors" onclick="luckRpsPick('scissors')">✂️ 가위</button>
+                    <button class="btn btn-luck" data-choice="scissors" onclick="luckRpsPick('scissors')">✌️ 가위</button>
                     <button class="btn btn-luck" data-choice="rock" onclick="luckRpsPick('rock')">✊ 바위</button>
                     <button class="btn btn-luck" data-choice="paper" onclick="luckRpsPick('paper')">🖐️ 보</button>
                 </div>
                 <div id="luckRouletteButtons" class="luck-choice-btns" style="display:none;">
-                    <button class="btn luck-color-btn" data-choice="red" style="background:#e74c3c;" onclick="luckRoulettePick('red')">빨강</button>
-                    <button class="btn luck-color-btn" data-choice="blue" style="background:#3498db;" onclick="luckRoulettePick('blue')">파랑</button>
-                    <button class="btn luck-color-btn" data-choice="yellow" style="background:#f1c40f;" onclick="luckRoulettePick('yellow')">노랑</button>
-                    <button class="btn luck-color-btn" data-choice="green" style="background:#2ecc71;" onclick="luckRoulettePick('green')">초록</button>
+                    <button class="btn luck-color-btn" data-choice="red" style="background:#DE4948;" onclick="luckRoulettePick('red')">빨강</button>
+                    <button class="btn luck-color-btn" data-choice="orange" style="background:#F07854;" onclick="luckRoulettePick('orange')">주황</button>
+                    <button class="btn luck-color-btn" data-choice="green" style="background:#5ABDAA;" onclick="luckRoulettePick('green')">초록</button>
+                    <button class="btn luck-color-btn" data-choice="blue" style="background:#58B7DA;" onclick="luckRoulettePick('blue')">파랑</button>
                 </div>
                 <div id="luckDiceButtons" class="luck-choice-btns" style="display:none;">
                     <button class="btn luck-dice-btn" data-choice="1" onclick="luckDiceStop(1)">1</button>
@@ -988,7 +989,7 @@
                 <div id="luckMultiplierSection" style="display:none; margin-top:16px;">
                     <div class="bank-section-divider">🎲 보상 배수 설정</div>
                     <div class="bank-ratio-card">
-                        <div class="bank-ratio-title">✂️ 가위바위보</div>
+                        <div class="bank-ratio-title">✊ 가위바위보</div>
                         <div class="bank-stepper">
                             <button class="bank-stepper-btn" onclick="luckAdjustMultiplier('rps', -1)">▼</button>
                             <div class="bank-stepper-val" id="luckRpsMultiplierDisplay">4배</div>
