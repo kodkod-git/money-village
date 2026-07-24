@@ -637,6 +637,11 @@ async function quizReset() {
     const result = await sbDeleteQuizHistory(_quiz.gameId);
     if (!result.success) { alert('초기화에 실패했습니다. 다시 시도해주세요.'); return; }
 
+    // quiz_history 로그 삭제와 별개로, 이미 지급된 quest_reward도 0으로 되돌린다
+    await Promise.all(_quiz.players.map(p =>
+        sbSaveQuestReward(_quiz.gameId, p.user_id, 0).catch(console.error)
+    ));
+
     _quiz.progress         = {};
     _quiz.teamProgress     = {};
     _quiz.teamPlayers      = {};
@@ -669,7 +674,7 @@ async function quizResetEntry(playerIdx) {
     }
 
     const userIds = members.map(pl => pl.user_id);
-    const result = await sbDeleteQuizHistoryEntries(_quiz.gameId, userIds);
+    const result = await sbResetQuizEntries(_quiz.gameId, userIds, isTeamTab ? 'team' : 'indiv');
     if (!result.success) { alert('초기화에 실패했습니다.'); return; }
 
     await _quizPollAndMerge();

@@ -854,13 +854,18 @@ async function sbDeleteQuizHistory(gameId) {
     return { success: true };
 }
 
-async function sbDeleteQuizHistoryEntries(gameId, userIds) {
+// scope: 'indiv' → 개인탭 진행도만 초기화, 'team' → 팀탭 진행도만 초기화 (다른 탭 기록은 보존)
+async function sbResetQuizEntries(gameId, userIds, scope) {
     const gid = String(gameId || '').trim();
     if (!gid || !userIds.length) return { success: false };
-    const { error } = await _sb.from('quiz_history').delete()
+    const fields = scope === 'team'
+        ? { team_answered: false, team_failed_at: null }
+        : { indiv_progress: 0,     indiv_failed_at: null };
+    const { error } = await _sb.from('quiz_history')
+        .update(fields)
         .eq('game_id', gid)
         .in('user_id', userIds);
-    if (error) { console.error('[sbDeleteQuizHistoryEntries]', error); return { success: false }; }
+    if (error) { console.error('[sbResetQuizEntries]', error); return { success: false }; }
     return { success: true };
 }
 
