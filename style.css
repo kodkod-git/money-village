@@ -2004,9 +2004,9 @@
         .tr-name { top: 11.9%; left: 17.5%; }
         .tr-age  { top: 11.9%; left: 47.5%; }
         .tr-date { top: 11.9%; left: 78.5%; }
-        .efti-report-name { top: 10.8%; left: 17.5%; }
-        .efti-report-age  { top: 10.8%; left: 47.5%; }
-        .efti-report-date { top: 10.8%; left: 78.5%; }
+        .efti-report-name { top: 10.9%; left: 17.5%; }
+        .efti-report-age  { top: 10.9%; left: 47.5%; }
+        .efti-report-date { top: 10.9%; left: 78.5%; }
         #testReportPrintArea { display: none; }
         @media print {
             body.printing-test-report > *:not(#testReportPrintArea) { display: none !important; }
