@@ -58,7 +58,7 @@
         const base = cash + assetVal + diligence;
 
         if (currentGameVariant !== 'basic') {
-            p.total = base * calcSuccessMultiplier(p.successFactors || {});
+            p.total = Math.round(base * calcSuccessMultiplier(p.successFactors || {}));
         } else {
             p.total = base;
         }

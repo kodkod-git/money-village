@@ -398,7 +398,7 @@
 
         let total;
         if (currentGameVariant !== 'basic') {
-            total = base * calcSuccessMultiplier(p.successFactors || {});
+            total = Math.round(base * calcSuccessMultiplier(p.successFactors || {}));
         } else {
             total = base;
         }
@@ -1310,7 +1310,7 @@
                     if (estates) {
                         Object.assign(p.assets, estates);
                         const base = (p.manualCash || 0) + calcEstate(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
-                        p.total = base * calcSuccessMultiplier(p.successFactors || {});
+                        p.total = Math.round(base * calcSuccessMultiplier(p.successFactors || {}));
                     } else {
                         console.warn(`  no estate balance: ${p.nickname}`);
                     }

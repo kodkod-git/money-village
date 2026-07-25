@@ -363,6 +363,7 @@
             text-align: right;
             white-space: nowrap;
         }
+        .success-col { font-size: 13px !important; }
         .team-asset-col,
         .team-asset-col .fit-number {
             text-align: center;
@@ -370,6 +371,10 @@
         .ranking-table--compact-numbers .asset-col .fit-number,
         .ranking-table--compact-numbers .sub-asset-col .fit-number {
             font-size: 0.8em;
+        }
+        /* 심화/부자의그릇 탭: 자릿수 상관없이 13px로 고정 */
+        #indivTableBody.fame-fixed-numbers .fit-number {
+            font-size: 13px !important;
         }
         
         /* 3. 날짜 폰트 크기 수정 */
@@ -399,6 +404,7 @@
         .hl-cash { color: #00897b; }
         .hl-diligence { color: #22c55e; }
         .hl-stock { color: #d32f2f; }
+        .hl-luck { color: #f59e0b; }
         
         /* 푸터 */
         .fame-footer {
@@ -689,6 +695,10 @@
         /* 현금/주식 칸: 20 -> 19 */
         #indivTableBody tr:not(:first-child) td.sub-asset-col {
         font-size: 19px !important;
+        }
+        /* 성공열쇠 칸은 위 규칙보다 좁게 유지 */
+        #indivTableBody tr:not(:first-child) td.success-col {
+        font-size: 13px !important;
         }
 
         /* 날짜 칸: 15 -> 14 (이미 작지만 더 압축) */

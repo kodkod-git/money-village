@@ -1,5 +1,11 @@
     let currentFameVariant = 'basic';
 
+    const _FAME_VARIANT_LABEL = { basic: '기본', advanced: '심화', rich_vessel: '부자의그릇' };
+    function updateFameTitle() {
+        const el = document.getElementById('fameTitleSuffix');
+        if (el) el.textContent = `(${_FAME_VARIANT_LABEL[currentFameVariant] || '기본'})`;
+    }
+
     function showFameScreen() {
         switchScreen('fameScreen');
         if (customLogoData) {
@@ -16,6 +22,7 @@
             btn.classList.toggle('active', btn.dataset.variant === 'basic');
         });
         document.getElementById('indivStockHeader').innerText = '주식';
+        updateFameTitle();
         fetchFameData();
     }
 
@@ -26,6 +33,7 @@
         });
         const isEstate = variant === 'advanced' || variant === 'rich_vessel';
         document.getElementById('indivStockHeader').innerText = isEstate ? '부동산' : '주식';
+        updateFameTitle();
         renderFame();
     }
 
@@ -43,7 +51,9 @@
                     stock: Number(d.stock ?? 0),
                     diligence_reward: Number(d.diligence_reward ?? 0),
                     quest_reward:     Number(d.quest_reward ?? 0),
-                    deposit_reward:   Number(d.deposit_reward ?? 0)
+                    deposit_reward:   Number(d.deposit_reward ?? 0),
+                    luck_reward:      Number(d.luck_reward ?? 0),
+                    success_count:    d.success_count ?? null
                 }));
             } else {
                 fameIndivData = [];
@@ -83,8 +93,21 @@
         renderRankingTable(indiv.slice(0, 10), 'indivTableBody', false);
         renderRankingTable(team.slice(0, 5), 'teamTableBody', true);
         updateFameDiligenceColumn();
-        applyTableNumberScale('indivTableBody');
+        updateFameSuccessColumn();
+        updateFameNumberScale();
         setSpecialAwards(indiv);
+    }
+
+    // 심화/부자의그릇 탭은 숫자 자릿수와 무관하게 13px로 고정, 기본 탭은 기존 자동 축소 유지
+    function updateFameNumberScale() {
+        const tbody = document.getElementById('indivTableBody');
+        const isFixedSize = currentFameVariant === 'advanced' || currentFameVariant === 'rich_vessel';
+        if (tbody) tbody.classList.toggle('fame-fixed-numbers', isFixedSize);
+        if (isFixedSize) {
+            tbody?.closest('table')?.classList.remove('ranking-table--compact-numbers');
+        } else {
+            applyTableNumberScale('indivTableBody');
+        }
     }
 
     function updateFameDiligenceColumn() {
@@ -95,12 +118,25 @@
         });
     }
 
+    function updateFameSuccessColumn() {
+        const hideSuccess = currentFameVariant === 'basic';
+        ['indivSuccessCol', 'indivSuccessHeader'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = hideSuccess ? 'none' : '';
+        });
+    }
+
+    function formatSuccessCount(count) {
+        const n = Number(count) || 0;
+        return `${n}개(x${n * 0.25})`;
+    }
+
     function renderRankingTable(data, tableId, isTeam) {
         const tbody = document.getElementById(tableId);
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            const colSpan = isTeam ? 4 : (currentFameVariant === 'rich_vessel' ? 7 : 8);
+            const colSpan = isTeam ? 4 : (7 + (currentFameVariant !== 'basic' ? 1 : 0) + (currentFameVariant !== 'rich_vessel' ? 1 : 0));
             tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding:20px; color:#999;">데이터가 없습니다.</td></tr>`;
             return;
         }
@@ -143,6 +179,9 @@
                 if (currentFameVariant !== 'rich_vessel') {
                     row += `<td class="sub-asset-col">${fitNumber(item.diligence_reward)}</td>`;
                 }
+                if (currentFameVariant !== 'basic') {
+                    row += `<td class="sub-asset-col success-col">${formatSuccessCount(item.success_count)}</td>`;
+                }
             }
 
             row += `</tr>`;
@@ -153,22 +192,24 @@
     function setSpecialAwards(data) {
         const isEstateVariant = currentFameVariant === 'advanced' || currentFameVariant === 'rich_vessel';
         document.getElementById('awardStockIcon').innerText  = isEstateVariant ? '🏠' : '📈';
-        document.getElementById('awardStockTitle').innerText = isEstateVariant ? 'Personal Estate King' : 'Personal Stock King';
-        document.getElementById('awardStockLabel').innerText = isEstateVariant ? '부동산 평가액' : '주식 평가액';
+        document.getElementById('awardStockTitle').innerText = isEstateVariant ? 'Estate King' : 'Stock King';
 
         if (data.length === 0) {
             setAwardDisplay('awardCashName', 'awardCashVal');
             setAwardDisplay('awardDiligenceName', 'awardDiligenceVal');
             setAwardDisplay('awardStockName', 'awardStockVal');
+            setAwardDisplay('awardLuckName', 'awardLuckVal');
             return;
         }
         const cashKing = findPositiveAwardWinner(data, 'cash');
         const diligenceKing = findPositiveAwardWinner(data, 'diligence_reward');
         const stockKing = findPositiveAwardWinner(data, 'stock');
+        const luckKing = findPositiveAwardWinner(data, 'luck_reward');
 
         setAwardDisplay('awardCashName', 'awardCashVal', cashKing, 'cash');
         setAwardDisplay('awardDiligenceName', 'awardDiligenceVal', diligenceKing, 'diligence_reward');
         setAwardDisplay('awardStockName', 'awardStockVal', stockKing, 'stock');
+        setAwardDisplay('awardLuckName', 'awardLuckVal', luckKing, 'luck_reward');
     }
 
     function findPositiveAwardWinner(data, field) {

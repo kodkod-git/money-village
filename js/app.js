@@ -153,7 +153,7 @@
 
         const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.depositReward || 0) + (p.questReward || 0);
         p.total = currentGameVariant !== 'basic'
-            ? base * calcSuccessMultiplier(p.successFactors || {})
+            ? Math.round(base * calcSuccessMultiplier(p.successFactors || {}))
             : base;
     }
 
@@ -161,7 +161,7 @@
         players.forEach(p => {
             const base = (p.manualCash || 0) + calcActiveAsset(p.assets) + (p.diligenceReward || 0) + (p.questReward || 0) + (p.depositReward || 0);
             p.total = currentGameVariant !== 'basic'
-                ? base * calcSuccessMultiplier(p.successFactors || {})
+                ? Math.round(base * calcSuccessMultiplier(p.successFactors || {}))
                 : base;
         });
 

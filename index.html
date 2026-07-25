@@ -427,7 +427,7 @@
             <div class="report-header">
                 <div class="header-left">
                     <div class="header-title">
-                        <h1><span>🏆</span> 머니빌리지 명예의 전당</h1>
+                        <h1><span>🏆</span> 머니빌리지 명예의 전당<span id="fameTitleSuffix">(기본)</span></h1>
                         <p>Money Village Hall of Fame : 역대 최고 자산가 랭킹</p>
                     </div>
                 </div>
@@ -441,14 +441,15 @@
             <div class="fame-only section-title" style="margin-top:5px;">👤 개인전 역대 Top 10 (Individual)</div>
             <table class="ranking-table">
                 <colgroup>
-                    <col style="width: 7%">
-                    <col style="width: 18%">
-                    <col style="width: 15%">
-                    <col style="width: 12%">
-                    <col style="width: 12%">
-                    <col style="width: 12%">
-                    <col style="width: 12%">
+                    <col style="width: 6%">
+                    <col style="width: 16%">
+                    <col style="width: 13%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
                     <col id="indivDiligenceCol" style="width: 12%">
+                    <col id="indivSuccessCol" style="width: 13%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -460,6 +461,7 @@
                         <th>예금</th>
                         <th>퀘스트</th>
                         <th id="indivDiligenceHeader">성실활동금</th>
+                        <th id="indivSuccessHeader" class="success-col">성공열쇠</th>
                     </tr>
                 </thead>
                 <tbody id="indivTableBody"></tbody>
@@ -469,25 +471,33 @@
                 <div class="award-card">
                     <div class="award-icon">💵</div>
                     <div class="award-info">
-                        <div class="award-title hl-cash">Personal Cash King</div>
+                        <div class="award-title hl-cash">Cash King</div>
                         <div class="award-name" id="awardCashName">-</div>
-                        <div class="award-value">현금 보유액: <span id="awardCashVal">0</span> 원</div>
+                        <div class="award-value"><span id="awardCashVal">0</span> 원</div>
                     </div>
                 </div>
                 <div class="award-card">
                     <div class="award-icon">👷</div>
                     <div class="award-info">
-                        <div class="award-title hl-diligence">Personal Diligence King</div>
+                        <div class="award-title hl-diligence">Diligence King</div>
                         <div class="award-name" id="awardDiligenceName">-</div>
-                        <div class="award-value">성실활동금: <span id="awardDiligenceVal">0</span> 원</div>
+                        <div class="award-value"><span id="awardDiligenceVal">0</span> 원</div>
                     </div>
                 </div>
                 <div class="award-card">
                     <div class="award-icon" id="awardStockIcon">📈</div>
                     <div class="award-info">
-                        <div class="award-title hl-stock" id="awardStockTitle">Personal Stock King</div>
+                        <div class="award-title hl-stock" id="awardStockTitle">Stock King</div>
                         <div class="award-name" id="awardStockName">-</div>
-                        <div class="award-value"><span id="awardStockLabel">주식 평가액</span>: <span id="awardStockVal">0</span> 원</div>
+                        <div class="award-value"><span id="awardStockVal">0</span> 원</div>
+                    </div>
+                </div>
+                <div class="award-card">
+                    <div class="award-icon">🍀</div>
+                    <div class="award-info">
+                        <div class="award-title hl-luck">Luck King</div>
+                        <div class="award-name" id="awardLuckName">-</div>
+                        <div class="award-value"><span id="awardLuckVal">0</span> 원</div>
                     </div>
                 </div>
             </div>

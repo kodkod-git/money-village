@@ -372,9 +372,16 @@ async function sbSaveTraits(gameId, players) {
 }
 
 async function sbSaveGameResult({ mode, date, game_variant = 'basic', individuals = [], teams = [] }) {
-    for (const p of individuals) {
-        if (!p.user_id) { console.error('[sbSaveGameResult] user_id 없는 individual 무시', p); continue; }
-        await _sb.from('game_individual').upsert({
+    let hasError = false;
+
+    // 플레이어 수만큼 요청을 나눠 보내면 그 중 하나만 네트워크 순간 장애로 실패해도
+    // 조용히 묻힐 수 있다 — 배열 그대로 한 번에 upsert해 요청 수와 실패 노출 구간을 최소화한다.
+    const individualRows = individuals
+        .filter(p => {
+            if (!p.user_id) { console.error('[sbSaveGameResult] user_id 없는 individual 무시', p); hasError = true; return false; }
+            return true;
+        })
+        .map(p => ({
             user_id:          p.user_id,
             total_asset:      Number(p.total ?? 0),
             cash:             Number(p.manualCash ?? 0),
@@ -384,20 +391,23 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
             deposit_reward:   Number(p.depositReward ?? 0),
             game_id:          String(p.game_id || '').trim(),
             team_id:          String(p.team_id || '').trim() || null
-        }, { onConflict: 'game_id,user_id' });
+        }));
+    if (individualRows.length > 0) {
+        const { error } = await _sb.from('game_individual').upsert(individualRows, { onConflict: 'game_id,user_id' });
+        if (error) { console.error('[sbSaveGameResult] game_individual upsert 실패', error); hasError = true; }
     }
 
     if (mode === 'team') {
-        for (const t of teams) {
-            const teamId   = String(t.team_id || '').trim();
-            const teamName = _text(t.name ?? '');
-            const gameId   = String(t.game_id || '').trim();
-            if (!teamId || !teamName || !gameId) continue;
-            await _sb.from('game_team').upsert({
-                team_id:   teamId,
-                game_id:   gameId,
-                team_name: teamName
-            }, { onConflict: 'team_id' });
+        const teamRows = teams
+            .map(t => ({
+                team_id:   String(t.team_id || '').trim(),
+                game_id:   String(t.game_id || '').trim(),
+                team_name: _text(t.name ?? '')
+            }))
+            .filter(t => t.team_id && t.team_name && t.game_id);
+        if (teamRows.length > 0) {
+            const { error } = await _sb.from('game_team').upsert(teamRows, { onConflict: 'team_id' });
+            if (error) { console.error('[sbSaveGameResult] game_team upsert 실패', error); hasError = true; }
         }
     }
 
@@ -424,7 +434,7 @@ async function sbSaveGameResult({ mode, date, game_variant = 'basic', individual
         }
     }
 
-    return { success: true };
+    return { success: !hasError };
 }
 
 async function sbLoadAssetsByDate(date) {
@@ -637,13 +647,23 @@ async function sbLoadSuccessFactorsByGameId(gameId) {
 // =========================================================
 
 async function sbLoadHallOfFame() {
-    const [{ data: gameInfoList }, { data: indiv }, { data: team }, { data: users }, { data: allIndiv }] = await Promise.all([
+    const [{ data: gameInfoList }, { data: indiv }, { data: team }, { data: users }, { data: allIndiv }, { data: successFactors }] = await Promise.all([
         _sb.from('game_info').select('game_id, game_variant, is_test'),
         _sb.from('game_individual').select('*').order('total_asset', { ascending: false }).limit(200),
         _sb.from('game_team').select('*'),
         _sb.from('users').select('user_id, nickname'),
-        _sb.from('game_individual').select('user_id, team_id, total_asset, game_id')
+        _sb.from('game_individual').select('user_id, team_id, total_asset, game_id'),
+        _sb.from('success_factors').select('*')
     ]);
+
+    // game_id+user_id별 성공요소(성공열쇠) 체크 개수
+    const successCountByKey = Object.fromEntries(
+        (successFactors || []).map(r => [
+            `${r.game_id}_${r.user_id}`,
+            [r.financial_management, r.communication, r.critical_thinking,
+             r.global_economy, r.credit_trust, r.entrepreneurship].filter(Boolean).length
+        ])
+    );
 
     // 테스트 게임은 명예의 전당에서 제외
     const validGameIds = new Set(
@@ -658,8 +678,9 @@ async function sbLoadHallOfFame() {
         .filter(r => validGameIds.has(r.game_id))
         .map(r => ({
             ...r,
-            nickname:     nickByUserId[r.user_id] || '',
-            game_variant: variantMap[r.game_id] || 'basic'
+            nickname:      nickByUserId[r.user_id] || '',
+            game_variant:  variantMap[r.game_id] || 'basic',
+            success_count: successCountByKey[`${r.game_id}_${r.user_id}`] ?? null
         }));
 
     // team_id별 총자산/멤버 닉네임 온더플라이 집계 (테스트 게임 제외)
