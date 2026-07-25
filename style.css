@@ -372,9 +372,9 @@
         .ranking-table--compact-numbers .sub-asset-col .fit-number {
             font-size: 0.8em;
         }
-        /* 심화/부자의그릇 탭: 자릿수 상관없이 13px로 고정 */
+        /* 심화/부자의그릇 탭: 자릿수 상관없이 15px로 고정 */
         #indivTableBody.fame-fixed-numbers .fit-number {
-            font-size: 13px !important;
+            font-size: 15px !important;
         }
         
         /* 3. 날짜 폰트 크기 수정 */
