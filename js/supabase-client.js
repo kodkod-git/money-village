@@ -2,7 +2,11 @@
 // SUPABASE_URL, SUPABASE_ANON_KEY는 index.html에 인라인으로 설정
 // (브라우저에서는 process.env 불가 — anon key는 공개 키라 노출 안전)
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// public -> management 스키마 분리 (통합관리시스템 데이터 전용)
+// survey(설문), boardgame(보드게임 웹앱)과 DB 프로젝트는 공유하되 스키마로 분리 관리
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    db: { schema: 'management' }
+});
 
 
 function _toStorageKey(fileName) {
