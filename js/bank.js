@@ -573,7 +573,7 @@ function _bankSubmitTeam(p, type, amount) {
 }
 
 // ── 라운드 전환 ────────────────────────────────────────────────────
-function bankGoBackRound() {
+async function bankGoBackRound() {
     if (_bank.currentRound <= 1) { alert('첫 번째 라운드입니다.'); return; }
     if (!confirm('이전 라운드로 돌아갑니다.\n현재 라운드 입력 내용은 초기화됩니다.\n계속하시겠습니까?')) return;
 
@@ -589,12 +589,15 @@ function bankGoBackRound() {
     _bank.playerTypeTags  = snapshot.playerTypeTags;
     _bank.teamTypeTags    = snapshot.teamTypeTags;
 
-    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
+    _bank._roundChangedAt = Date.now();
     _bankRenderPlayerList();
     _bankShowView(2);
+    // 폴링이 stale 값으로 되돌리지 않도록 upsert 완료를 기다린다
+    await sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
+    _bank._roundChangedAt = Date.now();
 }
 
-function bankAdvanceRound() {
+async function bankAdvanceRound() {
     const isLast = _bank.currentRound >= 3;
     const label  = isLast ? '예금 신청을 종료합니다' : '다음 라운드로 넘어갑니다';
     if (!confirm(`${label}.\n미완료 팀 신청은 원금만 반환됩니다.\n마감하시겠습니까?`)) return;
@@ -642,10 +645,13 @@ function bankAdvanceRound() {
     _bank.indivCompleted = {};
     _bank.teamDeposits   = {};
     _bank.currentRound   = Math.min(_bank.currentRound + 1, 4);
-    sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
+    _bank._roundChangedAt = Date.now();
 
     _bankRenderPlayerList();
     _bankShowView(2);
+    // 폴링이 stale 값으로 되돌리지 않도록 upsert 완료를 기다린다
+    await sbUpsertBankState(_bank.gameId, { current_round: _bank.currentRound });
+    _bank._roundChangedAt = Date.now();
 }
 
 // ── View 4: 결과 ───────────────────────────────────────────────────
@@ -671,6 +677,13 @@ async function bankReset() {
     _bank.teamTypeTags    = {};
     _bank.roundSnapshots  = [];
     _bank.currentRound    = 1;
+
+    // bank_history 로그 삭제와 별개로, 이미 지급된 deposit_reward도 0으로 되돌린다
+    // (quizReset / luckReset과 동일한 처리 — 없으면 초기화 후에도 유령 예금 보상이
+    //  결과 발표·명예의 전당 총자산에 합산됨)
+    await Promise.all(_bank.players.map(p =>
+        sbSaveDepositReward(_bank.gameId, p.user_id, 0).catch(console.error)
+    ));
 
     await sbUpsertBankState(_bank.gameId, { current_round: 1 });
     _bankRenderPlayerList();
@@ -754,8 +767,14 @@ function _bankMergeRemoteState(state, history) {
 
     const remoteRound = state.current_round ?? 1;
 
+    // 방금 이 탭에서 라운드를 바꿨다면(아직 upsert가 커밋되기 전일 수 있음) 폴링이
+    // stale한 원격 값으로 로컬 라운드를 되돌리지 않도록 잠시(2.5초) 무시한다.
+    // 이 가드가 없으면 확인 대화상자를 빠르게 연속 승인해 라운드를 넘길 때
+    // 전환 1건이 폴링에 먹혀 유실됐다.
+    const localRoundIsFresh = _bank._roundChangedAt && (Date.now() - _bank._roundChangedAt < 2500);
+
     // 라운드 전환 감지: 원격과 로컬이 다르면 동기화 (전진 및 후퇴 모두 처리)
-    if (remoteRound !== _bank.currentRound) {
+    if (remoteRound !== _bank.currentRound && !localRoundIsFresh) {
         _bank.currentRound   = remoteRound;
         _bank.indivCompleted = {};
         _bank.teamDeposits   = {};

@@ -905,6 +905,7 @@ async function sbDeleteGame(gameId) {
     const tables = [
         'bank_history', 'bank_state',
         'quiz_history', 'quiz_state',
+        'luck_history', 'luck_state',
         'cash_balance', 'stock_balance', 'stock_price',
         'estate_balance', 'estate_price',
         'traits', 'success_factors',

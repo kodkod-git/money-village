@@ -1,6 +1,8 @@
 // js/luck.js
 // [행운] 머니빌리지 행운 — 가위바위보 / 룰렛 색깔 맞추기 / 주사위 눈금 맞추기
 
+const _LUCK_DEFAULT_BET = 1000;
+
 const _luck = {
     gameId:     null,
     gameDate:   null,
@@ -11,7 +13,7 @@ const _luck = {
     earnedRewards: {},   // { nickname: 누적 획득액 }
     currentPlayerIdx: null,
     selectedGame: null,  // 'rps' | 'roulette' | 'dice'
-    bet: { amount: 1000 },
+    bet: { amount: _LUCK_DEFAULT_BET },
 };
 
 const _LUCK_GAME = {
@@ -357,6 +359,10 @@ async function luckReset() {
 // ── View 2 → 3: 플레이어 선택 ─────────────────────────────────────
 function luckSelectPlayer(idx) {
     _luck.currentPlayerIdx = idx;
+    // 참가자별로 게임 선택/배팅 금액을 초기화한다 — 초기화하지 않으면 이전 참가자가
+    // 고른 게임·배팅액이 다음 참가자 화면에 그대로 이월되어 오배팅으로 이어진다.
+    _luck.selectedGame = null;
+    _luck.bet = { amount: _LUCK_DEFAULT_BET };
     const p = _luck.players[idx];
     document.getElementById('luckGameSelectPlayerName').textContent = `${p.nickname}(${p.real_name})의 게임 선택`;
     _luckSyncGameSelectUI();
@@ -793,18 +799,25 @@ function luckDiceStop(playerGuess) {
     const duration  = 600;
     const startTime = performance.now();
 
+    // 시각적 정착 애니메이션 (rAF — 탭이 백그라운드면 멈출 수 있음)
     function settle(now) {
+        if (token !== _diceResolveToken) { _diceRollFrame = null; return; }
         const t     = Math.min(1, (now - startTime) / duration);
         const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
         _luckSetDiceRotation(t < 1 ? _luckLerpOrientation(startOrientation, targetOrientation, eased) : targetOrientation);
-        if (t < 1) {
-            _diceRollFrame = requestAnimationFrame(settle);
-        } else {
-            _diceRollFrame = null;
-            if (token !== _diceResolveToken) return;
-            const isWin = face === playerGuess;
-            _luckResolve(isWin, { face, playerGuess });
-        }
+        _diceRollFrame = t < 1 ? requestAnimationFrame(settle) : null;
     }
     _diceRollFrame = requestAnimationFrame(settle);
+
+    // 결과 확정은 rAF와 분리해 setTimeout으로 처리한다.
+    // rAF settle 안에서 _luckResolve를 부르면 탭이 백그라운드일 때 rAF가 멈춰
+    // 결과가 영영 확정되지 않고(배팅만 "제출"된 상태) 방치됐다. setTimeout은 백그라운드에서도 동작한다.
+    setTimeout(() => {
+        if (token !== _diceResolveToken) return;
+        cancelAnimationFrame(_diceRollFrame);
+        _diceRollFrame = null;
+        _luckSetDiceRotation(targetOrientation); // rAF가 멈췄던 경우 최종 자세 보정
+        const isWin = face === playerGuess;
+        _luckResolve(isWin, { face, playerGuess });
+    }, duration + 50);
 }
