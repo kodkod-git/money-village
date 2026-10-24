@@ -119,6 +119,36 @@
         if (id === 'luckScreen') _luckStartSync();
     }
 
+    // ── 부스(은행/퀴즈/행운) 첫 화면 홈 버튼 ──────────────────────────────
+    // 진행 중(은행: 예금 신청 종료 전, 퀴즈/행운: 마감 전)이면 확인 모달을 거친다.
+    const _BOOTH_LABEL = { bank: '은행 예금이', quiz: '퀴즈 퀘스트가', luck: '행운 게임이' };
+
+    function _isBoothInProgress(type) {
+        if (type === 'bank') return !!_bank.gameId && _bank.currentRound < 4;
+        if (type === 'quiz') return !!_quiz.gameId && !_quiz.isClosed;
+        if (type === 'luck') return !!_luck.gameId && !_luck.isClosed;
+        return false;
+    }
+
+    function boothGoHome(type) {
+        if (!_isBoothInProgress(type)) {
+            switchScreen('setupScreen');
+            return;
+        }
+        document.getElementById('boothHomeConfirmMsg').textContent =
+            `${_BOOTH_LABEL[type]} 아직 진행 중입니다.\n지금까지의 기록은 저장되어 있습니다.\n메인 화면으로 나가시겠습니까?`;
+        document.getElementById('boothHomeConfirmModal').classList.add('show');
+    }
+
+    function _boothGoHomeConfirmed() {
+        document.getElementById('boothHomeConfirmModal').classList.remove('show');
+        switchScreen('setupScreen');
+    }
+
+    function _boothGoHomeCancel() {
+        document.getElementById('boothHomeConfirmModal').classList.remove('show');
+    }
+
     function initAssets() {
         const bills = { "100":0,"500":0,"1000":0,"5000":0,"10000":0,"50000":0 };
         if (currentGameVariant !== 'basic') {
