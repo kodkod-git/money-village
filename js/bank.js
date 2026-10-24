@@ -517,13 +517,19 @@ function _bankSubmitTeam(p, type, amount) {
     }
     _bank.teamDeposits[teamName].type = type;
     _bank.teamDeposits[teamName].members[_bank.currentPlayerIdx] = amount;
-    sbUpsertBankHistory(_bank.gameId, p.user_id, _bank.currentRound, type, amount, 0, true);
 
     const teamMembers  = _bank.players.filter(pl => pl.team_name === teamName);
     const teamSize     = teamMembers.length;
     const td           = _bank.teamDeposits[teamName];
     const completedCnt = Object.keys(td.members).length;
     const allDone      = completedCnt === teamSize;
+
+    // 팀 미완료일 때만 대기(matured=0) 행을 기록한다. 마지막 팀원 신청 시에도 이 upsert를
+    // 보내면 아래 정산 upsert와 같은 키로 동시에 날아가, 도착 순서가 뒤바뀌면 0이 최종값으로
+    // 남아 다른 태블릿의 prevRoundsTotal(→ 이후 라운드 deposit_reward)에서 보상이 사라졌다.
+    if (!allDone) {
+        sbUpsertBankHistory(_bank.gameId, p.user_id, _bank.currentRound, type, amount, 0, true);
+    }
 
     const totalPrincipal = Object.values(td.members).reduce((a, b) => a + b, 0);
     const totalMatured   = Math.round(totalPrincipal * _bank.teamSettings[type]);
